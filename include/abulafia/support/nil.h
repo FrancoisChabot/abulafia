@@ -64,7 +64,7 @@ struct Nil {
 };
 
 // There is no harm in providing global instance, since Nil is stateless.
-static constexpr Nil nil;
+static Nil nil;
 
 }  // namespace ABULAFIA_NAMESPACE
 
