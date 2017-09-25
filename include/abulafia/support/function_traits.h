@@ -49,6 +49,9 @@ template <typename CALLABLE_T, std::size_t Index>
 using callable_argument_t =
     typename function_traits<CALLABLE_T>::template arg<Index>::type;
 
+template <typename CALLABLE_T>
+using callable_result_t = typename function_traits<CALLABLE_T>::result_type;
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

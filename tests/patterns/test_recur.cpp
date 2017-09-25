@@ -78,18 +78,18 @@ TEST(test_recur, sub_recur_test) {
   auto sub_recur_pat = ( uint_ >> '(' >> *sub_recur >> ')' );
   auto recur_pat = ( uint_ >> '(' >> *recur >> ')' >> '[' >> *sub_recur >> ']'
 );
-  
+  
 
   ABU_Recur_define(recur, abc, recur_pat);
   ABU_Recur_define(sub_recur, def, sub_recur_pat);
-  
+  
 
 
   auto status = parse(recur, std::string("1()[2()3(4())]"));
   EXPECT_EQ(status, result::SUCCESS);
 }
 TEST(test_recur, chained_recur_test) {
-  
+  
 
   Recur<struct abc> recur;
   Recur<struct def> sub_recur;
@@ -102,11 +102,11 @@ TEST(test_recur, chained_recur_test) {
   auto recur_pat = uint_ >>
                      '(' >> *recur >> ')' >>
                      '[' >> *sub_recur >> ']';
-  
+  
 
   ABU_Recur_define(recur, abc, recur_pat);
   ABU_Recur_define(sub_recur, def, sub_recur_pat);
-  
+  
 
 
   auto status = parse(recur, std::string("1()[2()[]3()[4()[]]]"));

@@ -37,6 +37,7 @@ add_library( header_sanitizer
   patterns/nary/sequence.cpp
   patterns/nary/nary.cpp
 
+  patterns/unary/action.cpp
   patterns/unary/attr_cast.cpp
   patterns/unary/not.cpp
   patterns/unary/repeat.cpp

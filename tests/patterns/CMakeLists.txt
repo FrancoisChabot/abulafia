@@ -1,4 +1,5 @@
 add_executable(pattern_tests
+   test_action.cpp
    test_alternative.cpp
    test_char_literal.cpp
    test_character.cpp

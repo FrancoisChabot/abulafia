@@ -53,6 +53,7 @@
 #include "abulafia/patterns/nary/alternative.h"
 #include "abulafia/patterns/nary/sequence.h"
 
+#include "abulafia/patterns/unary/action.h"
 #include "abulafia/patterns/unary/attr_cast.h"
 #include "abulafia/patterns/unary/not.h"
 #include "abulafia/patterns/unary/repeat.h"
