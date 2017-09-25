@@ -1,0 +1,12 @@
+branches:
+    only:
+        - master
+skip_tags: true
+matrix:
+    fast_finish: true
+build_script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - cmake --build .
+    - ctest
