@@ -31,24 +31,26 @@ Abulafia is a headers-only library. In order to use it, you just have to make th
 ## Usage
 
 With abulafia, you can write surprisingly complex parsers in a few, very readable, lines of code:
+```c++
 
-    #include "abulafia/abulafia.h"
+#include "abulafia/abulafia.h"
 
-    #include <iostream>
+#include <iostream>
 
-    int main() {
-      // opening bracket, followed by a comma-delimited list of integers, followed by a closing bracket.
-      auto with_brackets = '[' >> (abu::int_ % ',') >> ']';
-      
-      // ignore whitespace
-      auto ignoring_whitespace = abu::apply_skipper(with_brackets, abu::char_(" \t\r\n"));
+int main() {
+  // opening bracket, followed by a comma-delimited list of integers, followed by a closing bracket.
+  auto with_brackets = '[' >> (abu::int_ % ',') >> ']';
+  
+  // ignore whitespace
+  auto ignoring_whitespace = abu::apply_skipper(with_brackets, abu::char_(" \t\r\n"));
 
-      std::vector<int> dst;
-      auto status = abu::parse(ignoring_whitespace, "[1, 2, 3, 4, 5]", dst);
+  std::vector<int> dst;
+  auto status = abu::parse(ignoring_whitespace, "[1, 2, 3, 4, 5]", dst);
 
-      if(status == abu::result::SUCCESS) {
-        for(auto v : dst) {
-          std::cout << v << std::endl;
-        }
-      }
+  if(status == abu::result::SUCCESS) {
+    for(auto v : dst) {
+      std::cout << v << std::endl;
     }
+  }
+}
+```
