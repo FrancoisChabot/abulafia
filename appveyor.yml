@@ -4,6 +4,7 @@ branches:
 skip_tags: true
 matrix:
     fast_finish: true
+image: Visual Studio 2017
 build_script:
     - git submodule init
     - git submodule update
