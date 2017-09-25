@@ -37,5 +37,28 @@ struct is_tuple : public std::false_type {};
 template <typename... ARGS_T>
 struct is_tuple<std::tuple<ARGS_T...>> : public std::true_type {};
 
+// TODO: this isn't really a great place for this...
+template <class T>
+struct blank_type_ {
+  typedef void type;
+};
+
+template <typename T, typename Enable = void>
+struct is_collection : public std::false_type {};
+
+template <typename T>
+struct is_collection<T, typename blank_type_<typename T::value_type>::type>
+    : public std::true_type {};
+
+template <typename T, typename ENABLE = void>
+struct reset_if_collection {
+  static void exec(T&) {}
+};
+
+template <typename T>
+struct reset_if_collection<T, enable_if_t<is_collection<T>::value>> {
+  static void exec(T& c) { c.clear(); }
+};
+
 }  // namespace ABULAFIA_NAMESPACE
 #endif
