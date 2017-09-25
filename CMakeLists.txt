@@ -6,7 +6,6 @@ option(ABULAFIA_BUILD_TESTS "Build the abulafia tests" ON)
 option(ABULAFIA_BUILD_TESTS "Build the abulafia examples" ON)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set(CMAKE_CXX_STANDARD 17)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /W4 /wd4127")
@@ -15,7 +14,7 @@ if(MSVC)
   #Gtest workaround for MSVC2017
   add_definitions(-DGTEST_LANG_CXX11)
 else()
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -std=c++17")
 endif(MSVC)
 
 set(INSTALL_GTEST OFF CACHE BOOL "Do not install gtest" FORCE)
