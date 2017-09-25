@@ -1,0 +1,1 @@
+#include "abulafia/patterns/leaf/char_symbol.h"

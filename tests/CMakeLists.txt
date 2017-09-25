@@ -1,0 +1,4 @@
+add_subdirectory(char_set)
+add_subdirectory(contexts)
+add_subdirectory(header_sanitizer)
+add_subdirectory(patterns)
