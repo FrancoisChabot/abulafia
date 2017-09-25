@@ -63,14 +63,9 @@ struct Nil {
   Nil const& end() const { return *this; }
 };
 
-// TODO: this isn't really a great place for this...
-template <class T>
-struct blank_type_ {
-  typedef void type;
-};
+// There is no harm in providing global instance, since Nil is stateless.
+static constexpr Nil nil;
 
-// Since nil is stateless, there is no harm in providing a global instance
-static Nil nil;
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

@@ -17,11 +17,13 @@
 
 namespace ABULAFIA_NAMESPACE {
 
+// There is no harm in providing global instances of stateless parsers:
 static constexpr Int<10, 1, 0> int_;
 static constexpr Uint<10, 1, 0> uint_;
 
 static constexpr Eoi eoi;
 static constexpr Fail fail;
 static constexpr Pass pass;
+
 }  // namespace ABULAFIA_NAMESPACE
 #endif
