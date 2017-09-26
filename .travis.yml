@@ -17,6 +17,7 @@ matrix:
 
 before_install:
     - eval "${MATRIX_EVAL}"
+    - pip install --user cpp-coveralls
 
 script:
     - mkdir build
@@ -24,3 +25,9 @@ script:
     - cmake -DCMAKE_VERBOSE_MAKEFILE=ON ..
     - cmake --build .
     - ctest
+
+after_success:
+  - coveralls --root .. -E ".*googletest.*" -E ".*CMakeFiles.*" -E ".*tests/.*.cpp.*"
+
+notifications:
+  email: false
