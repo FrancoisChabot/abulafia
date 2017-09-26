@@ -55,3 +55,11 @@ int main() {
   }
 }
 ```
+
+## Documentation
+
+You can find up-to-date documention [here](https://francoischabot.github.io/abulafia/).
+
+### Building the documentation
+
+In order to build the documentation, you will need [mkdocs](http://www.mkdocs.org/) and the [material theme](http://squidfunk.github.io/mkdocs-material/). Simply run `mkdocs serve` from the project directory to serve the documentation locally (useful for previewing documentation updates before pushing).
