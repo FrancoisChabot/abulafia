@@ -2,11 +2,6 @@ language: cpp
 
 dist: trusty
 
-addons:
-  apt:
-    sources: [ 'ubuntu-toolchain-r-test' ]
-    packages: [ 'libstdc++-4.9-dev' ]
-
 matrix:
   include:
     - os: linux
@@ -19,17 +14,6 @@ matrix:
             - g++-7
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-5.0
-          packages:
-            - clang-5.0
-      env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
-        - CXXFLAGS="-stdlib=libstdc++"
 
 before_install:
     - eval "${MATRIX_EVAL}"
