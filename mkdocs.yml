@@ -1,14 +1,21 @@
 site_name: Abulafia Documentation
 theme: material
-extra_css: 
-    - custom.css
+extra:
+  palette:
+    primary: 'Amber'
+    accent: 'Deep Orange'
+  feature:
+    tabs: true
+repo_name: 'FrancoisChabot/abulafia'
+repo_url: 'https://github.com/FrancoisChabot/abulafia'
+
 markdown_extensions:
   - footnotes
 pages:
 - Home: 'index.md'
 - User Guide:
   - 'Installation': 'guide/01_installation.md'
-  - 'Introduction': 'guide/02_introduction.md'
+  - 'Parsers': 'guide/02_parsers.md'
 - Reference:
   - 'Quick Reference': 'patterns/reference.md'
   - 'Leaf parsers':

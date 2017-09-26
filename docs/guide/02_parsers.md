@@ -1,4 +1,4 @@
-# Introduction
+# Parsers
 
 At its core, Abulafia builds parsers by combining three components:
 
