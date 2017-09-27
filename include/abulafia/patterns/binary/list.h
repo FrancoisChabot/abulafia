@@ -23,9 +23,6 @@ namespace ABULAFIA_NAMESPACE {
 // List(a, b) -> a >> *( ignore(b) >> a )
 template <typename VAL_PAT_T, typename SEP_PAT_T>
 class List : public Pattern<List<VAL_PAT_T, SEP_PAT_T>> {
-  VAL_PAT_T val_;
-  SEP_PAT_T sep_;
-
  public:
   using val_pat_t = VAL_PAT_T;
   using sep_pat_t = SEP_PAT_T;
@@ -35,6 +32,10 @@ class List : public Pattern<List<VAL_PAT_T, SEP_PAT_T>> {
 
   val_pat_t const& operand() const { return val_; }
   sep_pat_t const& separator() const { return sep_; }
+
+ private:
+  VAL_PAT_T val_;
+  SEP_PAT_T sep_;
 };
 
 template <typename CTX_T, typename DST_T, typename VAL_PAT_T,
@@ -127,6 +128,11 @@ template <typename LHS_T, typename RHS_T>
 auto list(LHS_T&& lhs, RHS_T&& rhs) {
   return List<pattern_t<LHS_T>, pattern_t<RHS_T>>(
       make_pattern(forward<LHS_T>(lhs)), make_pattern(forward<RHS_T>(rhs)));
+}
+
+template <typename LHS_T, typename RHS_T, typename CB_T>
+auto convert(List<LHS_T, RHS_T> const& tgt, CB_T const& cb) {
+  return list(cb(tgt.operand()), cb(tgt.separator()));
 }
 
 template <typename LHS_T, typename RHS_T, typename RECUR_TAG>

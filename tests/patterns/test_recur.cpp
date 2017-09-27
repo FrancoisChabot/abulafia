@@ -10,35 +10,19 @@
 
 using namespace abu;
 
-// Test basic syntax with any recursivity involved.
-TEST(test_recur, attr_lookup_simple) {
-  using ctx_t = SingleForwardContext<std::string::iterator>;
-
+TEST(test_recur, weaken_non_recur) {
   struct abc;
-  Recur<abc, std::vector<char>> recur;
+  using Recur_t = Recur<abc>;
+  auto pattern = *char_();
 
-  // Even if it won't be usefull, there is no reason attr lookup cannot work
-  // before definition
-  expect_same<std::vector<char>, attr_t<decltype(recur), ctx_t>>();
-  ABU_Recur_define(recur, abc, *char_());
+  using pattern_t = decltype(pattern);
+  using weakened_t = decltype(weaken_recur<Recur_t>(pattern));
 
-  expect_same<std::vector<char>, attr_t<decltype(recur), ctx_t>>();
-}
+  static_assert(std::is_same<pattern_t, weakened_t>::value, "");
 
-TEST(test_recur, attr_lookup_recur) {
-  using ctx_t = SingleForwardContext<std::string::iterator>;
+  auto weakened = weaken_recur<Recur_t>(pattern);
 
-  struct abc;
-  Recur<abc, std::vector<char>> recur;
-
-  auto loop = *recur;
-  // Even if it won't be usefull, there is no reason attr lookup cannot work
-  // before definition
-
-  ABU_Recur_define(recur, abc, loop);
-
-  expect_same<std::vector<char>, attr_t<decltype(loop), ctx_t>>();
-  expect_same<std::vector<char>, attr_t<decltype(recur), ctx_t>>();
+  static_assert(std::is_same<decltype(weakened), weakened_t>::value, "");
 }
 
 // Test basic syntax with any recursivity involved.
@@ -63,52 +47,8 @@ TEST(test_recur, recur_test) {
   ABU_Recur_define(recur, abc, recur_pat);
 
   //  std::vector<int> dst;
-  auto status = parse(recur, std::string("123456"));
+  auto status = parse(recur, std::string("123456") /*, dst*/);
 
   EXPECT_EQ(status, result::SUCCESS);
-  // EXPECT_EQ(std::vector<int>({12,34,56}), dst);
+  //  EXPECT_EQ(std::vector<int>({12,34,56}), dst);
 }
-
-/*
-
-TEST(test_recur, sub_recur_test) {
-  Recur<struct abc> recur;
-  Recur<struct def> sub_recur;
-
-  auto sub_recur_pat = ( uint_ >> '(' >> *sub_recur >> ')' );
-  auto recur_pat = ( uint_ >> '(' >> *recur >> ')' >> '[' >> *sub_recur >> ']'
-);
-  
-
-  ABU_Recur_define(recur, abc, recur_pat);
-  ABU_Recur_define(sub_recur, def, sub_recur_pat);
-  
-
-
-  auto status = parse(recur, std::string("1()[2()3(4())]"));
-  EXPECT_EQ(status, result::SUCCESS);
-}
-TEST(test_recur, chained_recur_test) {
-  
-
-  Recur<struct abc> recur;
-  Recur<struct def> sub_recur;
-
-
-  auto sub_recur_pat = uint_ >>
-                        '(' >> *recur >> ')' >>
-                        '[' >> *sub_recur >> ']';
-
-  auto recur_pat = uint_ >>
-                     '(' >> *recur >> ')' >>
-                     '[' >> *sub_recur >> ']';
-  
-
-  ABU_Recur_define(recur, abc, recur_pat);
-  ABU_Recur_define(sub_recur, def, sub_recur_pat);
-  
-
-
-  auto status = parse(recur, std::string("1()[2()[]3()[4()[]]]"));
-  EXPECT_EQ(status, result::SUCCESS);
-}*/

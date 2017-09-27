@@ -15,6 +15,7 @@
 #include "abulafia/patterns/helpers/buffer.h"
 #include "abulafia/support/type_traits.h"
 
+#include <utility>
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
@@ -253,6 +254,26 @@ class Seq : public Pattern<Seq<CHILD_PATS_T...>> {
 template <std::size_t Index, typename... CHILD_PATS_T>
 auto const& getChild(Seq<CHILD_PATS_T...> const& pat) {
   return std::get<Index>(pat.childs());
+}
+
+template <typename... CHILD_PATS_T>
+auto seq(CHILD_PATS_T&&... childs) {
+  return Seq<CHILD_PATS_T...>(
+      std::make_tuple(std::forward<CHILD_PATS_T>(childs)...));
+}
+
+template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
+auto convert_seq_impl(CHILD_TUP_T const& c, CB_T const& cb,
+                      std::index_sequence<Is...>) {
+  return seq(convert(std::get<Is>(c), cb)...);
+}
+
+template <typename... CHILD_PATS_T, typename CB_T>
+auto convert(Seq<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
+  using indices = std::make_index_sequence<sizeof...(CHILD_PATS_T)>;
+  auto const& childs_tuple = tgt.childs();
+
+  return convert_seq_impl(childs_tuple, cb, indices());
 }
 
 template <typename CTX_T, typename DST_T, typename... CHILD_PATS_T>

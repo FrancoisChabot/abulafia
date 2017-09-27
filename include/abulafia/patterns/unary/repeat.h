@@ -101,6 +101,12 @@ inline auto repeat(PAT_T&& pat) {
       make_pattern(forward<PAT_T>(pat)));
 }
 
+template <std::size_t MIN_REP = 0, std::size_t MAX_REP = 0, typename PAT_T,
+          typename CB_T>
+auto convert(Repeat<PAT_T, MIN_REP, MAX_REP> const& tgt, CB_T const& cb) {
+  return repeat(cb(tgt.operand()));
+}
+
 namespace repeat_ {
 template <typename PAT_T, typename CTX_T, typename Enable = void>
 struct extract_value_type;

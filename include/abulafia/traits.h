@@ -67,5 +67,10 @@ inline auto make_pattern(T&& p) {
   return expr_traits<decay_t<T>>::make_pattern(forward<T>(p));
 }
 
+template <typename T, typename CB_T>
+auto convert(T const& tgt, CB_T const&) {
+  return tgt;
+}
+
 }  // namespace ABULAFIA_NAMESPACE
 #endif

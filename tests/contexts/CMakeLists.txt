@@ -3,7 +3,7 @@ add_executable(contexts_tests
    test_skipper.cpp
 )
 
-target_link_libraries(contexts_tests gtest_main)
+target_link_libraries(contexts_tests abu_test_main gtest)
 add_test(contexts_tests contexts_tests)
 
 set_target_properties(contexts_tests PROPERTIES FOLDER "tests")

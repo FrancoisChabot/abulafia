@@ -8,7 +8,7 @@ add_executable(char_set_tests
    test_single.cpp
 )
 
-target_link_libraries(char_set_tests gtest_main)
+target_link_libraries(char_set_tests abu_test_main gtest)
 add_test(char_set_tests char_set_tests)
 
 set_target_properties(char_set_tests PROPERTIES FOLDER "tests")

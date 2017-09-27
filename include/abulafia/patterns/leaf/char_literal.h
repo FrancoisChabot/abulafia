@@ -27,8 +27,8 @@ inline auto lit(CHAR_T chr) {
 template <typename T>
 using CharLiteral = decltype(lit(std::declval<T>()));
 
-
-// Allow 'c' to be used as pattern when in a binary expression with another pattern.
+// Allow 'c' to be used as pattern when in a binary expression with another
+// pattern.
 template <>
 struct expr_traits<char> {
   enum { is_pattern = false, converts_to_pattern = true };
