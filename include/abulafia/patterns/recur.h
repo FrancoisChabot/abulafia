@@ -315,11 +315,11 @@ struct pattern_traits<
 #define ABU_Recur_define(var, RECUR_TAG, pattern)                  \
   using abu_##RECUR_TAG##_recur_t = decltype(var);                 \
   using abu_##RECUR_TAG##_weakened_t =                             \
-      decltype(weaken_recur<abu_##RECUR_TAG##_recur_t>(pattern));  \
+      decltype(ABULAFIA_NAMESPACE :: weaken_recur<abu_##RECUR_TAG##_recur_t>(pattern));  \
   struct RECUR_TAG : public abu_##RECUR_TAG##_weakened_t {         \
     using pattern_t = abu_##RECUR_TAG##_weakened_t;                \
     RECUR_TAG(decltype(pattern) const & p)                         \
-        : pattern_t(weaken_recur<abu_##RECUR_TAG##_recur_t>(p)) {} \
+        : pattern_t(ABULAFIA_NAMESPACE :: weaken_recur<abu_##RECUR_TAG##_recur_t>(p)) {} \
   };                                                               \
   var = RECUR_TAG(pattern);
 
