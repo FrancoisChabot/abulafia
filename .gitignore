@@ -32,3 +32,4 @@
 *.app
 
 include/abulafia/abulafia_all.h
+site/
