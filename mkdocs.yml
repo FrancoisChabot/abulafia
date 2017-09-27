@@ -16,6 +16,7 @@ pages:
 - User Guide:
   - 'Installation': 'guide/01_installation.md'
   - 'Parsers': 'guide/02_parsers.md'
+  - 'Skippers': 'guide/03_skippers.md'
 - Reference:
   - 'Quick Reference': 'patterns/reference.md'
   - 'Leaf parsers':

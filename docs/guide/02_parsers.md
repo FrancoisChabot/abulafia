@@ -30,8 +30,17 @@ The simplest of these is `SingleForwardContext<>`. It takes a pair of iterators,
 
 ## Destinations
 
-Quite simply where the parser will store any and all extracted data. As long as the various assignments being done in the parsers are compatible with the 
-type that's currently being passed to it.
+Quite simply where the parser will store any and all extracted data. A parser will accept any type that are compatible with the assingments being performed in the parser.
+
+For example:
+
+    // A list of integers
+    auto pattern = *int_;
+
+    // These are all valid dst for our pattern
+    std::vector<int> dst_1;
+    std::vector<float> dst_2;
+    std::list<std::uint64_t> dst_3;
 
 ### The Nil Destination
 
@@ -56,10 +65,12 @@ int main() {
   std::string data = "123456";
 
   // pattern
-  auto pattern = *abu::Uint<10,2,2>; //a list of two-digits decimal-10 unsigned integer
+  // A list of two-digits decimal-10 unsigned integer
+  auto pattern = *abu::Uint<10,2,2>; 
 
-  //context
-  abu::SingleForwardContext<std::string::const_iterator> context(data.begin(), data.end());
+  // context
+  abu::SingleForwardContext<std::string::const_iterator> context(data.begin(), 
+                                                                 data.end());
  
   // destination
   std::vector<unsigned short> destination;
@@ -80,6 +91,7 @@ int main() {
 }
 ```
 
+## Making it cleaner
 This is all fairly verbose. Since parsing a container all at once is such a common pattern, Abulafia provides a shorthand method:
 
 ```
@@ -93,13 +105,9 @@ int main() {
 
   auto status = abu::parse(*abu::Uint<10,2,2>,
                            "123456",
-                           destination)
+                           destination);
 
   assert(status == abu::result::SUCCESS);
-  assert(destination.size() == 3);
-  assert(destination[0] == 12);
-  assert(destination[1] == 34);
-  assert(destination[2] == 56);
 
   return 0;
 }
