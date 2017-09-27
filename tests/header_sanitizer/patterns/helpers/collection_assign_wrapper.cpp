@@ -1,1 +1,0 @@
-#include "abulafia/patterns/helpers/collection_assign_wrapper.h"

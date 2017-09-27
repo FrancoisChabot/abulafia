@@ -26,10 +26,7 @@ namespace ABULAFIA_NAMESPACE {
 //  - If only 1 byte of a buffer is needed for rollback, the entire buffer
 //    will be kept.
 
- enum class IsFinal {
-    FINAL,
-    NOT_FINAL
-};
+enum class IsFinal { FINAL, NOT_FINAL };
 
 template <typename CONTAINER_T>
 class ContainerSequenceContext {
@@ -53,10 +50,10 @@ class ContainerSequenceContext {
   base_ctx_t& root_ctx() { return *this; }
   enum { IS_RESUMABLE = true };
 
-  ContainerSequenceContext() 
-    : current_buffer_(buffers_.end()) {}
+  ContainerSequenceContext() : current_buffer_(buffers_.end()) {}
 
-  void add_buffer(std::shared_ptr<CONTAINER_T> b, IsFinal f = IsFinal::NOT_FINAL) {
+  void add_buffer(std::shared_ptr<CONTAINER_T> b,
+                  IsFinal f = IsFinal::NOT_FINAL) {
     assert(!final_);
 
     // push_back can invalidate our iterator.
@@ -70,11 +67,11 @@ class ContainerSequenceContext {
       current_ = (*current_buffer_)->begin();
     }
 
-
     final_ = f == IsFinal::FINAL;
   }
 
-  void add_buffer(std::unique_ptr<CONTAINER_T> b, IsFinal f = IsFinal::NOT_FINAL) {
+  void add_buffer(std::unique_ptr<CONTAINER_T> b,
+                  IsFinal f = IsFinal::NOT_FINAL) {
     add_buffer(std::shared_ptr<CONTAINER_T>(std::move(b)), f);
   }
 
@@ -101,9 +98,10 @@ class ContainerSequenceContext {
 
       // iI we are done with the front buffer, and the rollback stack
       // has no hold on it, dump the buffer.
-      if(current_buffer_ == buffers_.begin()) { 
-        bool held_for_rollback = !rollback_stack_.empty() &&
-          rollback_stack_.front().second == current_buffer_;
+      if (current_buffer_ == buffers_.begin()) {
+        bool held_for_rollback =
+            !rollback_stack_.empty() &&
+            rollback_stack_.front().second == current_buffer_;
         if (!held_for_rollback) {
           buffers_.pop_front();
         }

@@ -14,6 +14,7 @@
 #include "abulafia/pattern.h"
 #include "abulafia/patterns/helpers/buffer.h"
 #include "abulafia/support/type_traits.h"
+#include "abulafia/support/visit_val.h"
 
 #include <utility>
 #include <variant>

@@ -13,6 +13,7 @@
 #include "abulafia/patterns/leaf/eoi.h"
 #include "abulafia/patterns/leaf/fail.h"
 #include "abulafia/patterns/leaf/numeric/int.h"
+#include "abulafia/patterns/leaf/numeric/uint.h"
 #include "abulafia/patterns/leaf/pass.h"
 
 namespace ABULAFIA_NAMESPACE {

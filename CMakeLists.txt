@@ -22,6 +22,72 @@ set(INSTALL_GMOCK OFF CACHE BOOL "Do not install gmock" FORCE)
 
 add_subdirectory(googletest)
 
+
+# List of abulafia headers
+SET(ABULAFIA_HEADERS
+  abulafia/char_set/any.h
+  abulafia/char_set/char_set.h
+  abulafia/char_set/delegated.h
+  abulafia/char_set/not.h
+  abulafia/char_set/operators.h
+  abulafia/char_set/or.h
+  abulafia/char_set/range.h
+  abulafia/char_set/set.h
+  abulafia/char_set/single.h
+
+  abulafia/contexts/container_sequence.h
+  abulafia/contexts/single_forward.h
+  abulafia/contexts/skipper_adapter.h
+
+  abulafia/operations/parse.h
+
+  abulafia/patterns/binary/except.h
+  abulafia/patterns/binary/list.h
+
+  abulafia/patterns/helpers/buffer.h
+  abulafia/patterns/helpers/collection_assign_wrapper.h
+
+  abulafia/patterns/leaf/numeric/digit_values.h
+  abulafia/patterns/leaf/numeric/int.h
+  abulafia/patterns/leaf/numeric/uint.h
+  abulafia/patterns/leaf/char_literal.h
+  abulafia/patterns/leaf/char_symbol.h
+  abulafia/patterns/leaf/character.h
+  abulafia/patterns/leaf/eoi.h
+  abulafia/patterns/leaf/fail.h
+  abulafia/patterns/leaf/pass.h
+  abulafia/patterns/leaf/string_literal.h
+  abulafia/patterns/leaf/string_symbol.h
+
+  abulafia/patterns/nary/alternative.h
+  abulafia/patterns/nary/nary.h
+  abulafia/patterns/nary/sequence.h
+
+  abulafia/patterns/unary/action.h
+  abulafia/patterns/unary/attr_cast.h
+  abulafia/patterns/unary/not.h
+  abulafia/patterns/unary/repeat.h
+  abulafia/patterns/operators.h
+  abulafia/patterns/recur.h
+  abulafia/patterns/with_skipper.h
+
+  abulafia/support/assert.h
+  abulafia/support/function_traits.h
+  abulafia/support/nil.h
+  abulafia/support/type_traits.h
+  abulafia/support/variant_utils.h
+  abulafia/support/visit_val.h
+
+  abulafia/abulafia.h
+  abulafia/config.h
+  abulafia/parser.h
+  abulafia/pattern.h
+  abulafia/patterns.h
+  abulafia/result.h
+  abulafia/traits.h
+)
+
+
 include_directories(
   ./include
   ${gtest_SOURCE_DIR}/include

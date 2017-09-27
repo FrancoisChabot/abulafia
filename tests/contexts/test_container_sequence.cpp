@@ -16,9 +16,9 @@ struct FakeData {
   char* begin() { return nullptr; }
   char* end() { return nullptr; }
 
-  bool * tgt;
+  bool* tgt;
 
-  FakeData(bool * t) : tgt(t) { *t = true; }
+  FakeData(bool* t) : tgt(t) { *t = true; }
   ~FakeData() { *tgt = false; }
 };
 
@@ -101,9 +101,6 @@ TEST(test_container_sequence, perform_rollback_to_start) {
   EXPECT_EQ('1', ctx.next());
 }
 
-
-
-
 TEST(test_container_sequence, perform_rollback_to_middle) {
   ContainerSequenceContext<std::string> ctx;
 
@@ -112,7 +109,6 @@ TEST(test_container_sequence, perform_rollback_to_middle) {
   ctx.add_buffer("56");
   ctx.add_buffer("78");
   ctx.add_buffer("90", IsFinal::FINAL);
-
 
   ctx.advance();
   ctx.advance();

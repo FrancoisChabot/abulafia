@@ -10,6 +10,10 @@
 
 #include "abulafia/config.h"
 
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
 namespace ABULAFIA_NAMESPACE {
 
 template <std::size_t MAX_V, std::size_t N>
