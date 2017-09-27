@@ -22,12 +22,13 @@ Abulafia is a headers-only library. In order to use it, you just have to make th
 
 ## Features
 
+- **No external dependencies**: The only requirement is a valid C++ compiler.
+- **Header-based**: There is no building or linking involved, just use the headers in your project.
 - **Type safety**: Abulafia goes to a lot of trouble to ensure its parsers are valid at compile-time. If your code compiles, the parsers are valid.
 - **Performance**: Parsers are heavily optimized during compilation, resulting in parsing code that's often faster than hand-written parsers.
 - **Resumable parsers**: Parsing can be done gradually, as data becomes available. There is no need to accumulate the full source before beginning parsing. 
 - **Parser library**: Abulafia comes with a full library of core parsers that can be composed using overloaded operators. 
 - **Custom parsers**: In the unlikely event that the provided parsers cannot fullfill a project's needs, extending the library with new parsers is fairly straightforward.
-
 
 ## Usage
 
