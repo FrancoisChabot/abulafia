@@ -17,4 +17,5 @@ endforeach()
 
 add_library(header_sanitizer ${HEADER_SAN_SRC})
 
+set_target_properties(abu_test_main PROPERTIES FOLDER "tests")
 set_target_properties(header_sanitizer PROPERTIES FOLDER "tests")

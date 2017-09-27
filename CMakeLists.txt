@@ -22,6 +22,10 @@ set(INSTALL_GMOCK OFF CACHE BOOL "Do not install gmock" FORCE)
 
 add_subdirectory(googletest)
 
+set_target_properties(gmock PROPERTIES FOLDER "gtest")
+set_target_properties(gmock_main PROPERTIES FOLDER "gtest")
+set_target_properties(gtest PROPERTIES FOLDER "gtest")
+set_target_properties(gtest_main PROPERTIES FOLDER "gtest")
 
 # List of abulafia headers
 SET(ABULAFIA_HEADERS
@@ -87,6 +91,11 @@ SET(ABULAFIA_HEADERS
   abulafia/traits.h
 )
 
+SET(HEADER_PATHS "")
+FOREACH(f ${ABULAFIA_HEADERS})
+  LIST(APPEND HEADER_PATHS "include/${f}")
+ENDFOREACH(f)
+
 
 include_directories(
   ./include
@@ -97,3 +106,14 @@ if(ABULAFIA_BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()
+
+add_custom_command(
+  OUTPUT ${CMAKE_BINARY_DIR}/abulafia_all.h
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
+  DEPENDS ${HEADER_PATHS}
+  COMMAND ${CMAKE_COMMAND}
+    -D OUT=${CMAKE_BINARY_DIR}/abulafia_all.h
+    -D IN=${ABULAFIA_HEADERS}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/concat.cmake)
+
+add_custom_target(generate_all_include DEPENDS ${CMAKE_BINARY_DIR}/abulafia_all.h)
