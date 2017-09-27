@@ -1,8 +1,20 @@
 # Abulafia
 A C++ parsing framework
 
-[![Build Status](https://travis-ci.org/FrancoisChabot/abulafia.svg?branch=master)](https://travis-ci.org/FrancoisChabot/abulafia) [![Build status](https://ci.appveyor.com/api/projects/status/8013l0w05xgj76a0/branch/master?svg=true)](https://ci.appveyor.com/project/FrancoisChabot/abulafia/branch/master) [![Coverage Status](https://coveralls.io/repos/github/FrancoisChabot/abulafia/badge.svg?branch=master)](https://coveralls.io/github/FrancoisChabot/abulafia?branch=master)
+[![build][badge.build]][build]
+[![build_win][badge.build_win]][build_win]
+[![coverage][badge.coverage]][coverage]
+[![on-godbolt][badge.on-godbolt]][on-godbolt]
 
+[badge.build]: https://travis-ci.org/FrancoisChabot/abulafia.svg?branch=master
+[badge.build_win]: https://ci.appveyor.com/api/projects/status/8013l0w05xgj76a0/branch/master?svg=true
+[badge.coverage]: https://coveralls.io/repos/github/FrancoisChabot/abulafia/badge.svg?branch=master
+[badge.on-godbolt]: https://img.shields.io/badge/on-godbolt-376666.svg
+
+[build]: https://travis-ci.org/FrancoisChabot/abulafia
+[build_win]: https://ci.appveyor.com/project/FrancoisChabot/abulafia/branch/master
+[coverage]: https://coveralls.io/github/FrancoisChabot/abulafia?branch=master
+[on-godbolt]: https://godbolt.org/g/9iMUX9
 
 Abulafia is a C++ expression templates library that generates parsers. The idea is to let programs contain ABNF-like grammars embedded directly within the code. It's heavily inspired by Boost::spirit::QI, but differs fundamentally from it in a number of respects.
 
