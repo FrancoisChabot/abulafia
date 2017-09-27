@@ -107,13 +107,14 @@ if(ABULAFIA_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
+SET(ALL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia_all.h)
+
 add_custom_command(
-  OUTPUT ${CMAKE_BINARY_DIR}/abulafia_all.h
+  OUTPUT ${ALL_FILE}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
   DEPENDS ${HEADER_PATHS}
-  COMMAND ${CMAKE_COMMAND}
-    -D OUT=${CMAKE_BINARY_DIR}/abulafia_all.h
-    -D IN=${ABULAFIA_HEADERS}
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/concat.cmake)
+  COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/scripts/compile_header.py 
+    --output=${ALL_FILE}
+    --input=${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia.h)
 
-add_custom_target(generate_all_include DEPENDS ${CMAKE_BINARY_DIR}/abulafia_all.h)
+add_custom_target(generate_all_include DEPENDS ${ALL_FILE})
