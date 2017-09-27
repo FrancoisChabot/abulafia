@@ -4,7 +4,7 @@
     
     <url>
      <loc>/</loc>
-     <lastmod>2017-09-26</lastmod>
+     <lastmod>2017-09-27</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -13,13 +13,19 @@
         
     <url>
      <loc>/guide/01_installation/</loc>
-     <lastmod>2017-09-26</lastmod>
+     <lastmod>2017-09-27</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/guide/02_parsers/</loc>
-     <lastmod>2017-09-26</lastmod>
+     <lastmod>2017-09-27</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/guide/03_skippers/</loc>
+     <lastmod>2017-09-27</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -29,7 +35,7 @@
         
     <url>
      <loc>/patterns/reference/</loc>
-     <lastmod>2017-09-26</lastmod>
+     <lastmod>2017-09-27</lastmod>
      <changefreq>daily</changefreq>
     </url>
         

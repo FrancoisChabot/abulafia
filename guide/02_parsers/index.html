@@ -351,12 +351,31 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#making-it-cleaner" title="Making it cleaner" class="md-nav__link">
+    Making it cleaner
+  </a>
+  
+</li>
+      
       
       
     </ul>
   
 </nav>
     
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../03_skippers/" title="Skippers" class="md-nav__link">
+      Skippers
+    </a>
   </li>
 
         
@@ -762,6 +781,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#making-it-cleaner" title="Making it cleaner" class="md-nav__link">
+    Making it cleaner
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -800,8 +826,16 @@ auto prefixed_hex() {
 <p>Contexts are primarily used to specify how the data is being fed to the parsers. </p>
 <p>The simplest of these is <code>SingleForwardContext&lt;&gt;</code>. It takes a pair of iterators, and assumes that they represent the entire totality of the data the parser will consume.</p>
 <h2 id="destinations">Destinations</h2>
-<p>Quite simply where the parser will store any and all extracted data. As long as the various assignments being done in the parsers are compatible with the 
-type that's currently being passed to it.</p>
+<p>Quite simply where the parser will store any and all extracted data. A parser will accept any type that are compatible with the assingments being performed in the parser.</p>
+<p>For example:</p>
+<pre><code>// A list of integers
+auto pattern = *int_;
+
+// These are all valid dst for our pattern
+std::vector&lt;int&gt; dst_1;
+std::vector&lt;float&gt; dst_2;
+std::list&lt;std::uint64_t&gt; dst_3;
+</code></pre>
 <h3 id="the-nil-destination">The Nil Destination</h3>
 <p>Abulafia provides a special type: <code>Nil</code>, with a matching constant: <code>nil</code>, that represents the concept of nothingness. Every pattern will always accept <code>nil</code> as a valid destination. Its use causes all parsers to stop generating any data<sup id="fnref:2"><a class="footnote-ref" href="#fn:2" rel="footnote">2</a></sup>.</p>
 <h2 id="putting-it-all-together">Putting it all together</h2>
@@ -814,10 +848,12 @@ int main() {
   std::string data = &quot;123456&quot;;
 
   // pattern
-  auto pattern = *abu::Uint&lt;10,2,2&gt;; //a list of two-digits decimal-10 unsigned integer
+  // A list of two-digits decimal-10 unsigned integer
+  auto pattern = *abu::Uint&lt;10,2,2&gt;; 
 
-  //context
-  abu::SingleForwardContext&lt;std::string::const_iterator&gt; context(data.begin(), data.end());
+  // context
+  abu::SingleForwardContext&lt;std::string::const_iterator&gt; context(data.begin(), 
+                                                                 data.end());
 
   // destination
   std::vector&lt;unsigned short&gt; destination;
@@ -838,6 +874,7 @@ int main() {
 }
 </code></pre>
 
+<h2 id="making-it-cleaner">Making it cleaner</h2>
 <p>This is all fairly verbose. Since parsing a container all at once is such a common pattern, Abulafia provides a shorthand method:</p>
 <pre><code>#include &lt;string&gt;
 #include &lt;vector&gt;
@@ -849,13 +886,9 @@ int main() {
 
   auto status = abu::parse(*abu::Uint&lt;10,2,2&gt;,
                            &quot;123456&quot;,
-                           destination)
+                           destination);
 
   assert(status == abu::result::SUCCESS);
-  assert(destination.size() == 3);
-  assert(destination[0] == 12);
-  assert(destination[1] == 34);
-  assert(destination[2] == 56);
 
   return 0;
 }
@@ -906,13 +939,13 @@ away the entire assignment routine of the parsers.&#160;<a class="footnote-backr
           </a>
         
         
-          <a href="../../patterns/reference/" title="Quick Reference" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../03_skippers/" title="Skippers" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Quick Reference
+                Skippers
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">
