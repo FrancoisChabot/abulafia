@@ -1,4 +1,5 @@
 add_executable(contexts_tests
+   test_container_sequence.cpp
    test_single_forward.cpp
    test_skipper.cpp
 )

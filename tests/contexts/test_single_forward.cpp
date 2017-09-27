@@ -86,7 +86,7 @@ TEST(test_single_forward_context, perform_rollback_from_empty) {
   EXPECT_EQ('1', ctx.next());
 }
 
-TEST(test_single_forward_context, immedaite_rollback) {
+TEST(test_single_forward_context, immediate_rollback) {
   std::string data = "1234567890";
 
   SingleForwardContext<std::string::iterator> ctx(std::begin(data),

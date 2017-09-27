@@ -25,6 +25,7 @@
 
 // Parsing Contexts
 
+#include "abulafia/contexts/container_sequence.h"
 #include "abulafia/contexts/single_forward.h"
 #include "abulafia/contexts/skipper_adapter.h"
 
