@@ -72,6 +72,11 @@ enable_if_t<char_set::is_char_set<decay_t<T>>::value, Char<decay_t<T>>> char_(
   return Char<decay_t<T>>(forward<T>(chars));
 }
 
+template <typename CHAR_T, std::size_t LEN>
+inline auto char_(const CHAR_T(&l)[LEN]) {
+  return char_(char_set::set(l));
+}
+
 template <typename T>
 auto char_(T begin, T end) {
   return Char<char_set::Range<T>>(char_set::Range<T>(begin, end));
