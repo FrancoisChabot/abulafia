@@ -14,7 +14,7 @@ A C++ parsing framework
 [build]: https://travis-ci.org/FrancoisChabot/abulafia
 [build_win]: https://ci.appveyor.com/project/FrancoisChabot/abulafia/branch/master
 [coverage]: https://coveralls.io/github/FrancoisChabot/abulafia?branch=master
-[on-godbolt]: https://godbolt.org/g/9iMUX9
+[on-godbolt]: https://godbolt.org/g/Zq7Eb1
 
 Abulafia is a C++ expression templates library that generates parsers. The idea is to let programs contain ABNF-like grammars embedded directly within the code. It's heavily inspired by Boost::spirit::QI, but differs fundamentally from it in a number of respects.
 
