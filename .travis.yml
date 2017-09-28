@@ -14,19 +14,19 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - deadsnakes
           packages:
             - g++-7
-            - python3.5
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 before_install:
   - eval "${MATRIX_EVAL}"
-
-before_script:
+  - sudo apt-get update
+  - sudo apt-get -y install python3
+  - sudo apt-get -y install python3-pip
   - alias python=python3
   - pip3 install --user cpp-coveralls
+
 
 script:
     - mkdir build
