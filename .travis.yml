@@ -6,13 +6,6 @@ branches:
   except:
   - gh-pages
 
-addons:
-  apt:
-    sources:
-        - deadsnakes
-    packages:
-        - python3.5
-
 matrix:
   include:
     - os: linux
@@ -21,17 +14,19 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - deadsnakes
           packages:
             - g++-7
+            - python3.5
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 before_install:
-    - eval "${MATRIX_EVAL}"
+  - eval "${MATRIX_EVAL}"
 
 before_script:
-    - alias python=python3
-    - pip3 install --user cpp-coveralls
+  - alias python=python3
+  - pip3 install --user cpp-coveralls
 
 script:
     - mkdir build
