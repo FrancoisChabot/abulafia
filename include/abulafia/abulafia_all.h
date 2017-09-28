@@ -24,7 +24,7 @@
 #include <variant>
 #include <vector>
 
-#ifndef ABULAFIA_NAMESPACE
+#ifndef ESPACE
 #define ABULAFIA_NAMESPACE abu
 #endif
 
