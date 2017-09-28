@@ -12,6 +12,12 @@
     
         
     <url>
+     <loc>/guide/00_introduction/</loc>
+     <lastmod>2017-09-27</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
      <loc>/guide/01_installation/</loc>
      <lastmod>2017-09-27</lastmod>
      <changefreq>daily</changefreq>
@@ -29,12 +35,20 @@
      <changefreq>daily</changefreq>
     </url>
         
-    
-
-    
+    <url>
+     <loc>/guide/04_resumable_parsers/</loc>
+     <lastmod>2017-09-27</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
         
     <url>
-     <loc>/patterns/reference/</loc>
+     <loc>/guide/05_actions/</loc>
+     <lastmod>2017-09-27</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/guide/06_recursivity/</loc>
      <lastmod>2017-09-27</lastmod>
      <changefreq>daily</changefreq>
     </url>
@@ -45,15 +59,13 @@
      <changefreq>daily</changefreq>
     </url>
         
-    <url>
-     <loc></loc>
-     <lastmod></lastmod>
-     <changefreq>daily</changefreq>
-    </url>
+    
+
+    
         
     <url>
-     <loc></loc>
-     <lastmod></lastmod>
+     <loc>/reference/</loc>
+     <lastmod>2017-09-27</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
