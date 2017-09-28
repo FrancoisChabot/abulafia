@@ -16,26 +16,62 @@ copyright_notice = '''//  Copyright 2017 Francois Chabot
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)'''
 
-def process(file, dst):
+def process(file):
+  result = []
+  includes = set()
   if file in loaded_files:
-    return ""
+    return result, includes
+
   loaded_files.add(file)
   print("loading: " + file)
 
   with open(file) as f:
-    for line in f:
-      stripped_line = line.strip()
-      if not stripped_line or stripped_line.startswith(r'//'):
+    raw = [x.rstrip() for x in f]
+    
+    # Remove comment-only lines and empty lines
+    processed = []
+    for r  in raw:
+      s = r.strip()
+      if not r or r.startswith(r'//'):
         continue
-      if stripped_line.startswith("#include"):
-        path = stripped_line[8:].strip()
+
+      # We store the raw string because we want to maintain indentation.
+      processed.append(r)
+
+    # Remove Header guards
+    if (len(processed) >= 3 and 
+        processed[0].strip().startswith('#ifndef') and
+        processed[1].strip().startswith('#define') and
+        processed[-1].strip().startswith('#endif')):
+
+      processed = processed[2:-1]
+
+    for line in processed:
+      stripped = line.strip()
+      if stripped.startswith("#include"):
+        path = stripped[8:].strip()
         #all non-sysem includes belong in here.
         if path.startswith('"'):
-          process(path[1:-1], dst)
-          continue
-      print(line.rstrip(), file=dst)
+          r, i = process(path[1:-1])
+          result.extend(r)
+          includes.update(i)
+        else:
+          includes.add(line)
+      else:
+        result.append(line)
 
+  result.append("")
+  return result, includes
+
+result, includes = process(args.input)
 
 with open(args.output, "w") as destination:
   print(copyright_notice, file=destination)
-  process(args.input, destination)
+
+  for h in includes:
+    print(h, file=destination)
+  
+  print("", file=destination)
+
+  for r in result:
+    print(r, file=destination)
