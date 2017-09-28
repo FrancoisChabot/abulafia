@@ -21,7 +21,7 @@ TEST(test_skipper, basic_test) {
   SkipperAdapter<decltype(ctx), decltype(skip_pat)> skipping_ctx(ctx, skip_pat);
 
   int dst;
-  auto parser = make_parser(skipping_ctx, dst, pattern);
+  auto parser = make_parser_(skipping_ctx, dst, pattern);
 
   auto success = parser.consume(skipping_ctx, dst, pattern);
 
@@ -40,7 +40,7 @@ TEST(test_skipper, multi_skip) {
   SkipperAdapter<decltype(ctx), decltype(skip_pat)> skipping_ctx(ctx, skip_pat);
 
   int dst;
-  auto parser = make_parser(skipping_ctx, dst, pattern);
+  auto parser = make_parser_(skipping_ctx, dst, pattern);
 
   auto success = parser.consume(skipping_ctx, dst, pattern);
 
@@ -59,7 +59,7 @@ TEST(test_skipper, multi_skip_complex_pattern) {
   SkipperAdapter<decltype(ctx), decltype(skip_pat)> skipping_ctx(ctx, skip_pat);
 
   int dst;
-  auto parser = make_parser(skipping_ctx, dst, pattern);
+  auto parser = make_parser_(skipping_ctx, dst, pattern);
 
   auto success = parser.consume(skipping_ctx, dst, pattern);
 
@@ -78,7 +78,7 @@ TEST(test_skipper, test_list_skipping) {
   SkipperAdapter<decltype(ctx), decltype(skip_pat)> skipping_ctx(ctx, skip_pat);
 
   std::vector<int> dst;
-  auto parser = make_parser(skipping_ctx, dst, pattern);
+  auto parser = make_parser_(skipping_ctx, dst, pattern);
 
   auto success = parser.consume(skipping_ctx, dst, pattern);
 

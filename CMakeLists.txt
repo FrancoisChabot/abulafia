@@ -43,6 +43,7 @@ SET(ABULAFIA_HEADERS
   abulafia/contexts/single_forward.h
   abulafia/contexts/skipper_adapter.h
 
+  abulafia/operations/make_parser.h
   abulafia/operations/parse.h
 
   abulafia/patterns/binary/except.h

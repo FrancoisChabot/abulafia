@@ -110,7 +110,7 @@ class Parser<CTX_T, DST_T, Alt<CHILD_PATS_T...>>
         auto const& new_c_pattern = getChild<new_id>(pat);
 
         child_parsers_ = child_parsers_t(std::in_place_index_t<new_id>(),
-                                         make_parser(ctx, dst, new_c_pattern));
+                                         make_parser_(ctx, dst, new_c_pattern));
 
         if (rolls_back_at<new_id>()) {
           ctx.prepare_rollback();

@@ -65,7 +65,7 @@ int main() {
 
   // pattern
   // A list of two-digits decimal-10 unsigned integers
-  auto pattern = *abu::Uint<10,2,2>; 
+  auto pattern = *abu::Uint<10,2,2>();
 
   // context
   // Consume a pair of `std::string` iterators all at once

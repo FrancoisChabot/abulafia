@@ -30,6 +30,7 @@
 #include "abulafia/contexts/skipper_adapter.h"
 
 // Operations
+#include "abulafia/operations/make_parser.h"
 #include "abulafia/operations/parse.h"
 
 // Patterns

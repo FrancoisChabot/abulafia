@@ -27,7 +27,7 @@ result parse(const PAT_T& pat, const DATA_RANGE_T& data, DST_T& dst) {
   auto real_pat = make_pattern(pat);
   SingleForwardContext<iterator_t> ctx(std::begin(data), std::end(data));
 
-  auto parser = make_parser(ctx, dst, real_pat);
+  auto parser = make_parser_(ctx, dst, real_pat);
 
   return parser.consume(ctx, dst, real_pat);
 }
@@ -37,7 +37,7 @@ result parse(const PAT_T& pat, ITE_T b, ITE_T e, DST_T& dst) {
   auto real_pat = make_pattern(pat);
   SingleForwardContext<ITE_T> ctx(b, e);
 
-  auto parser = make_parser(ctx, dst, real_pat);
+  auto parser = make_parser_(ctx, dst, real_pat);
 
   return parser.consume(ctx, dst, real_pat);
 }

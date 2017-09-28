@@ -24,7 +24,7 @@ class Parser : public Parser<CTX_T, DST_T, typename PAT_T::pattern_t> {
 };
 
 template <typename CTX_T, typename DST_T, typename PAT_T>
-auto make_parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+auto make_parser_(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
   return Parser<CTX_T, DST_T, PAT_T>(ctx, dst, pat);
 }
 

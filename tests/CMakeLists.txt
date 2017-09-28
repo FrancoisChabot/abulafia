@@ -3,6 +3,8 @@ add_library(abu_test_main test_main.cpp)
 add_subdirectory(char_set)
 add_subdirectory(contexts)
 add_subdirectory(patterns)
+add_subdirectory(operations)
+add_subdirectory(documentation)
 
 SET(HEADER_SAN_SRC "")
 
