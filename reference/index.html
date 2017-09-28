@@ -421,10 +421,95 @@
     
     <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
     
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Quick Reference
+      </label>
     
     <a href="./" title="Quick Reference" class="md-nav__link md-nav__link--active">
       Quick Reference
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#character-patterns" title="Character Patterns" class="md-nav__link">
+    Character Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#numeric-patterns" title="Numeric Patterns" class="md-nav__link">
+    Numeric Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#literal-patterns" title="Literal Patterns" class="md-nav__link">
+    Literal Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#symbol-patterns" title="Symbol Patterns" class="md-nav__link">
+    Symbol Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#misc-patterns" title="Misc Patterns" class="md-nav__link">
+    Misc Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unary-patterns" title="Unary Patterns" class="md-nav__link">
+    Unary Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#binary-patterns" title="Binary Patterns" class="md-nav__link">
+    Binary Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nary-patterns" title="Nary Patterns" class="md-nav__link">
+    Nary Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recur" title="Recur" class="md-nav__link">
+    Recur
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
     
   </li>
 
@@ -820,6 +905,78 @@
 <nav class="md-nav md-nav--secondary">
   
   
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#character-patterns" title="Character Patterns" class="md-nav__link">
+    Character Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#numeric-patterns" title="Numeric Patterns" class="md-nav__link">
+    Numeric Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#literal-patterns" title="Literal Patterns" class="md-nav__link">
+    Literal Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#symbol-patterns" title="Symbol Patterns" class="md-nav__link">
+    Symbol Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#misc-patterns" title="Misc Patterns" class="md-nav__link">
+    Misc Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unary-patterns" title="Unary Patterns" class="md-nav__link">
+    Unary Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#binary-patterns" title="Binary Patterns" class="md-nav__link">
+    Binary Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nary-patterns" title="Nary Patterns" class="md-nav__link">
+    Nary Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recur" title="Recur" class="md-nav__link">
+    Recur
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
   
 </nav>
                   </div>
@@ -832,9 +989,254 @@
               
                 
                 
-                  <h1>Quick Reference</h1>
-                
-                
+                <h2 id="patterns">Patterns</h2>
+<h3 id="character-patterns">Character Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>pattern</th>
+<th>compatible dst</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>char_()</code></td>
+<td>CHAR_T</td>
+<td>Matches any single character.</td>
+</tr>
+<tr>
+<td><code>char_(charset&lt;T&gt;)</code></td>
+<td>CHAR_T</td>
+<td>Matches a single character belonging to the character set.</td>
+</tr>
+<tr>
+<td><code>char_('c')</code></td>
+<td>CHAR_T</td>
+<td>Matches that one specific character.</td>
+</tr>
+<tr>
+<td><code>char_("string")</code></td>
+<td>CHAR_T</td>
+<td>Matches a single character found in the string</td>
+</tr>
+</tbody>
+</table>
+<h3 id="numeric-patterns">Numeric Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>pattern</th>
+<th>compatible dst</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Int&lt;BASE, MIN_DIG, MAX_DIG&gt;()</code></td>
+<td>integer-like</td>
+<td>Matches a signed number in base BASE, having between MIN_DIG and MAX_DIG (0 means no limit) digits.</td>
+</tr>
+<tr>
+<td><code>int_</code></td>
+<td>integer-like</td>
+<td>Shorthand for Int&lt;10, 1, 0&gt;().</td>
+</tr>
+<tr>
+<td><code>UInt&lt;BASE, MIN_DIG, MAX_DIG&gt;()</code></td>
+<td>integer-like</td>
+<td>Matches an unsigned number in base BASE, having between MIN_DIG and MAX_DIG (0 means no limit) digits.</td>
+</tr>
+<tr>
+<td><code>uint_</code></td>
+<td>integer-like</td>
+<td>Shorthand for UInt&lt;10, 1, 0&gt;().</td>
+</tr>
+</tbody>
+</table>
+<h3 id="literal-patterns">Literal Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>pattern</th>
+<th>compatible dst</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lit('c')</code></td>
+<td>Nil</td>
+<td>Matches and ignores a specific character.</td>
+</tr>
+<tr>
+<td><code>lit("str")</code></td>
+<td>Nil</td>
+<td>Matches and ignores a specific string of characters.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="symbol-patterns">Symbol Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>pattern</th>
+<th>compatible dst</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>symbol(map&lt;CHAR_T, VAL&gt;)</code></td>
+<td>VAL</td>
+<td>Matches character based on map key, and emits matching value.</td>
+</tr>
+<tr>
+<td><code>symbol(map&lt;string, VAL&gt;)</code></td>
+<td>VAL</td>
+<td>Matches string based on map key, and emits matching value.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="misc-patterns">Misc Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>pattern</th>
+<th>compatible dst</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>eoi</code></td>
+<td>Nil</td>
+<td>Matches the end of input.</td>
+</tr>
+<tr>
+<td><code>pass</code></td>
+<td>Nil</td>
+<td>Always succeeds.</td>
+</tr>
+<tr>
+<td><code>fail</code></td>
+<td>Nil</td>
+<td>Always fails.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="unary-patterns">Unary Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>operator</th>
+<th>compatible dst</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Not</td>
+<td><code>!pat</code></td>
+<td>Nil</td>
+<td>Fails if the operand matches, does nothing otherwise.</td>
+</tr>
+<tr>
+<td>Repeat</td>
+<td><code>*pat</code></td>
+<td><code>vector&lt;pat_dst&gt;</code></td>
+<td>Matches pat zero or more times.</td>
+</tr>
+<tr>
+<td>Repeat</td>
+<td><code>+pat</code></td>
+<td><code>vector&lt;pat_dst&gt;</code></td>
+<td>Matches pat one or more times.</td>
+</tr>
+<tr>
+<td>Action</td>
+<td><code>pat[act]</code></td>
+<td><code>decltype(act())</code></td>
+<td>Executes Act if pat succeeds.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="binary-patterns">Binary Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>operator</th>
+<th>compatible dst</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Except</td>
+<td><code>op - neg</code></td>
+<td><code>op_dst</code></td>
+<td>Delegates to <code>op</code> if neg fails.</td>
+</tr>
+<tr>
+<td>List</td>
+<td><code>op % sep</code></td>
+<td><code>vector&lt;op_dst&gt;</code></td>
+<td>Matches a list of <code>sep</code> seprated <code>op</code>s (0-&gt;inf).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="nary-patterns">Nary Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>operator</th>
+<th>compatible dst</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alternative</td>
+<td><code>A | B | ...</code></td>
+<td><strong>see below</strong></td>
+<td>Matches the first non-failing child pattern</td>
+</tr>
+<tr>
+<td>Sequence</td>
+<td><code>A &gt;&gt; B &gt;&gt; ...</code></td>
+<td><strong>see below</strong></td>
+<td>Matches each sub-pattern sequentially</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Alternative dst</strong>: Any type that can accept an atomic assignment of any of A, B, ...</p>
+<p><strong>Sequence dst</strong>:</p>
+<ul>
+<li>If all child patterns are <code>Nil</code>: <code>Nil</code></li>
+<li>If all child patterns except <code>pat</code> are <code>Nil</code> patterns: Anything <code>pat</code> is compatible with.</li>
+<li>if one child is <code>vector&lt;T&gt;, and all childs are</code>T<code>or</code>vector<T><code>:</code>vector<T>`.</li>
+<li>Otherwise: dst must be a type that can be constructed with each of the non-Nil child patterns</li>
+</ul>
+<h3 id="recur">Recur</h3>
+<div class="codehilite"><pre><span></span><span class="k">auto</span> <span class="nf">create_pattern</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">abu</span><span class="o">::</span><span class="n">Recur</span><span class="o">&lt;</span><span class="k">struct</span> <span class="n">MyRecur</span><span class="o">&gt;</span> <span class="n">my_recur</span><span class="p">;</span>
+
+  <span class="k">auto</span> <span class="n">pat</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">pattern</span> <span class="n">making</span> <span class="n">use</span> <span class="n">of</span> <span class="n">my_recur</span><span class="o">&gt;</span><span class="p">;</span>
+
+  <span class="c1">// must be in same scope as my_recur</span>
+  <span class="n">ABU_Recur_Define</span><span class="p">(</span><span class="n">MyRecur</span><span class="p">,</span> <span class="n">my_recur</span><span class="p">,</span> <span class="n">pat</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="n">my_recur</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2 id="data-sources">Data Sources</h2>
+<h1 id="singleforward">SingleForward</h1>
+<h1 id="containersequence">ContainerSequence</h1>
                 
                   
                 

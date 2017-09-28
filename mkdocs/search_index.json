@@ -177,8 +177,73 @@
         },
         {
             "location": "/reference/",
-            "text": "",
+            "text": "Patterns\n\n\nCharacter Patterns\n\n\n\n\n\n\n\n\npattern\n\n\ncompatible dst\n\n\nBehavior\n\n\n\n\n\n\n\n\n\n\nchar_()\n\n\nCHAR_T\n\n\nMatches any single character.\n\n\n\n\n\n\nchar_(charset<T>)\n\n\nCHAR_T\n\n\nMatches a single character belonging to the character set.\n\n\n\n\n\n\nchar_('c')\n\n\nCHAR_T\n\n\nMatches that one specific character.\n\n\n\n\n\n\nchar_(\"string\")\n\n\nCHAR_T\n\n\nMatches a single character found in the string\n\n\n\n\n\n\n\n\nNumeric Patterns\n\n\n\n\n\n\n\n\npattern\n\n\ncompatible dst\n\n\nBehavior\n\n\n\n\n\n\n\n\n\n\nInt<BASE, MIN_DIG, MAX_DIG>()\n\n\ninteger-like\n\n\nMatches a signed number in base BASE, having between MIN_DIG and MAX_DIG (0 means no limit) digits.\n\n\n\n\n\n\nint_\n\n\ninteger-like\n\n\nShorthand for Int<10, 1, 0>().\n\n\n\n\n\n\nUInt<BASE, MIN_DIG, MAX_DIG>()\n\n\ninteger-like\n\n\nMatches an unsigned number in base BASE, having between MIN_DIG and MAX_DIG (0 means no limit) digits.\n\n\n\n\n\n\nuint_\n\n\ninteger-like\n\n\nShorthand for UInt<10, 1, 0>().\n\n\n\n\n\n\n\n\nLiteral Patterns\n\n\n\n\n\n\n\n\npattern\n\n\ncompatible dst\n\n\nBehavior\n\n\n\n\n\n\n\n\n\n\nlit('c')\n\n\nNil\n\n\nMatches and ignores a specific character.\n\n\n\n\n\n\nlit(\"str\")\n\n\nNil\n\n\nMatches and ignores a specific string of characters.\n\n\n\n\n\n\n\n\nSymbol Patterns\n\n\n\n\n\n\n\n\npattern\n\n\ncompatible dst\n\n\nBehavior\n\n\n\n\n\n\n\n\n\n\nsymbol(map<CHAR_T, VAL>)\n\n\nVAL\n\n\nMatches character based on map key, and emits matching value.\n\n\n\n\n\n\nsymbol(map<string, VAL>)\n\n\nVAL\n\n\nMatches string based on map key, and emits matching value.\n\n\n\n\n\n\n\n\nMisc Patterns\n\n\n\n\n\n\n\n\npattern\n\n\ncompatible dst\n\n\nBehavior\n\n\n\n\n\n\n\n\n\n\neoi\n\n\nNil\n\n\nMatches the end of input.\n\n\n\n\n\n\npass\n\n\nNil\n\n\nAlways succeeds.\n\n\n\n\n\n\nfail\n\n\nNil\n\n\nAlways fails.\n\n\n\n\n\n\n\n\nUnary Patterns\n\n\n\n\n\n\n\n\nName\n\n\noperator\n\n\ncompatible dst\n\n\nBehavior\n\n\n\n\n\n\n\n\n\n\nNot\n\n\n!pat\n\n\nNil\n\n\nFails if the operand matches, does nothing otherwise.\n\n\n\n\n\n\nRepeat\n\n\n*pat\n\n\nvector<pat_dst>\n\n\nMatches pat zero or more times.\n\n\n\n\n\n\nRepeat\n\n\n+pat\n\n\nvector<pat_dst>\n\n\nMatches pat one or more times.\n\n\n\n\n\n\nAction\n\n\npat[act]\n\n\ndecltype(act())\n\n\nExecutes Act if pat succeeds.\n\n\n\n\n\n\n\n\nBinary Patterns\n\n\n\n\n\n\n\n\nName\n\n\noperator\n\n\ncompatible dst\n\n\nBehavior\n\n\n\n\n\n\n\n\n\n\nExcept\n\n\nop - neg\n\n\nop_dst\n\n\nDelegates to \nop\n if neg fails.\n\n\n\n\n\n\nList\n\n\nop % sep\n\n\nvector<op_dst>\n\n\nMatches a list of \nsep\n seprated \nop\ns (0->inf).\n\n\n\n\n\n\n\n\nNary Patterns\n\n\n\n\n\n\n\n\nName\n\n\noperator\n\n\ncompatible dst\n\n\nBehavior\n\n\n\n\n\n\n\n\n\n\nAlternative\n\n\nA | B | ...\n\n\nsee below\n\n\nMatches the first non-failing child pattern\n\n\n\n\n\n\nSequence\n\n\nA >> B >> ...\n\n\nsee below\n\n\nMatches each sub-pattern sequentially\n\n\n\n\n\n\n\n\nAlternative dst\n: Any type that can accept an atomic assignment of any of A, B, ...\n\n\nSequence dst\n:\n\n\n\n\nIf all child patterns are \nNil\n: \nNil\n\n\nIf all child patterns except \npat\n are \nNil\n patterns: Anything \npat\n is compatible with.\n\n\nif one child is \nvector<T>, and all childs are\nT\nor\nvector\n:\nvector\n`.\n\n\nOtherwise: dst must be a type that can be constructed with each of the non-Nil child patterns\n\n\n\n\nRecur\n\n\nauto\n \ncreate_pattern\n()\n \n{\n\n  \nabu\n::\nRecur\n<\nstruct\n \nMyRecur\n>\n \nmy_recur\n;\n\n\n  \nauto\n \npat\n \n=\n \n<\npattern\n \nmaking\n \nuse\n \nof\n \nmy_recur\n>\n;\n\n\n  \n// must be in same scope as my_recur\n\n  \nABU_Recur_Define\n(\nMyRecur\n,\n \nmy_recur\n,\n \npat\n);\n\n\n  \nreturn\n \nmy_recur\n;\n\n\n}\n\n\n\n\n\n\nData Sources\n\n\nSingleForward\n\n\nContainerSequence",
             "title": "Quick Reference"
+        },
+        {
+            "location": "/reference/#patterns",
+            "text": "",
+            "title": "Patterns"
+        },
+        {
+            "location": "/reference/#character-patterns",
+            "text": "pattern  compatible dst  Behavior      char_()  CHAR_T  Matches any single character.    char_(charset<T>)  CHAR_T  Matches a single character belonging to the character set.    char_('c')  CHAR_T  Matches that one specific character.    char_(\"string\")  CHAR_T  Matches a single character found in the string",
+            "title": "Character Patterns"
+        },
+        {
+            "location": "/reference/#numeric-patterns",
+            "text": "pattern  compatible dst  Behavior      Int<BASE, MIN_DIG, MAX_DIG>()  integer-like  Matches a signed number in base BASE, having between MIN_DIG and MAX_DIG (0 means no limit) digits.    int_  integer-like  Shorthand for Int<10, 1, 0>().    UInt<BASE, MIN_DIG, MAX_DIG>()  integer-like  Matches an unsigned number in base BASE, having between MIN_DIG and MAX_DIG (0 means no limit) digits.    uint_  integer-like  Shorthand for UInt<10, 1, 0>().",
+            "title": "Numeric Patterns"
+        },
+        {
+            "location": "/reference/#literal-patterns",
+            "text": "pattern  compatible dst  Behavior      lit('c')  Nil  Matches and ignores a specific character.    lit(\"str\")  Nil  Matches and ignores a specific string of characters.",
+            "title": "Literal Patterns"
+        },
+        {
+            "location": "/reference/#symbol-patterns",
+            "text": "pattern  compatible dst  Behavior      symbol(map<CHAR_T, VAL>)  VAL  Matches character based on map key, and emits matching value.    symbol(map<string, VAL>)  VAL  Matches string based on map key, and emits matching value.",
+            "title": "Symbol Patterns"
+        },
+        {
+            "location": "/reference/#misc-patterns",
+            "text": "pattern  compatible dst  Behavior      eoi  Nil  Matches the end of input.    pass  Nil  Always succeeds.    fail  Nil  Always fails.",
+            "title": "Misc Patterns"
+        },
+        {
+            "location": "/reference/#unary-patterns",
+            "text": "Name  operator  compatible dst  Behavior      Not  !pat  Nil  Fails if the operand matches, does nothing otherwise.    Repeat  *pat  vector<pat_dst>  Matches pat zero or more times.    Repeat  +pat  vector<pat_dst>  Matches pat one or more times.    Action  pat[act]  decltype(act())  Executes Act if pat succeeds.",
+            "title": "Unary Patterns"
+        },
+        {
+            "location": "/reference/#binary-patterns",
+            "text": "Name  operator  compatible dst  Behavior      Except  op - neg  op_dst  Delegates to  op  if neg fails.    List  op % sep  vector<op_dst>  Matches a list of  sep  seprated  op s (0->inf).",
+            "title": "Binary Patterns"
+        },
+        {
+            "location": "/reference/#nary-patterns",
+            "text": "Name  operator  compatible dst  Behavior      Alternative  A | B | ...  see below  Matches the first non-failing child pattern    Sequence  A >> B >> ...  see below  Matches each sub-pattern sequentially     Alternative dst : Any type that can accept an atomic assignment of any of A, B, ...  Sequence dst :   If all child patterns are  Nil :  Nil  If all child patterns except  pat  are  Nil  patterns: Anything  pat  is compatible with.  if one child is  vector<T>, and all childs are T or vector : vector `.  Otherwise: dst must be a type that can be constructed with each of the non-Nil child patterns",
+            "title": "Nary Patterns"
+        },
+        {
+            "location": "/reference/#recur",
+            "text": "auto   create_pattern ()   { \n   abu :: Recur < struct   MyRecur >   my_recur ; \n\n   auto   pat   =   < pattern   making   use   of   my_recur > ; \n\n   // must be in same scope as my_recur \n   ABU_Recur_Define ( MyRecur ,   my_recur ,   pat ); \n\n   return   my_recur ;  }",
+            "title": "Recur"
+        },
+        {
+            "location": "/reference/#data-sources",
+            "text": "",
+            "title": "Data Sources"
+        },
+        {
+            "location": "/reference/#singleforward",
+            "text": "",
+            "title": "SingleForward"
+        },
+        {
+            "location": "/reference/#containersequence",
+            "text": "",
+            "title": "ContainerSequence"
         },
         {
             "location": "/data_sources/single_forward/",
