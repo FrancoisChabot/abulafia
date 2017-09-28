@@ -58,13 +58,16 @@ if(ABULAFIA_BUILD_TESTS)
 endif()
 
 SET(ALL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia_all.h)
+SET(NOTICE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/misc/notice.txt)
 
 add_custom_command(
   OUTPUT ${ALL_FILE}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
-  DEPENDS ${HEADER_PATHS}
+  DEPENDS ${HEADER_PATHS} 
   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/scripts/compile_header.py 
     --output=${ALL_FILE}
+    --notice=${NOTICE_FILE}
+    --header_guard="ABULAFIA_SINGLE_INCLUDE_H_"
     --input=${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia.h)
 
 add_custom_target(generate_all_include ALL DEPENDS ${ALL_FILE})

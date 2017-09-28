@@ -1,26 +1,22 @@
 from __future__ import print_function
 
 import argparse
-import os
-import sys
-
 
 parser = argparse.ArgumentParser(description='Compiles a header by #including all local files.')
 parser.add_argument('--output', help='where to save the result', required=True)
 parser.add_argument('--input', help='the root header to load', required=True)
+parser.add_argument('--notice', help='copyright notice file', required=True)
+parser.add_argument('--header_guard', help='Header guard', required=True)
 args = parser.parse_args()
 
 loaded_files = set()
 includes = set()
 
-copyright_notice = '''//  Copyright 2017 Francois Chabot
-//  (francois.chabot.dev@gmail.com)
-//
-//  Distributed under the Boost Software License, Version 1.0.
-//  (See accompanying file LICENSE or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)'''
+header_guard = args.header_guard
+copyright_notice = ''
 
-header_guard = 'ABULAFIA_SINGLE_INCLUDE_H_'
+with open(args.notice) as f:
+  copyright_notice = f.read()
 
 def process(file):
   result = []
@@ -70,7 +66,6 @@ def process(file):
 
   result.append("")
   return result
-
 
 result = process(args.input)
 
