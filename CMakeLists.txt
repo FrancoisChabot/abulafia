@@ -64,7 +64,7 @@ add_custom_command(
   OUTPUT ${ALL_FILE}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
   DEPENDS ${HEADER_PATHS} 
-  COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/scripts/compile_header.py 
+  COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/third_party/header_compiler/header_compiler.py 
     --output=${ALL_FILE}
     --notice=${NOTICE_FILE}
     --header_guard="ABULAFIA_SINGLE_INCLUDE_H_"
