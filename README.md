@@ -18,6 +18,11 @@ A C++ parsing framework
 
 Abulafia is a C++ expression templates library that generates parsers. The idea is to let programs contain ABNF-like grammars embedded directly within the code. It's heavily inspired by Boost::spirit::QI, but differs fundamentally from it in a number of respects.
 
+**Quick links**
+- [Documention](https://francoischabot.github.io/abulafia/)
+- [Cheatsheet](https://francoischabot.github.io/abulafia/reference/)
+- [Single Header](https://raw.githubusercontent.com/FrancoisChabot/abulafia/single_header/include/abulafia/abulafia_all.h)
+
 ## Requirements
 
 Abulafia currently requires a C++17 compiler. The level of C++17 compatibility required will be kept at the lowest bar set by the current release of the following compilers:
