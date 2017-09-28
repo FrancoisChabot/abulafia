@@ -2637,15 +2637,15 @@ auto seq(CHILD_PATS_T&&... childs) {
       std::make_tuple(std::forward<CHILD_PATS_T>(childs)...));
 }
 template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
-auto convert_seq_impl(CHILD_TUP_T const& c, CB_T const& cb,
+auto transform_seq_impl(CHILD_TUP_T const& c, CB_T const& cb,
                       std::index_sequence<Is...>) {
-  return seq(convert(std::get<Is>(c), cb)...);
+  return seq(transform(std::get<Is>(c), cb)...);
 }
 template <typename... CHILD_PATS_T, typename CB_T>
-auto convert(Seq<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
+auto transform(Seq<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
   using indices = std::make_index_sequence<sizeof...(CHILD_PATS_T)>;
   auto const& childs_tuple = tgt.childs();
-  return convert_seq_impl(childs_tuple, cb, indices());
+  return transform_seq_impl(childs_tuple, cb, indices());
 }
 template <typename CTX_T, typename DST_T, typename... CHILD_PATS_T>
 class Parser<CTX_T, DST_T, Seq<CHILD_PATS_T...>>
