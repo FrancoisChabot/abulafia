@@ -2,6 +2,11 @@ language: cpp
 
 dist: trusty
 
+branches:
+  except:
+  - gh-pages
+  - single_header
+
 matrix:
   include:
     - os: linux
