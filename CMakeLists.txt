@@ -29,10 +29,18 @@ set_target_properties(gtest_main PROPERTIES FOLDER "gtest")
 
 # List of abulafia headers
 FILE(GLOB_RECURSE
-  ABULAFIA_HEADERS
+  ABULAFIA_HEADERS_GLOBBED
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
 )
+
+
+SET(ABULAFIA_HEADERS "")
+FOREACH(f ${ABULAFIA_HEADERS_GLOBBED})
+  IF(NOT ${f} MATCHES "abulafia_all.h")
+    LIST(APPEND ABULAFIA_HEADERS "${f}")
+  ENDIF()
+ENDFOREACH(f)
 
 SET(HEADER_PATHS "")
 FOREACH(f ${ABULAFIA_HEADERS})
@@ -59,4 +67,4 @@ add_custom_command(
     --output=${ALL_FILE}
     --input=${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia.h)
 
-add_custom_target(generate_all_include DEPENDS ${ALL_FILE})
+add_custom_target(generate_all_include ALL DEPENDS ${ALL_FILE})
