@@ -19,6 +19,8 @@
 #include "abulafia/patterns/binary/except.h"
 #include "abulafia/patterns/binary/list.h"
 
+#include "abulafia/patterns/leaf/char_symbol.h"
+
 namespace ABULAFIA_NAMESPACE {
 
 // There is no harm in providing global instances of stateless parsers:
@@ -28,7 +30,6 @@ static constexpr Uint<10, 1, 0> uint_;
 static constexpr Eoi eoi;
 static constexpr Fail fail;
 static constexpr Pass pass;
-
 
 // Function-base API
 template <typename LHS_T, typename RHS_T>
@@ -41,6 +42,11 @@ template <typename LHS_T, typename RHS_T>
 auto list(LHS_T&& lhs, RHS_T&& rhs) {
   return List<pattern_t<LHS_T>, pattern_t<RHS_T>>(
       make_pattern(forward<LHS_T>(lhs)), make_pattern(forward<RHS_T>(rhs)));
+}
+
+template <typename CHAR_T, typename VAL_T>
+auto symbol(std::map<CHAR_T, VAL_T> const& vals) {
+  return CharSymbol<CHAR_T, VAL_T>(vals);
 }
 
 }  // namespace ABULAFIA_NAMESPACE

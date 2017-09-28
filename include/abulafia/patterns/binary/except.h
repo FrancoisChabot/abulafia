@@ -10,16 +10,7 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
 #include "abulafia/pattern.h"
-#include "abulafia/support/assert.h"
-
-#include "abulafia/config.h"
-
-#include "abulafia/pattern.h"
-#include "abulafia/support/assert.h"
-
-#include <variant>
 
 namespace ABULAFIA_NAMESPACE {
 
@@ -60,6 +51,16 @@ struct pat_attr_t<Except<LHS_T, RHS_T>, CTX_T> {
   using attr_type = abu::attr_t<LHS_T, CTX_T>;
 };
 
+template <typename LHS_T, typename RHS_T, typename CB_T>
+auto transform(Except<LHS_T, RHS_T> const& tgt, CB_T const& cb) {
+  auto new_op = cb(tgt.op());
+  auto new_neg = cb(tgt.neg());
+
+  using new_op_t = decltype(new_op);
+  using new_sep_t = decltype(new_neg);
+
+  return Except<new_op_t, new_sep_t>(std::move(new_op), std::move(new_neg));
+}
 
 }  // namespace ABULAFIA_NAMESPACE
 

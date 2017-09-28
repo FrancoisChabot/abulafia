@@ -22,7 +22,6 @@ TEST(test_make_parser, simple_usage) {
   EXPECT_EQ(12, dst);
 }
 
-
 TEST(test_make_parser, default_into_nil) {
   std::string data("12");
   SingleForwardContext<std::string::iterator> ctx(data.begin(), data.end());

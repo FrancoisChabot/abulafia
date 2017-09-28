@@ -11,11 +11,13 @@
 using namespace abu;
 
 TEST(test_readme, the_readme) {
-  // opening bracket, followed by a comma-delimited list of integers, followed by a closing bracket.
+  // opening bracket, followed by a comma-delimited list of integers, followed
+  // by a closing bracket.
   auto with_brackets = '[' >> (abu::int_ % ',') >> ']';
-  
+
   // ignore whitespace
-  auto ignoring_whitespace = abu::apply_skipper(with_brackets, abu::char_(" \t\r\n"));
+  auto ignoring_whitespace =
+      abu::apply_skipper(with_brackets, abu::char_(" \t\r\n"));
 
   std::vector<int> dst;
   auto status = abu::parse(ignoring_whitespace, "[1, 2, 3, 4, 5]", dst);
@@ -26,5 +28,4 @@ TEST(test_readme, the_readme) {
   EXPECT_EQ(dst[2], 3);
   EXPECT_EQ(dst[3], 4);
   EXPECT_EQ(dst[4], 5);
-
 }

@@ -5,8 +5,8 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_PATTERNS_LEAF_NUMERIC_DIGIT_VALUES_H_
-#define ABULAFIA_PATTERNS_LEAF_NUMERIC_DIGIT_VALUES_H_
+#ifndef ABULAFIA_PARSER_HELPERS_DIGIT_VALUES_H_
+#define ABULAFIA_PARSER_HELPERS_DIGIT_VALUES_H_
 
 #include "abulafia/config.h"
 

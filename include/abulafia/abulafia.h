@@ -23,9 +23,6 @@
 
 #include "abulafia/char_set/operators.h"
 
-
-
-
 // Parsing Contexts
 
 #include "abulafia/contexts/container_sequence.h"
@@ -51,7 +48,6 @@
 #include "abulafia/patterns/leaf/string_literal.h"
 #include "abulafia/patterns/leaf/string_symbol.h"
 
-#include "abulafia/patterns/leaf/numeric/digit_values.h"
 #include "abulafia/patterns/leaf/numeric/int.h"
 #include "abulafia/patterns/leaf/numeric/uint.h"
 

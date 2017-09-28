@@ -882,48 +882,6 @@ auto weaken_recur(PAT_T const& pat) {
   RecurWeakener<CHILD_PAT_T, ATTR_T> transformation;
   return transform(pat, transformation);
 }
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ATTR_T>
-class Parser<CTX_T, DST_T, Recur<CHILD_PAT_T, ATTR_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  using PAT_T = Recur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename PAT_T::operand_pat_t;
-  using operand_parser_t = Parser<CTX_T, DST_T, operand_pat_t>;
-  std::unique_ptr<operand_parser_t> child_parser_;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst) {
-    // We do not create the child parser here, since this is a recursive
-    // process.
-  }
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (!child_parser_) {
-      child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
-    }
-    return child_parser_->consume(ctx, dst, pat.operand());
-  }
-};
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ATTR_T>
-class Parser<CTX_T, DST_T, WeakRecur<CHILD_PAT_T, ATTR_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  using PAT_T = WeakRecur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename PAT_T::operand_pat_t;
-  using operand_parser_t = Parser<CTX_T, DST_T, operand_pat_t>;
-  std::unique_ptr<operand_parser_t> child_parser_;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst) {
-    // We do not create the child parser here, since this is a recursive
-    // process.
-  }
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (!child_parser_) {
-      child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
-    }
-    return child_parser_->consume(ctx, dst, pat.operand());
-  }
-};
 template <typename PAT_T, typename ATTR_T, typename CTX_T>
 struct pat_attr_t<Recur<PAT_T, ATTR_T>, CTX_T> {
   using attr_type = ATTR_T;
@@ -1109,23 +1067,6 @@ struct pattern_traits<WithSkipper<CHILD_PAT_T, SKIP_T>, RECUR_TAG>
     MAY_NOT_CONSUME = pattern_traits<CHILD_PAT_T, RECUR_TAG>::MAY_NOT_CONSUME,
   };
 };
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename SKIP_T>
-class Parser<CTX_T, DST_T, WithSkipper<CHILD_PAT_T, SKIP_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  // PARSER_OPT_NO_SKIP because we need to kill any existing skipper
-  using PAT_T = WithSkipper<CHILD_PAT_T, SKIP_T>;
-  using sub_ctx_t = SkipperAdapter<CTX_T, SKIP_T>;
-  Parser<sub_ctx_t, DST_T, CHILD_PAT_T> child_parser_;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst),
-        child_parser_(force_lvalue(sub_ctx_t(ctx, pat.getSkip())), dst,
-                      pat.getChild()) {}
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    sub_ctx_t sub_ctx(ctx, pat.getSkip());
-    return child_parser_.consume(sub_ctx, dst, pat.getChild());
-  }
-};
 template <typename PAT_T, typename SKIP_T>
 auto apply_skipper(PAT_T&& pat, SKIP_T&& skip) {
   return WithSkipper<std::decay_t<PAT_T>, std::decay_t<SKIP_T>>(
@@ -1165,6 +1106,14 @@ template <typename LHS_T, typename RHS_T, typename CTX_T>
 struct pat_attr_t<Except<LHS_T, RHS_T>, CTX_T> {
   using attr_type = abu::attr_t<LHS_T, CTX_T>;
 };
+template <typename LHS_T, typename RHS_T, typename CB_T>
+auto transform(Except<LHS_T, RHS_T> const& tgt, CB_T const& cb) {
+  auto new_op = cb(tgt.op());
+  auto new_neg = cb(tgt.neg());
+  using new_op_t = decltype(new_op);
+  using new_sep_t = decltype(new_neg);
+  return Except<new_op_t, new_sep_t>(std::move(new_op), std::move(new_neg));
+}
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1343,63 +1292,6 @@ class Repeat : public Pattern<Repeat<PAT_T, MIN_REP, MAX_REP>> {
   Repeat(PAT_T&& op) : operand_(std::move(op)) {}
   PAT_T const& operand() const { return operand_; }
 };
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T,
-          std::size_t MIN_REP, std::size_t MAX_REP>
-class Parser<CTX_T, DST_T, Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>;
-  using child_adapter_t =
-      buf_::CollectionParserAdapter<CTX_T, DST_T, CHILD_PAT_T>;
-  std::size_t count_ = 0;
-  child_adapter_t child_parser_;
-  enum { needs_backtrack = !pattern_traits<PAT_T, void>::FAILS_CLEANLY };
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst),
-        child_parser_(ctx, dst, pat.operand()) {
-    dst.clear();
-    if (needs_backtrack) {
-      ctx.prepare_rollback();
-    }
-  }
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    while (1) {
-      auto child_res = child_parser_.consume(ctx, dst, pat.operand());
-      switch (child_res) {
-        case result::FAILURE:
-          // cancel the child's data consumption
-          // Technically, we could cancel the rollback in the failure branch,
-          // but guaranteeing FAILS_CLEANLY is better.
-          if (needs_backtrack) {
-            ctx.commit_rollback();
-          }
-          if (count_ >= MIN_REP) {
-            return result::SUCCESS;
-          } else {
-            return result::FAILURE;
-          }
-        case result::PARTIAL:
-          return result::PARTIAL;
-        case result::SUCCESS:
-          count_++;
-          if (needs_backtrack) {
-            ctx.cancel_rollback();
-          }
-          if (MAX_REP != 0 && count_ == MAX_REP) {
-            return result::SUCCESS;
-          }
-          if (needs_backtrack) {
-            ctx.prepare_rollback();
-          }
-          // If we are still going, then we need to reset the child's parser
-          child_parser_ = child_adapter_t(ctx, dst, pat.operand());
-      }
-    }
-  }
-};
 template <std::size_t MIN_REP = 0, std::size_t MAX_REP = 0, typename PAT_T>
 inline auto repeat(PAT_T&& pat) {
   return Repeat<pattern_t<PAT_T>, MIN_REP, MAX_REP>(
@@ -1463,8 +1355,8 @@ class List : public Pattern<List<VAL_PAT_T, SEP_PAT_T>> {
   using sep_pat_t = SEP_PAT_T;
   List(val_pat_t val_pat, sep_pat_t sep)
       : val_(std::move(val_pat)), sep_(std::move(sep)) {}
-  val_pat_t const& operand() const { return val_; }
-  sep_pat_t const& separator() const { return sep_; }
+  val_pat_t const& op() const { return val_; }
+  sep_pat_t const& sep() const { return sep_; }
  private:
   VAL_PAT_T val_;
   SEP_PAT_T sep_;
@@ -1555,37 +1447,6 @@ struct expr_traits<CHAR_SET_T,
   enum { is_pattern = false, converts_to_pattern = true };
   static Char<CHAR_SET_T> make_pattern(CHAR_SET_T const& v) { return char_(v); }
 };
-template <typename CTX_T, typename DST_T, typename CHARSET_T>
-class Parser<CTX_T, DST_T, Char<CHARSET_T>> : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = Char<CHARSET_T>;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T>(ctx, dst) {}
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    // std::cout << "char is writing at: " << std::hex << (uint64_t)&dst <<
-    // std::endl;
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
-    }
-    auto next = ctx.next();
-    if (pat.char_set().is_valid(next)) {
-      dst = next;
-      ctx.advance();
-      return result::SUCCESS;
-    }
-    return result::FAILURE;
-  }
-  result peek(CTX_T const& ctx, PAT_T const& pat) const {
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
-    }
-    return pat.char_set().is_valid(ctx.next()) ? result::SUCCESS
-                                               : result::FAILURE;
-  }
-};
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1596,23 +1457,6 @@ class AttrCast : public Pattern<AttrCast<ATTR_T, PAT_T>> {
   AttrCast(PAT_T const& pat) : pat_(pat) {}
   AttrCast(PAT_T&& pat) : pat_(std::move(pat)) {}
   PAT_T const& operand() const { return pat_; }
-};
-template <typename CTX_T, typename DST_T, typename ATTR_T, typename CHILD_PAT_T>
-class Parser<CTX_T, DST_T, AttrCast<ATTR_T, CHILD_PAT_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  using PAT_T = AttrCast<ATTR_T, CHILD_PAT_T>;
-  using parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
-  parser_t parser_;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst),
-        parser_(ctx, dst, pat.operand()) {}
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    return parser_.consume(ctx, dst, pat.operand());
-  }
-  result peek(CTX_T& ctx, PAT_T const& pat) {
-    return parser_.peek(ctx, pat.operand());
-  }
 };
 template <typename ATTR_T, typename PAT_T>
 inline auto cast(PAT_T&& pat) {
@@ -1671,10 +1515,6 @@ class CharSymbol : public Pattern<CharSymbol<CHAR_T, VAL_T>> {
   CharSymbol(std::map<CHAR_T, VAL_T> const& vals) : mapping_(vals) {}
   std::map<CHAR_T, VAL_T> const& mapping() const { return mapping_; }
 };
-template <typename CHAR_T, typename VAL_T>
-auto symbol(std::map<CHAR_T, VAL_T> const& vals) {
-  return CharSymbol<CHAR_T, VAL_T>(vals);
-}
 template <typename CHAR_T, typename VAL_T, typename RECUR_TAG>
 struct pattern_traits<CharSymbol<CHAR_T, VAL_T>, RECUR_TAG>
     : public default_pattern_traits {
@@ -1689,40 +1529,6 @@ struct pattern_traits<CharSymbol<CHAR_T, VAL_T>, RECUR_TAG>
 template <typename CHAR_T, typename VAL_T, typename CTX_T>
 struct pat_attr_t<CharSymbol<CHAR_T, VAL_T>, CTX_T> {
   using attr_type = VAL_T;
-};
-template <typename CTX_T, typename DST_T, typename CHAR_T, typename VAL_T>
-class Parser<CTX_T, DST_T, CharSymbol<CHAR_T, VAL_T>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = CharSymbol<CHAR_T, VAL_T>;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst) {}
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
-    }
-    auto next = ctx.next();
-    auto found = pat.mapping().find(next);
-    if (found == pat.mapping().end()) {
-      return result::FAILURE;
-    }
-    dst = found->second;
-    return result::SUCCESS;
-  }
-  result peek(CTX_T& ctx, PAT_T const& pat) {
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
-    }
-    auto next = ctx.next();
-    auto found = pat.mapping().find(next);
-    if (found == pat.mapping().end()) {
-      return result::FAILURE;
-    }
-    return result::SUCCESS;
-  }
 };
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1743,25 +1549,6 @@ template <typename CTX_T>
 struct pat_attr_t<Eoi, CTX_T> {
   using attr_type = Nil;
 };
-template <typename CTX_T>
-class Parser<CTX_T, Nil, Eoi> : public ParserBase<CTX_T, Nil> {
-  using PAT_T = Eoi;
- public:
-  Parser(CTX_T& ctx, Nil& dst, PAT_T const&)
-      : ParserBase<CTX_T, Nil>(ctx, dst) {}
-  result consume(CTX_T& ctx, Nil&, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    return peek(ctx, pat);
-  }
-  result peek(CTX_T& ctx, PAT_T const&) {
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::SUCCESS : result::PARTIAL;
-    }
-    return result::FAILURE;
-  }
-};
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1781,16 +1568,6 @@ template <typename CTX_T>
 struct pat_attr_t<Fail, CTX_T> {
   using attr_type = Nil;
 };
-template <typename CTX_T>
-class Parser<CTX_T, Nil, Fail>
-    : public ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP> {
-  using PAT_T = Fail;
- public:
-  Parser(CTX_T& ctx, Nil&, PAT_T const&)
-      : ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP>(ctx, nil) {}
-  result consume(CTX_T&, Nil&, PAT_T const&) { return result::FAILURE; }
-  result peek(CTX_T&, PAT_T const&) { return result::FAILURE; }
-};
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1808,16 +1585,6 @@ struct pattern_traits<Pass, RECUR_TAG> : public default_pattern_traits {
 template <typename CTX_T>
 struct pat_attr_t<Pass, CTX_T> {
   using attr_type = Nil;
-};
-template <typename CTX_T>
-class Parser<CTX_T, Nil, Pass>
-    : public ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP> {
-  using PAT_T = Pass;
- public:
-  Parser(CTX_T& ctx, Nil&, PAT_T const&)
-      : ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP>(ctx, nil) {}
-  result consume(CTX_T&, Nil&, PAT_T const&) { return result::SUCCESS; }
-  result peek(CTX_T&, PAT_T const&) { return result::SUCCESS; }
 };
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1867,35 +1634,6 @@ template <typename T, typename CTX_T>
 struct pat_attr_t<StringLiteral<T>, CTX_T> {
   using attr_type = Nil;
 };
-template <typename CTX_T, typename DST_T, typename CHAR_T>
-class Parser<CTX_T, DST_T, StringLiteral<CHAR_T>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = StringLiteral<CHAR_T>;
-  typename std::basic_string<CHAR_T>::const_iterator next_expected_;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst), next_expected_(pat.begin()) {}
-  result consume(CTX_T& ctx, Nil&, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    while (1) {
-      if (next_expected_ == pat.end()) {
-        return result::SUCCESS;
-      }
-      if (ctx.empty()) {
-        return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
-      }
-      auto next = ctx.next();
-      if (next == *next_expected_) {
-        ctx.advance();
-        ++next_expected_;
-      } else {
-        return result::FAILURE;
-      }
-    }
-  }
-};
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1942,109 +1680,13 @@ template <typename CHAR_T, typename VAL_T, typename CTX_T>
 struct pat_attr_t<Symbol<CHAR_T, VAL_T>, CTX_T> {
   using attr_type = VAL_T;
 };
-template <typename CTX_T, typename DST_T, typename CHAR_T, typename VAL_T>
-class Parser<CTX_T, DST_T, Symbol<CHAR_T, VAL_T>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = Symbol<CHAR_T, VAL_T>;
-  using node_t = typename PAT_T::node_t;
-  node_t const* next_ = nullptr;
-  node_t const* current_valid_ = nullptr;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst), next_(pat.root()) {}
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    while (1) {
-      if (ctx.empty()) {
-        if (ctx.final_buffer()) {
-          if (current_valid_) {
-            dst = *current_valid_->val;
-            ctx.commit_rollback();
-            return result::SUCCESS;
-          } else {
-            return result::FAILURE;
-          }
-        } else {
-          // If we were conclusively done, we would have returned success
-          // before looping.
-          return result::PARTIAL;
-        }
-      }
-      auto next = ctx.next();
-      auto found = next_->child.find(next);
-      if (found == next_->child.end()) {
-        // the next character leads nowhere
-        if (current_valid_) {
-          // we had a match along the way
-          dst = *current_valid_->val;
-          ctx.commit_rollback();
-          return result::SUCCESS;
-        }
-        return result::FAILURE;
-      } else {
-        // consume the value
-        ctx.advance();
-        next_ = &found->second;
-        if (next_->val) {
-          // we got a hit!
-          if (current_valid_) {
-            ctx.cancel_rollback();
-          }
-          if (next_->child.empty()) {
-            // nowhere to go from here
-            dst = *next_->val;
-            return result::SUCCESS;
-          }
-          current_valid_ = next_;
-          ctx.prepare_rollback();
-        }
-      }
-    }
-  }
-};
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-template <int BASE, typename Enabled = void>
-struct DigitValues;
-template <int BASE>
-struct DigitValues<BASE, enable_if_t<(BASE <= 10U)>> {
-  static_assert(BASE >= 2, "");
-  static_assert(BASE <= 35, "");
-  static bool is_valid(char c) { return c >= '0' && c <= ('0' + BASE - 1); }
-  static int value(char c) { return c - '0'; }
-};
-template <int BASE>
-struct DigitValues<BASE, enable_if_t<(BASE > 10U) && (BASE <= 35U)>> {
-  static_assert(BASE >= 2, "");
-  static_assert(BASE <= 35, "");
-  static bool is_valid(char c) {
-    return (c >= '0' && c <= '9') || (c >= 'a' && c <= ('a' + BASE - 11)) ||
-           (c >= 'A' && c <= ('A' + BASE - 11));
-  }
-  static int value(char c) {
-    if (c >= '0' && c <= '9') {
-      return c - '0';
-    }
-    if (c >= 'a' && c <= 'z') {
-      return 10 + c - 'a';
-    }
-    if (c >= 'A' && c <= 'Z') {
-      return 10 + c - 'A';
-    }
-    return 0;
-  }
-};
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
 template <int BASE, std::size_t DIGITS_MIN = 1, std::size_t DIGITS_MAX = 0>
 class Int : public Pattern<Int<BASE, DIGITS_MIN, DIGITS_MAX>> {
-  static_assert(DIGITS_MIN >= 1, "Numeric parser must parse at least 1 digit");
-  static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0,
-                "Max < Min? really?");
+  static_assert(DIGITS_MIN >= 1);
+  static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0);
 };
 template <int BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX,
           typename RECUR_TAG>
@@ -2062,66 +1704,6 @@ template <int BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX,
           typename CTX_T>
 struct pat_attr_t<Int<BASE, DIGITS_MIN, DIGITS_MAX>, CTX_T> {
   using attr_type = int;
-};
-template <typename CTX_T, typename DST_T, int BASE, std::size_t DIGITS_MIN,
-          std::size_t DIGITS_MAX>
-class Parser<CTX_T, DST_T, Int<BASE, DIGITS_MIN, DIGITS_MAX>>
-    : public ParserBase<CTX_T, DST_T> {
-  using digit_vals = DigitValues<BASE>;
-  using PAT_T = Int<BASE, DIGITS_MIN, DIGITS_MAX>;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T>(ctx, dst) {
-    dst = 0;
-  }
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    while (true) {
-      if (ctx.empty()) {
-        if (ctx.final_buffer()) {
-          return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
-        } else {
-          return result::PARTIAL;
-        }
-      }
-      auto next = ctx.next();
-      if (digit_count_ == 0 && look_for_sign_) {
-        look_for_sign_ = false;
-        if (next == '-') {
-          ctx.advance();
-          neg_ = true;
-          continue;
-        }
-        if (next == '+') {
-          ctx.advance();
-          continue;
-        }
-      }
-      if (digit_vals::is_valid(next)) {
-        dst *= BASE;
-        dst += digit_vals::value(next);
-        ++digit_count_;
-        ctx.advance();
-        if (digit_count_ == DIGITS_MAX) {
-          if (neg_) {
-            dst *= -1;
-          }
-          return result::SUCCESS;
-        }
-      } else {
-        if (neg_) {
-          dst *= -1;
-        }
-        return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
-      }
-    }
-  }
- private:
-  std::size_t digit_count_ = 0;
-  bool look_for_sign_ = true;
-  bool neg_ = false;
 };
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -2148,62 +1730,6 @@ template <int BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX,
           typename CTX_T>
 struct pat_attr_t<Uint<BASE, DIGITS_MIN, DIGITS_MAX>, CTX_T> {
   using attr_type = unsigned int;
-};
-template <typename CTX_T, typename DST_T, int BASE, std::size_t DIGITS_MIN,
-          std::size_t DIGITS_MAX>
-class Parser<CTX_T, DST_T, Uint<BASE, DIGITS_MIN, DIGITS_MAX>>
-    : public ParserBase<CTX_T, DST_T> {
-  using digit_vals = DigitValues<BASE>;
-  using PAT_T = Uint<BASE, DIGITS_MIN, DIGITS_MAX>;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T>(ctx, dst) {
-    dst = 0;
-  }
-  result peek(CTX_T const& ctx, PAT_T const&) const {
-    static_assert(DIGITS_MIN == 1, "we should not be peeking here.");
-    if (ctx.empty()) {
-      if (ctx.final_buffer()) {
-        return result::FAILURE;
-      } else {
-        return result::PARTIAL;
-      }
-    }
-    auto next = ctx.next();
-    if (digit_vals::is_valid(next)) {
-      return result::SUCCESS;
-    } else {
-      return result::FAILURE;
-    }
-  }
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    while (true) {
-      if (ctx.empty()) {
-        if (ctx.final_buffer()) {
-          return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
-        } else {
-          return result::PARTIAL;
-        }
-      }
-      auto next = ctx.next();
-      if (digit_vals::is_valid(next)) {
-        dst *= BASE;
-        dst += digit_vals::value(next);
-        ++digit_count_;
-        ctx.advance();
-        if (digit_count_ == DIGITS_MAX) {
-          return result::SUCCESS;
-        }
-      } else {
-        return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
-      }
-    }
-  }
- private:
-  std::size_t digit_count_ = 0;
 };
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -2335,73 +1861,6 @@ template <std::size_t Index, typename... CHILD_PATS_T>
 auto const& getChild(Alt<CHILD_PATS_T...> const& pat) {
   return std::get<Index>(pat.childs());
 }
-template <typename CTX_T, typename DST_T, typename... CHILD_PATS_T>
-class Parser<CTX_T, DST_T, Alt<CHILD_PATS_T...>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = Alt<CHILD_PATS_T...>;
-  using child_pat_tuple_t = typename PAT_T::child_tuple_t;
-  using child_parsers_t = std::variant<Parser<CTX_T, DST_T, CHILD_PATS_T>...>;
-  child_parsers_t child_parsers_;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst),
-        child_parsers_(std::in_place_index_t<0>(), ctx, dst, getChild<0>(pat)) {
-    if (rolls_back_at<0>()) {
-      ctx.prepare_rollback();
-    }
-  }
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    if (CTX_T::IS_RESUMABLE) {
-      return visit_val<sizeof...(CHILD_PATS_T)>(
-          child_parsers_.index(),
-          [&](auto N) { return this->consume_from<N()>(ctx, dst, pat); });
-    } else {
-      // Skip the visitation when using non_resumable parsers.
-      return consume_from<0>(ctx, dst, pat);
-    }
-  }
-  template <std::size_t ID>
-  result consume_from(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    abu_assume(child_parsers_.index() == ID);
-    auto& c_parser = std::get<ID>(child_parsers_);
-    auto const& c_pattern = getChild<ID>(pat);
-    result child_res = c_parser.consume(ctx, dst, c_pattern);
-    if (result::FAILURE == child_res) {
-      if (rolls_back_at<ID>()) {
-        ctx.commit_rollback();
-      }
-      constexpr int next_id = ID + 1;
-      // if we have reached the end of the child parsers list
-      if (sizeof...(CHILD_PATS_T) == next_id) {
-        return result::FAILURE;
-      } else {
-        constexpr int new_id = next_id < sizeof...(CHILD_PATS_T) ? next_id : 0;
-        auto const& new_c_pattern = getChild<new_id>(pat);
-        child_parsers_ = child_parsers_t(std::in_place_index_t<new_id>(),
-                                         make_parser_(ctx, dst, new_c_pattern));
-        if (rolls_back_at<new_id>()) {
-          ctx.prepare_rollback();
-        }
-        return consume_from<new_id>(ctx, dst, pat);
-      }
-    }
-    if (child_res == result::SUCCESS) {
-      if (rolls_back_at<ID>()) {
-        ctx.cancel_rollback();
-      }
-    }
-    return child_res;
-  }
- private:
-  template <std::size_t N>
-  static constexpr bool rolls_back_at() {
-    return !pattern_traits<std::tuple_element_t<N, child_pat_tuple_t>,
-                           void>::FAILS_CLEANLY;
-  }
-};
 template <typename... T>
 auto alt(T&&... args) {
   using ret_type = Alt<T...>;
@@ -2638,7 +2097,7 @@ auto seq(CHILD_PATS_T&&... childs) {
 }
 template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
 auto transform_seq_impl(CHILD_TUP_T const& c, CB_T const& cb,
-                      std::index_sequence<Is...>) {
+                        std::index_sequence<Is...>) {
   return seq(transform(std::get<Is>(c), cb)...);
 }
 template <typename... CHILD_PATS_T, typename CB_T>
@@ -2647,73 +2106,6 @@ auto transform(Seq<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
   auto const& childs_tuple = tgt.childs();
   return transform_seq_impl(childs_tuple, cb, indices());
 }
-template <typename CTX_T, typename DST_T, typename... CHILD_PATS_T>
-class Parser<CTX_T, DST_T, Seq<CHILD_PATS_T...>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = Seq<CHILD_PATS_T...>;
-  using childs_tuple_t = std::tuple<CHILD_PATS_T...>;
-  using child_parsers_t = typename seq_::SeqSubParser<
-      CTX_T, DST_T, childs_tuple_t,
-      std::index_sequence_for<CHILD_PATS_T...>>::type;
-  child_parsers_t child_parsers_;
- public:
-  template <std::size_t ID>
-  decltype(auto) getDstFor(DST_T& dst) {
-    using accessor_t =
-        seq_::choose_dst_accessor<ID, CTX_T, DST_T, childs_tuple_t>;
-    return accessor_t::access(dst);
-  }
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst),
-        child_parsers_(
-            std::in_place_index_t<0>(),
-            std::variant_alternative_t<0, child_parsers_t>(
-                ctx, force_lvalue(getDstFor<0>(dst)), getChild<0>(pat))) {
-    reset_if_collection<DST_T>::exec(dst);
-  }
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    if (CTX_T::IS_RESUMABLE) {
-      return visit_val<sizeof...(CHILD_PATS_T)>(
-          child_parsers_.index(),
-          [&](auto N) { return this->consume_from<N()>(ctx, dst, pat); });
-    } else {
-      // Skip the visitation when using non_resumable parsers.
-      return consume_from<0>(ctx, dst, pat);
-    }
-  }
-  template <std::size_t ID>
-  result consume_from(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    abu_assume(child_parsers_.index() == ID);
-    auto& c_parser = std::get<ID>(child_parsers_);
-    auto const& c_pattern = getChild<ID>(pat);
-    result child_res =
-        c_parser.consume(ctx, force_lvalue(getDstFor<ID>(dst)), c_pattern);
-    if (result::SUCCESS == child_res) {
-      constexpr int next_id = ID + 1;
-      // if we have reached the end of the child parsers list
-      if (sizeof...(CHILD_PATS_T) == next_id) {
-        return result::SUCCESS;
-      } else {
-        // This does not matter nearly that much, as we will never enter
-        // here with a saturated value
-        // The sole purpose of the max is to prevent reset<N>() from
-        // being called with an out of bounds value,
-        // which would cause a compile-time error.
-        constexpr int new_id = next_id < sizeof...(CHILD_PATS_T) ? next_id : 0;
-        auto const& new_c_pattern = getChild<new_id>(pat);
-        child_parsers_ = child_parsers_t(
-            std::in_place_index_t<new_id>(),
-            make_parser_(ctx, force_lvalue(getDstFor<new_id>(dst)),
-                         new_c_pattern));
-        return consume_from<new_id>(ctx, dst, pat);
-      }
-    }
-    return child_res;
-  }
-};
 template <typename RECUR_TAG, typename... CHILD_PATS>
 struct pattern_traits<Seq<CHILD_PATS...>, RECUR_TAG>
     : public default_pattern_traits {
@@ -2819,28 +2211,6 @@ class Action : public Pattern<Action<CHILD_PAT_T, ACT_T>> {
   CHILD_PAT_T const& child_pattern() const { return pat_; }
   ACT_T const& action() const { return act_; }
 };
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ACT_T>
-class Parser<CTX_T, DST_T, Action<CHILD_PAT_T, ACT_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  using PAT_T = Action<CHILD_PAT_T, ACT_T>;
-  using child_ctx_t = CTX_T;  // for now, but I suspect this may change.
-  using landing_type_t = typename act_::determine_landing_type<ACT_T>::type;
-  using child_parser_t = Parser<child_ctx_t, landing_type_t, CHILD_PAT_T>;
-  landing_type_t landing;
-  child_parser_t child_parser_;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst),
-        child_parser_(ctx, landing, pat.child_pattern()) {}
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    auto status = child_parser_.consume(ctx, landing, pat.child_pattern());
-    if (status == result::SUCCESS) {
-      act_::Dispatch<ACT_T>::template dispatch(pat.action(), std::move(landing),
-                                               dst);
-    }
-    return status;
-  }
-};
 template <typename CHILD_PAT_T, typename ACT_T, typename RECUR_TAG>
 struct pattern_traits<Action<CHILD_PAT_T, ACT_T>, RECUR_TAG>
     : public default_pattern_traits {
@@ -2873,57 +2243,6 @@ class Not : public Pattern<Not<PAT_T>> {
   Not(const PAT_T& child) : child_(child) {}
   Not(PAT_T&& child) : child_(std::move(child)) {}
   PAT_T const& operand() const { return child_; }
-};
-template <typename CTX_T, typename CHILD_PAT_T>
-class Parser<CTX_T, Nil, Not<CHILD_PAT_T>> : public ParserBase<CTX_T, Nil> {
-  using DST_T = Nil;
-  using PAT_T = Not<CHILD_PAT_T>;
-  using child_parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
-  child_parser_t parser_;
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, Nil>(ctx, dst), parser_(ctx, dst, pat.operand()) {
-    constexpr bool backtrack = !pattern_traits<CHILD_PAT_T, void>::PEEKABLE;
-    if (backtrack) {
-      ctx.prepare_rollback();
-    }
-  }
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-    constexpr bool backtrack = !pattern_traits<CHILD_PAT_T, void>::PEEKABLE;
-    if (backtrack) {
-      auto status = parser_.consume(ctx, dst, pat.operand());
-      switch (status) {
-        case result::SUCCESS:
-          // just commit the rollback anyways, this allows us to promise
-          // FAILS_CLEANLY
-          ctx.commit_rollback();
-          return result::FAILURE;
-        case result::FAILURE:
-          ctx.commit_rollback();
-          return result::SUCCESS;
-        case result::PARTIAL:
-          return result::PARTIAL;
-      }
-      abu_unreachable();
-    } else {
-      return peek(ctx, pat);
-    }
-  }
-  result peek(CTX_T& ctx, PAT_T const& pat) {
-    auto status = parser_.peek(ctx, pat.operand());
-    switch (status) {
-      case result::SUCCESS:
-        return result::FAILURE;
-      case result::FAILURE:
-        return result::SUCCESS;
-      case result::PARTIAL:
-        return result::PARTIAL;
-    }
-    abu_unreachable();
-  }
 };
 template <typename PAT_T, typename RECUR_TAG>
 struct pattern_traits<Not<PAT_T>, RECUR_TAG> : public default_pattern_traits {
@@ -3008,6 +2327,381 @@ auto list(LHS_T&& lhs, RHS_T&& rhs) {
   return List<pattern_t<LHS_T>, pattern_t<RHS_T>>(
       make_pattern(forward<LHS_T>(lhs)), make_pattern(forward<RHS_T>(rhs)));
 }
+template <typename CHAR_T, typename VAL_T>
+auto symbol(std::map<CHAR_T, VAL_T> const& vals) {
+  return CharSymbol<CHAR_T, VAL_T>(vals);
+}
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <int BASE, typename Enabled = void>
+struct DigitValues;
+template <int BASE>
+struct DigitValues<BASE, enable_if_t<(BASE <= 10U)>> {
+  static_assert(BASE >= 2, "");
+  static_assert(BASE <= 35, "");
+  static bool is_valid(char c) { return c >= '0' && c <= ('0' + BASE - 1); }
+  static int value(char c) { return c - '0'; }
+};
+template <int BASE>
+struct DigitValues<BASE, enable_if_t<(BASE > 10U) && (BASE <= 35U)>> {
+  static_assert(BASE >= 2, "");
+  static_assert(BASE <= 35, "");
+  static bool is_valid(char c) {
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= ('a' + BASE - 11)) ||
+           (c >= 'A' && c <= ('A' + BASE - 11));
+  }
+  static int value(char c) {
+    if (c >= '0' && c <= '9') {
+      return c - '0';
+    }
+    if (c >= 'a' && c <= 'z') {
+      return 10 + c - 'a';
+    }
+    if (c >= 'A' && c <= 'Z') {
+      return 10 + c - 'A';
+    }
+    return 0;
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, int BASE, std::size_t DIGITS_MIN,
+          std::size_t DIGITS_MAX>
+class Parser<CTX_T, DST_T, Int<BASE, DIGITS_MIN, DIGITS_MAX>>
+    : public ParserBase<CTX_T, DST_T> {
+  using digit_vals = DigitValues<BASE>;
+  using PAT_T = Int<BASE, DIGITS_MIN, DIGITS_MAX>;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
+      : ParserBase<CTX_T, DST_T>(ctx, dst) {
+    dst = 0;
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    while (true) {
+      if (ctx.empty()) {
+        if (ctx.final_buffer()) {
+          return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+        } else {
+          return result::PARTIAL;
+        }
+      }
+      auto next = ctx.next();
+      if (digit_count_ == 0 && look_for_sign_) {
+        look_for_sign_ = false;
+        if (next == '-') {
+          ctx.advance();
+          neg_ = true;
+          continue;
+        }
+        if (next == '+') {
+          ctx.advance();
+          continue;
+        }
+      }
+      if (digit_vals::is_valid(next)) {
+        dst *= BASE;
+        dst += digit_vals::value(next);
+        ++digit_count_;
+        ctx.advance();
+        if (digit_count_ == DIGITS_MAX) {
+          if (neg_) {
+            dst *= -1;
+          }
+          return result::SUCCESS;
+        }
+      } else {
+        if (neg_) {
+          dst *= -1;
+        }
+        return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+      }
+    }
+  }
+ private:
+  std::size_t digit_count_ = 0;
+  bool look_for_sign_ = true;
+  bool neg_ = false;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, int BASE, std::size_t DIGITS_MIN,
+          std::size_t DIGITS_MAX>
+class Parser<CTX_T, DST_T, Uint<BASE, DIGITS_MIN, DIGITS_MAX>>
+    : public ParserBase<CTX_T, DST_T> {
+  using digit_vals = DigitValues<BASE>;
+  using PAT_T = Uint<BASE, DIGITS_MIN, DIGITS_MAX>;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
+      : ParserBase<CTX_T, DST_T>(ctx, dst) {
+    dst = 0;
+  }
+  result peek(CTX_T const& ctx, PAT_T const&) const {
+    static_assert(DIGITS_MIN == 1, "we should not be peeking here.");
+    if (ctx.empty()) {
+      if (ctx.final_buffer()) {
+        return result::FAILURE;
+      } else {
+        return result::PARTIAL;
+      }
+    }
+    auto next = ctx.next();
+    if (digit_vals::is_valid(next)) {
+      return result::SUCCESS;
+    } else {
+      return result::FAILURE;
+    }
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    while (true) {
+      if (ctx.empty()) {
+        if (ctx.final_buffer()) {
+          return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+        } else {
+          return result::PARTIAL;
+        }
+      }
+      auto next = ctx.next();
+      if (digit_vals::is_valid(next)) {
+        dst *= BASE;
+        dst += digit_vals::value(next);
+        ++digit_count_;
+        ctx.advance();
+        if (digit_count_ == DIGITS_MAX) {
+          return result::SUCCESS;
+        }
+      } else {
+        return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+      }
+    }
+  }
+ private:
+  std::size_t digit_count_ = 0;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHAR_T, typename VAL_T>
+class Parser<CTX_T, DST_T, CharSymbol<CHAR_T, VAL_T>>
+    : public ParserBase<CTX_T, DST_T> {
+  using PAT_T = CharSymbol<CHAR_T, VAL_T>;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T>(ctx, dst) {}
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    if (performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    if (ctx.empty()) {
+      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
+    }
+    auto next = ctx.next();
+    auto found = pat.mapping().find(next);
+    if (found == pat.mapping().end()) {
+      return result::FAILURE;
+    }
+    dst = found->second;
+    return result::SUCCESS;
+  }
+  result peek(CTX_T& ctx, PAT_T const& pat) {
+    if (ctx.empty()) {
+      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
+    }
+    auto next = ctx.next();
+    auto found = pat.mapping().find(next);
+    if (found == pat.mapping().end()) {
+      return result::FAILURE;
+    }
+    return result::SUCCESS;
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHARSET_T>
+class Parser<CTX_T, DST_T, Char<CHARSET_T>> : public ParserBase<CTX_T, DST_T> {
+  using PAT_T = Char<CHARSET_T>;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
+      : ParserBase<CTX_T, DST_T>(ctx, dst) {}
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    // std::cout << "char is writing at: " << std::hex << (uint64_t)&dst <<
+    // std::endl;
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    if (ctx.empty()) {
+      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
+    }
+    auto next = ctx.next();
+    if (pat.char_set().is_valid(next)) {
+      dst = next;
+      ctx.advance();
+      return result::SUCCESS;
+    }
+    return result::FAILURE;
+  }
+  result peek(CTX_T const& ctx, PAT_T const& pat) const {
+    if (ctx.empty()) {
+      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
+    }
+    return pat.char_set().is_valid(ctx.next()) ? result::SUCCESS
+                                               : result::FAILURE;
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T>
+class Parser<CTX_T, Nil, Eoi> : public ParserBase<CTX_T, Nil> {
+  using PAT_T = Eoi;
+ public:
+  Parser(CTX_T& ctx, Nil& dst, PAT_T const&)
+      : ParserBase<CTX_T, Nil>(ctx, dst) {}
+  result consume(CTX_T& ctx, Nil&, PAT_T const& pat) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    return peek(ctx, pat);
+  }
+  result peek(CTX_T& ctx, PAT_T const&) {
+    if (ctx.empty()) {
+      return ctx.final_buffer() ? result::SUCCESS : result::PARTIAL;
+    }
+    return result::FAILURE;
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T>
+class Parser<CTX_T, Nil, Fail>
+    : public ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP> {
+  using PAT_T = Fail;
+ public:
+  Parser(CTX_T& ctx, Nil&, PAT_T const&)
+      : ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP>(ctx, nil) {}
+  result consume(CTX_T&, Nil&, PAT_T const&) { return result::FAILURE; }
+  result peek(CTX_T&, PAT_T const&) { return result::FAILURE; }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T>
+class Parser<CTX_T, Nil, Pass>
+    : public ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP> {
+  using PAT_T = Pass;
+ public:
+  Parser(CTX_T& ctx, Nil&, PAT_T const&)
+      : ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP>(ctx, nil) {}
+  result consume(CTX_T&, Nil&, PAT_T const&) { return result::SUCCESS; }
+  result peek(CTX_T&, PAT_T const&) { return result::SUCCESS; }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHAR_T>
+class Parser<CTX_T, DST_T, StringLiteral<CHAR_T>>
+    : public ParserBase<CTX_T, DST_T> {
+  using PAT_T = StringLiteral<CHAR_T>;
+  typename std::basic_string<CHAR_T>::const_iterator next_expected_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T>(ctx, dst), next_expected_(pat.begin()) {}
+  result consume(CTX_T& ctx, Nil&, PAT_T const& pat) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    while (1) {
+      if (next_expected_ == pat.end()) {
+        return result::SUCCESS;
+      }
+      if (ctx.empty()) {
+        return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
+      }
+      auto next = ctx.next();
+      if (next == *next_expected_) {
+        ctx.advance();
+        ++next_expected_;
+      } else {
+        return result::FAILURE;
+      }
+    }
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHAR_T, typename VAL_T>
+class Parser<CTX_T, DST_T, Symbol<CHAR_T, VAL_T>>
+    : public ParserBase<CTX_T, DST_T> {
+  using PAT_T = Symbol<CHAR_T, VAL_T>;
+  using node_t = typename PAT_T::node_t;
+  node_t const* next_ = nullptr;
+  node_t const* current_valid_ = nullptr;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T>(ctx, dst), next_(pat.root()) {}
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    while (1) {
+      if (ctx.empty()) {
+        if (ctx.final_buffer()) {
+          if (current_valid_) {
+            dst = *current_valid_->val;
+            ctx.commit_rollback();
+            return result::SUCCESS;
+          } else {
+            return result::FAILURE;
+          }
+        } else {
+          // If we were conclusively done, we would have returned success
+          // before looping.
+          return result::PARTIAL;
+        }
+      }
+      auto next = ctx.next();
+      auto found = next_->child.find(next);
+      if (found == next_->child.end()) {
+        // the next character leads nowhere
+        if (current_valid_) {
+          // we had a match along the way
+          dst = *current_valid_->val;
+          ctx.commit_rollback();
+          return result::SUCCESS;
+        }
+        return result::FAILURE;
+      } else {
+        // consume the value
+        ctx.advance();
+        next_ = &found->second;
+        if (next_->val) {
+          // we got a hit!
+          if (current_valid_) {
+            ctx.cancel_rollback();
+          }
+          if (next_->child.empty()) {
+            // nowhere to go from here
+            dst = *next_->val;
+            return result::SUCCESS;
+          }
+          current_valid_ = next_;
+          ctx.prepare_rollback();
+        }
+      }
+    }
+  }
+};
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -3078,7 +2772,7 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
  public:
   Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
       : ParserBase<CTX_T, DST_T>(ctx, dst),
-        child_parser_(std::in_place_index_t<0>(), ctx, dst, pat.operand()) {
+        child_parser_(std::in_place_index_t<0>(), ctx, dst, pat.op()) {
     constexpr bool backtrack =
         !pattern_traits<VAL_PAT_T, void>::FAILS_CLEANLY ||
         !pattern_traits<SEP_PAT_T, void>::FAILS_CLEANLY;
@@ -3097,16 +2791,15 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
     while (1) {
       if (child_parser_.index() == 0) {
         // We are parsing a value.
-        auto child_res =
-            std::get<0>(child_parser_).consume(ctx, dst, pat.operand());
+        auto child_res = std::get<0>(child_parser_).consume(ctx, dst, pat.op());
         switch (child_res) {
           case result::SUCCESS: {
             if (backtrack) {
               ctx.cancel_rollback();
               ctx.prepare_rollback();
             }
-            child_parser_ = child_parser_t(std::in_place_index_t<1>(), ctx, nil,
-                                           pat.separator());
+            child_parser_ =
+                child_parser_t(std::in_place_index_t<1>(), ctx, nil, pat.sep());
           } break;
           case result::FAILURE:
             // this will cancel the consumption of the separator if there was
@@ -3122,11 +2815,11 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
         abu_assume(child_parser_.index() == 1);
         // We are parsing a separator
         auto child_res =
-            std::get<1>(child_parser_).consume(ctx, nil, pat.separator());
+            std::get<1>(child_parser_).consume(ctx, nil, pat.sep());
         switch (child_res) {
           case result::SUCCESS:
-            child_parser_ = child_parser_t(std::in_place_index_t<0>(), ctx, dst,
-                                           pat.operand());
+            child_parser_ =
+                child_parser_t(std::in_place_index_t<0>(), ctx, dst, pat.op());
             break;
           case result::FAILURE:
             // rollback whatever the separator may have eaten
@@ -3139,6 +2832,370 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
         }
       }
     }
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename... CHILD_PATS_T>
+class Parser<CTX_T, DST_T, Alt<CHILD_PATS_T...>>
+    : public ParserBase<CTX_T, DST_T> {
+  using PAT_T = Alt<CHILD_PATS_T...>;
+  using child_pat_tuple_t = typename PAT_T::child_tuple_t;
+  using child_parsers_t = std::variant<Parser<CTX_T, DST_T, CHILD_PATS_T>...>;
+  child_parsers_t child_parsers_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T>(ctx, dst),
+        child_parsers_(std::in_place_index_t<0>(), ctx, dst, getChild<0>(pat)) {
+    if (rolls_back_at<0>()) {
+      ctx.prepare_rollback();
+    }
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    if (CTX_T::IS_RESUMABLE) {
+      return visit_val<sizeof...(CHILD_PATS_T)>(
+          child_parsers_.index(),
+          [&](auto N) { return this->consume_from<N()>(ctx, dst, pat); });
+    } else {
+      // Skip the visitation when using non_resumable parsers.
+      return consume_from<0>(ctx, dst, pat);
+    }
+  }
+  template <std::size_t ID>
+  result consume_from(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    abu_assume(child_parsers_.index() == ID);
+    auto& c_parser = std::get<ID>(child_parsers_);
+    auto const& c_pattern = getChild<ID>(pat);
+    result child_res = c_parser.consume(ctx, dst, c_pattern);
+    if (result::FAILURE == child_res) {
+      if (rolls_back_at<ID>()) {
+        ctx.commit_rollback();
+      }
+      constexpr int next_id = ID + 1;
+      // if we have reached the end of the child parsers list
+      if (sizeof...(CHILD_PATS_T) == next_id) {
+        return result::FAILURE;
+      } else {
+        constexpr int new_id = next_id < sizeof...(CHILD_PATS_T) ? next_id : 0;
+        auto const& new_c_pattern = getChild<new_id>(pat);
+        child_parsers_ = child_parsers_t(std::in_place_index_t<new_id>(),
+                                         make_parser_(ctx, dst, new_c_pattern));
+        if (rolls_back_at<new_id>()) {
+          ctx.prepare_rollback();
+        }
+        return consume_from<new_id>(ctx, dst, pat);
+      }
+    }
+    if (child_res == result::SUCCESS) {
+      if (rolls_back_at<ID>()) {
+        ctx.cancel_rollback();
+      }
+    }
+    return child_res;
+  }
+ private:
+  template <std::size_t N>
+  static constexpr bool rolls_back_at() {
+    return !pattern_traits<std::tuple_element_t<N, child_pat_tuple_t>,
+                           void>::FAILS_CLEANLY;
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename... CHILD_PATS_T>
+class Parser<CTX_T, DST_T, Seq<CHILD_PATS_T...>>
+    : public ParserBase<CTX_T, DST_T> {
+  using PAT_T = Seq<CHILD_PATS_T...>;
+  using childs_tuple_t = std::tuple<CHILD_PATS_T...>;
+  using child_parsers_t = typename seq_::SeqSubParser<
+      CTX_T, DST_T, childs_tuple_t,
+      std::index_sequence_for<CHILD_PATS_T...>>::type;
+  child_parsers_t child_parsers_;
+ public:
+  template <std::size_t ID>
+  decltype(auto) getDstFor(DST_T& dst) {
+    using accessor_t =
+        seq_::choose_dst_accessor<ID, CTX_T, DST_T, childs_tuple_t>;
+    return accessor_t::access(dst);
+  }
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T>(ctx, dst),
+        child_parsers_(
+            std::in_place_index_t<0>(),
+            std::variant_alternative_t<0, child_parsers_t>(
+                ctx, force_lvalue(getDstFor<0>(dst)), getChild<0>(pat))) {
+    reset_if_collection<DST_T>::exec(dst);
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    if (CTX_T::IS_RESUMABLE) {
+      return visit_val<sizeof...(CHILD_PATS_T)>(
+          child_parsers_.index(),
+          [&](auto N) { return this->consume_from<N()>(ctx, dst, pat); });
+    } else {
+      // Skip the visitation when using non_resumable parsers.
+      return consume_from<0>(ctx, dst, pat);
+    }
+  }
+  template <std::size_t ID>
+  result consume_from(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    abu_assume(child_parsers_.index() == ID);
+    auto& c_parser = std::get<ID>(child_parsers_);
+    auto const& c_pattern = getChild<ID>(pat);
+    result child_res =
+        c_parser.consume(ctx, force_lvalue(getDstFor<ID>(dst)), c_pattern);
+    if (result::SUCCESS == child_res) {
+      constexpr int next_id = ID + 1;
+      // if we have reached the end of the child parsers list
+      if (sizeof...(CHILD_PATS_T) == next_id) {
+        return result::SUCCESS;
+      } else {
+        // This does not matter nearly that much, as we will never enter
+        // here with a saturated value
+        // The sole purpose of the max is to prevent reset<N>() from
+        // being called with an out of bounds value,
+        // which would cause a compile-time error.
+        constexpr int new_id = next_id < sizeof...(CHILD_PATS_T) ? next_id : 0;
+        auto const& new_c_pattern = getChild<new_id>(pat);
+        child_parsers_ = child_parsers_t(
+            std::in_place_index_t<new_id>(),
+            make_parser_(ctx, force_lvalue(getDstFor<new_id>(dst)),
+                         new_c_pattern));
+        return consume_from<new_id>(ctx, dst, pat);
+      }
+    }
+    return child_res;
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ACT_T>
+class Parser<CTX_T, DST_T, Action<CHILD_PAT_T, ACT_T>>
+    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
+  using PAT_T = Action<CHILD_PAT_T, ACT_T>;
+  using child_ctx_t = CTX_T;  // for now, but I suspect this may change.
+  using landing_type_t = typename act_::determine_landing_type<ACT_T>::type;
+  using child_parser_t = Parser<child_ctx_t, landing_type_t, CHILD_PAT_T>;
+  landing_type_t landing;
+  child_parser_t child_parser_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst),
+        child_parser_(ctx, landing, pat.child_pattern()) {}
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    auto status = child_parser_.consume(ctx, landing, pat.child_pattern());
+    if (status == result::SUCCESS) {
+      act_::Dispatch<ACT_T>::template dispatch(pat.action(), std::move(landing),
+                                               dst);
+    }
+    return status;
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename ATTR_T, typename CHILD_PAT_T>
+class Parser<CTX_T, DST_T, AttrCast<ATTR_T, CHILD_PAT_T>>
+    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
+  using PAT_T = AttrCast<ATTR_T, CHILD_PAT_T>;
+  using parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
+  parser_t parser_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst),
+        parser_(ctx, dst, pat.operand()) {}
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    return parser_.consume(ctx, dst, pat.operand());
+  }
+  result peek(CTX_T& ctx, PAT_T const& pat) {
+    return parser_.peek(ctx, pat.operand());
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename CHILD_PAT_T>
+class Parser<CTX_T, Nil, Not<CHILD_PAT_T>> : public ParserBase<CTX_T, Nil> {
+  using DST_T = Nil;
+  using PAT_T = Not<CHILD_PAT_T>;
+  using child_parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
+  child_parser_t parser_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, Nil>(ctx, dst), parser_(ctx, dst, pat.operand()) {
+    constexpr bool backtrack = !pattern_traits<CHILD_PAT_T, void>::PEEKABLE;
+    if (backtrack) {
+      ctx.prepare_rollback();
+    }
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    constexpr bool backtrack = !pattern_traits<CHILD_PAT_T, void>::PEEKABLE;
+    if (backtrack) {
+      auto status = parser_.consume(ctx, dst, pat.operand());
+      switch (status) {
+        case result::SUCCESS:
+          // just commit the rollback anyways, this allows us to promise
+          // FAILS_CLEANLY
+          ctx.commit_rollback();
+          return result::FAILURE;
+        case result::FAILURE:
+          ctx.commit_rollback();
+          return result::SUCCESS;
+        case result::PARTIAL:
+          return result::PARTIAL;
+      }
+      abu_unreachable();
+    } else {
+      return peek(ctx, pat);
+    }
+  }
+  result peek(CTX_T& ctx, PAT_T const& pat) {
+    auto status = parser_.peek(ctx, pat.operand());
+    switch (status) {
+      case result::SUCCESS:
+        return result::FAILURE;
+      case result::FAILURE:
+        return result::SUCCESS;
+      case result::PARTIAL:
+        return result::PARTIAL;
+    }
+    abu_unreachable();
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHILD_PAT_T,
+          std::size_t MIN_REP, std::size_t MAX_REP>
+class Parser<CTX_T, DST_T, Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>>
+    : public ParserBase<CTX_T, DST_T> {
+  using PAT_T = Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>;
+  using child_adapter_t =
+      buf_::CollectionParserAdapter<CTX_T, DST_T, CHILD_PAT_T>;
+  std::size_t count_ = 0;
+  child_adapter_t child_parser_;
+  enum { needs_backtrack = !pattern_traits<PAT_T, void>::FAILS_CLEANLY };
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T>(ctx, dst),
+        child_parser_(ctx, dst, pat.operand()) {
+    dst.clear();
+    if (needs_backtrack) {
+      ctx.prepare_rollback();
+    }
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    while (1) {
+      auto child_res = child_parser_.consume(ctx, dst, pat.operand());
+      switch (child_res) {
+        case result::FAILURE:
+          // cancel the child's data consumption
+          // Technically, we could cancel the rollback in the failure branch,
+          // but guaranteeing FAILS_CLEANLY is better.
+          if (needs_backtrack) {
+            ctx.commit_rollback();
+          }
+          if (count_ >= MIN_REP) {
+            return result::SUCCESS;
+          } else {
+            return result::FAILURE;
+          }
+        case result::PARTIAL:
+          return result::PARTIAL;
+        case result::SUCCESS:
+          count_++;
+          if (needs_backtrack) {
+            ctx.cancel_rollback();
+          }
+          if (MAX_REP != 0 && count_ == MAX_REP) {
+            return result::SUCCESS;
+          }
+          if (needs_backtrack) {
+            ctx.prepare_rollback();
+          }
+          // If we are still going, then we need to reset the child's parser
+          child_parser_ = child_adapter_t(ctx, dst, pat.operand());
+      }
+    }
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ATTR_T>
+class Parser<CTX_T, DST_T, Recur<CHILD_PAT_T, ATTR_T>>
+    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
+  using PAT_T = Recur<CHILD_PAT_T, ATTR_T>;
+  using operand_pat_t = typename PAT_T::operand_pat_t;
+  using operand_parser_t = Parser<CTX_T, DST_T, operand_pat_t>;
+  std::unique_ptr<operand_parser_t> child_parser_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
+      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst) {
+    // We do not create the child parser here, since this is a recursive
+    // process.
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    if (!child_parser_) {
+      child_parser_ =
+          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
+    }
+    return child_parser_->consume(ctx, dst, pat.operand());
+  }
+};
+template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ATTR_T>
+class Parser<CTX_T, DST_T, WeakRecur<CHILD_PAT_T, ATTR_T>>
+    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
+  using PAT_T = WeakRecur<CHILD_PAT_T, ATTR_T>;
+  using operand_pat_t = typename PAT_T::operand_pat_t;
+  using operand_parser_t = Parser<CTX_T, DST_T, operand_pat_t>;
+  std::unique_ptr<operand_parser_t> child_parser_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
+      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst) {
+    // We do not create the child parser here, since this is a recursive
+    // process.
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    if (!child_parser_) {
+      child_parser_ =
+          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
+    }
+    return child_parser_->consume(ctx, dst, pat.operand());
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename SKIP_T>
+class Parser<CTX_T, DST_T, WithSkipper<CHILD_PAT_T, SKIP_T>>
+    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
+  // PARSER_OPT_NO_SKIP because we need to kill any existing skipper
+  using PAT_T = WithSkipper<CHILD_PAT_T, SKIP_T>;
+  using sub_ctx_t = SkipperAdapter<CTX_T, SKIP_T>;
+  Parser<sub_ctx_t, DST_T, CHILD_PAT_T> child_parser_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst),
+        child_parser_(force_lvalue(sub_ctx_t(ctx, pat.getSkip())), dst,
+                      pat.getChild()) {}
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    sub_ctx_t sub_ctx(ctx, pat.getSkip());
+    return child_parser_.consume(sub_ctx, dst, pat.getChild());
   }
 };
 }  // namespace ABULAFIA_NAMESPACE

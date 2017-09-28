@@ -27,13 +27,13 @@ set_target_properties(gmock_main PROPERTIES FOLDER "gtest")
 set_target_properties(gtest PROPERTIES FOLDER "gtest")
 set_target_properties(gtest_main PROPERTIES FOLDER "gtest")
 
+
 # List of abulafia headers
 FILE(GLOB_RECURSE
   ABULAFIA_HEADERS_GLOBBED
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
 )
-
 
 SET(ABULAFIA_HEADERS "")
 FOREACH(f ${ABULAFIA_HEADERS_GLOBBED})

@@ -8,7 +8,6 @@
 #ifndef ABULAFIA_PARSERS_COROUTINE_LIST_H_
 #define ABULAFIA_PARSERS_COROUTINE_LIST_H_
 
-
 #include "abulafia/config.h"
 
 #include "abulafia/patterns/binary/list.h"
@@ -36,7 +35,7 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
  public:
   Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
       : ParserBase<CTX_T, DST_T>(ctx, dst),
-        child_parser_(std::in_place_index_t<0>(), ctx, dst, pat.operand()) {
+        child_parser_(std::in_place_index_t<0>(), ctx, dst, pat.op()) {
     constexpr bool backtrack =
         !pattern_traits<VAL_PAT_T, void>::FAILS_CLEANLY ||
         !pattern_traits<SEP_PAT_T, void>::FAILS_CLEANLY;
@@ -60,8 +59,7 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
     while (1) {
       if (child_parser_.index() == 0) {
         // We are parsing a value.
-        auto child_res =
-            std::get<0>(child_parser_).consume(ctx, dst, pat.operand());
+        auto child_res = std::get<0>(child_parser_).consume(ctx, dst, pat.op());
         switch (child_res) {
           case result::SUCCESS: {
             if (backtrack) {
@@ -69,8 +67,8 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
               ctx.prepare_rollback();
             }
 
-            child_parser_ = child_parser_t(std::in_place_index_t<1>(), ctx, nil,
-                                           pat.separator());
+            child_parser_ =
+                child_parser_t(std::in_place_index_t<1>(), ctx, nil, pat.sep());
           } break;
           case result::FAILURE:
             // this will cancel the consumption of the separator if there was
@@ -86,11 +84,11 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
         abu_assume(child_parser_.index() == 1);
         // We are parsing a separator
         auto child_res =
-            std::get<1>(child_parser_).consume(ctx, nil, pat.separator());
+            std::get<1>(child_parser_).consume(ctx, nil, pat.sep());
         switch (child_res) {
           case result::SUCCESS:
-            child_parser_ = child_parser_t(std::in_place_index_t<0>(), ctx, dst,
-                                           pat.operand());
+            child_parser_ =
+                child_parser_t(std::in_place_index_t<0>(), ctx, dst, pat.op());
             break;
           case result::FAILURE:
             // rollback whatever the separator may have eaten

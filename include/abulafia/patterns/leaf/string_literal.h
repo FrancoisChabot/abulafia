@@ -77,42 +77,6 @@ struct pat_attr_t<StringLiteral<T>, CTX_T> {
   using attr_type = Nil;
 };
 
-template <typename CTX_T, typename DST_T, typename CHAR_T>
-class Parser<CTX_T, DST_T, StringLiteral<CHAR_T>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = StringLiteral<CHAR_T>;
-
-  typename std::basic_string<CHAR_T>::const_iterator next_expected_;
-
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst), next_expected_(pat.begin()) {}
-
-  result consume(CTX_T& ctx, Nil&, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-
-    while (1) {
-      if (next_expected_ == pat.end()) {
-        return result::SUCCESS;
-      }
-
-      if (ctx.empty()) {
-        return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
-      }
-
-      auto next = ctx.next();
-      if (next == *next_expected_) {
-        ctx.advance();
-        ++next_expected_;
-      } else {
-        return result::FAILURE;
-      }
-    }
-  }
-};
-
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

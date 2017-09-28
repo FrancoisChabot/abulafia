@@ -80,56 +80,6 @@ auto weaken_recur(PAT_T const& pat) {
   return transform(pat, transformation);
 }
 
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ATTR_T>
-class Parser<CTX_T, DST_T, Recur<CHILD_PAT_T, ATTR_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  using PAT_T = Recur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename PAT_T::operand_pat_t;
-  using operand_parser_t = Parser<CTX_T, DST_T, operand_pat_t>;
-
-  std::unique_ptr<operand_parser_t> child_parser_;
-
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst) {
-    // We do not create the child parser here, since this is a recursive
-    // process.
-  }
-
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (!child_parser_) {
-      child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
-    }
-    return child_parser_->consume(ctx, dst, pat.operand());
-  }
-};
-
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ATTR_T>
-class Parser<CTX_T, DST_T, WeakRecur<CHILD_PAT_T, ATTR_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  using PAT_T = WeakRecur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename PAT_T::operand_pat_t;
-  using operand_parser_t = Parser<CTX_T, DST_T, operand_pat_t>;
-
-  std::unique_ptr<operand_parser_t> child_parser_;
-
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst) {
-    // We do not create the child parser here, since this is a recursive
-    // process.
-  }
-
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (!child_parser_) {
-      child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
-    }
-    return child_parser_->consume(ctx, dst, pat.operand());
-  }
-};
-
 template <typename PAT_T, typename ATTR_T, typename CTX_T>
 struct pat_attr_t<Recur<PAT_T, ATTR_T>, CTX_T> {
   using attr_type = ATTR_T;

@@ -26,28 +26,6 @@ class AttrCast : public Pattern<AttrCast<ATTR_T, PAT_T>> {
   PAT_T const& operand() const { return pat_; }
 };
 
-template <typename CTX_T, typename DST_T, typename ATTR_T, typename CHILD_PAT_T>
-class Parser<CTX_T, DST_T, AttrCast<ATTR_T, CHILD_PAT_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  using PAT_T = AttrCast<ATTR_T, CHILD_PAT_T>;
-  using parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
-
-  parser_t parser_;
-
- public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst),
-        parser_(ctx, dst, pat.operand()) {}
-
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    return parser_.consume(ctx, dst, pat.operand());
-  }
-
-  result peek(CTX_T& ctx, PAT_T const& pat) {
-    return parser_.peek(ctx, pat.operand());
-  }
-};
-
 template <typename ATTR_T, typename PAT_T>
 inline auto cast(PAT_T&& pat) {
   using real_pat_t = pattern_t<PAT_T>;

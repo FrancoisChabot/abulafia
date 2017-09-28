@@ -30,8 +30,8 @@ class List : public Pattern<List<VAL_PAT_T, SEP_PAT_T>> {
   List(val_pat_t val_pat, sep_pat_t sep)
       : val_(std::move(val_pat)), sep_(std::move(sep)) {}
 
-  val_pat_t const& operand() const { return val_; }
-  sep_pat_t const& separator() const { return sep_; }
+  val_pat_t const& op() const { return val_; }
+  sep_pat_t const& sep() const { return sep_; }
 
  private:
   VAL_PAT_T val_;

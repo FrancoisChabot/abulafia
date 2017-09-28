@@ -36,20 +36,6 @@ struct pat_attr_t<Fail, CTX_T> {
   using attr_type = Nil;
 };
 
-template <typename CTX_T>
-class Parser<CTX_T, Nil, Fail>
-    : public ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP> {
-  using PAT_T = Fail;
-
- public:
-  Parser(CTX_T& ctx, Nil&, PAT_T const&)
-      : ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP>(ctx, nil) {}
-
-  result consume(CTX_T&, Nil&, PAT_T const&) { return result::FAILURE; }
-
-  result peek(CTX_T&, PAT_T const&) { return result::FAILURE; }
-};
-
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif
