@@ -26,11 +26,11 @@ before_install:
 script:
     - mkdir build
     - cd build
-    - cp ../include/abulafia_all.h ./abulafia_all_ref.h
+    - cp ../include/abulafia/abulafia_all.h ./abulafia_all_ref.h
     - cmake -DCMAKE_VERBOSE_MAKEFILE=ON ..
     - cmake --build .
     - ctest
-    - cmp --silent ../include/abulafia_all.h ./abulafia_all_ref.h
+    - cmp --silent ../include/abulafia/abulafia_all.h ./abulafia_all_ref.h
 
 after_success:
   - coveralls --root .. -E ".*googletest.*" -E ".*CMakeFiles.*" -E ".*tests/.*.cpp.*"
