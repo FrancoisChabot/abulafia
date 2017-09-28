@@ -20,7 +20,7 @@ endif(MSVC)
 set(INSTALL_GTEST OFF CACHE BOOL "Do not install gtest" FORCE)
 set(INSTALL_GMOCK OFF CACHE BOOL "Do not install gmock" FORCE)
 
-add_subdirectory(googletest)
+add_subdirectory(third_party/googletest)
 
 set_target_properties(gmock PROPERTIES FOLDER "gtest")
 set_target_properties(gmock_main PROPERTIES FOLDER "gtest")
