@@ -23,6 +23,15 @@ Abulafia is a C++ expression templates library that generates parsers. The idea 
 - [Cheatsheet](https://francoischabot.github.io/abulafia/reference/)
 - [Single Header](https://raw.githubusercontent.com/FrancoisChabot/abulafia/single_header/include/abulafia/abulafia_all.h)
 
+**Warning**
+
+Abulafia is still in early development. While many features work as intended, there are still a LOT of work to be done before it can 
+be considered usable in a real environment.
+
+At the moment, validating parsers (parsers with `Nil` as the destination type) "should" work fine accross the board. Feel free to report any and all bugs you encounter related to them. 
+
+Parsing to dst still needs a lot of love. The sequence pattern in particular only handles very basic cases right now.
+
 ## Requirements
 
 Abulafia currently requires a C++17 compiler. The level of C++17 compatibility required will be kept at the lowest bar set by the current release of the following compilers:
