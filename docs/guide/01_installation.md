@@ -14,11 +14,13 @@ Since Abulafia is a header-only library, all you need to do is get the source co
 
 This can be as simple as copying the include/abulafia directory to your own source tree.
 
+We also maintain a single-header version of the library. You can build it yourself, using the `generate_all_include` build target, or get it from the [github branch](https://github.com/FrancoisChabot/abulafia/tree/single_header), where it is kept in sync with the master branch.
+
 ## Configuration
 
 Since Abulafia is a template library, most configuration options are passed as template arguments, which allows multiple configurations of Abulafia to live side-by-side in the same application.
 
-However, some configuration options cannot be exposed this way. These can be found in the `abulafia/config` file, and can be manipulated by preprocessor macros (or outright editing of the config.h file).
+However, some configuration options cannot be exposed this way. These can be found in the `abulafia/config.h` file, and can be manipulated by preprocessor macros (or outright editing of the config.h file).
 
 As of right now, here are the available configuration options:
 

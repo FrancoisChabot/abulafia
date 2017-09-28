@@ -11,31 +11,42 @@ repo_url: 'https://github.com/FrancoisChabot/abulafia'
 
 markdown_extensions:
   - footnotes
+  - codehilite
 pages:
 - Home: 'index.md'
 - User Guide:
+  - 'Introduction': 'guide/00_introduction.md'
   - 'Installation': 'guide/01_installation.md'
   - 'Parsers': 'guide/02_parsers.md'
   - 'Skippers': 'guide/03_skippers.md'
+  - 'Resumable Parsers': 'guide/04_resumable_parsers.md'
+  - 'Actions': 'guide/05_actions.md'
+  - 'Recursivity': 'guide/06_recursivity.md'
+  - 'Advanced' :
+    - 'Writing Parsers' : 'guide/advanced/00_writing_parsers.md'
 - Reference:
-  - 'Quick Reference': 'patterns/reference.md'
-  - 'Leaf parsers':
-      - 'Integer' : 'patterns/leaf/numeric/int.md'
-      - 'Character' : 'patterns/leaf/character.md'
-      - 'End-of-input' : 'patterns/leaf/eoi.md'
-      - 'Fail' : 'patterns/leaf/fail.md'
-      - 'Literal' : 'patterns/leaf/literal.md'
-      - 'Pass' : 'patterns/leaf/pass.md'
-      - 'Symbol' : 'patterns/leaf/Symbol.md'
-  - 'Unary parsers': 
-    - 'not' : 'patterns/unary/not.md'
-    - 'repeat' : 'patterns/unary/repeat.md'
-  - 'Binary Parsers': 
-    - 'except' : 'patterns/binary/except.md'
-    - 'list' : 'patterns/binary/list.md'
-  - 'Nary parsers': 
-    - 'Alternative' : 'patterns/nary/alternative.md'
-    - 'Sequence' : 'patterns/nary/sequence.md'
-  - 'Special parsers':
-    - 'Recursive' : 'patterns/recur.md'
-    - 'Semantic Action' : 'patterns/action.md'
+  - 'Quick Reference': 'reference.md'
+  - 'Data Sources':
+    - 'Single Forward' : 'data_sources/single_forward.md'
+    - 'Container Sequence' : 'data_sources/container_sequence.md'
+  - 'Patterns':
+    - 'Leaf':
+        - 'Integer' : 'patterns/leaf/numeric/int.md'
+        - 'Character' : 'patterns/leaf/character.md'
+        - 'End-of-input' : 'patterns/leaf/eoi.md'
+        - 'Fail' : 'patterns/leaf/fail.md'
+        - 'Literal' : 'patterns/leaf/literal.md'
+        - 'Pass' : 'patterns/leaf/pass.md'
+        - 'Symbol' : 'patterns/leaf/Symbol.md'
+    - 'Unary': 
+      - 'not' : 'patterns/unary/not.md'
+      - 'repeat' : 'patterns/unary/repeat.md'
+    - 'Binary': 
+      - 'except' : 'patterns/binary/except.md'
+      - 'list' : 'patterns/binary/list.md'
+    - 'Nary': 
+      - 'Alternative' : 'patterns/nary/alternative.md'
+      - 'Sequence' : 'patterns/nary/sequence.md'
+    - 'Special':
+      - 'Recursive' : 'patterns/recur.md'
+      - 'Semantic Action' : 'patterns/action.md'

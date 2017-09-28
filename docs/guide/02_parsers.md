@@ -12,15 +12,18 @@ Patterns describe the expected structure of the data we want to parse. They can 
 
 Because composed patterns generate very complicated types through templates, they are generally stored in type-infered variables:
 
-    auto my_pattern = int_ >> ',' >> *char('a', 'z');
+```c++
+auto my_pattern = int_ >> ',' >> *char('a', 'z');
+```
 
 Furthermore, patterns are composed using **value semantics**. This means that writing reusable grammars is mostly a matter of creating a function that returns the proper pattern. This is the prefered way to create custom pattern types.[^1]
-
-    // Parses hexadecimal numbers, expecting them to be prefixed by the standard 0x
-    template<std::size_t MIN_DIGITS, std::size_t MAX_DIGITS>
-    auto prefixed_hex() {
-      return (lit("0x") | lit("0X") >> Uint<16, MIN_DIGITS, MAX_DIGITS>();
-    }
+```c++
+// Parses hexadecimal numbers, expecting them to be prefixed by the standard 0x
+template<std::size_t MIN_DIGITS, std::size_t MAX_DIGITS>
+auto prefixed_hex() {
+  return (lit("0x") | lit("0X") >> Uint<16, MIN_DIGITS, MAX_DIGITS>();
+}
+```
 
 ## Contexts
 
@@ -34,28 +37,24 @@ Quite simply where the parser will store any and all extracted data. A parser wi
 
 For example:
 
-    // A list of integers
-    auto pattern = *int_;
+```c++
+// A list of integers
+auto pattern = *int_;
 
-    // These are all valid dst for our pattern
-    std::vector<int> dst_1;
-    std::vector<float> dst_2;
-    std::list<std::uint64_t> dst_3;
+// These are all valid dst for our pattern
+std::vector<int> dst_1;
+std::vector<float> dst_2;
+std::list<std::uint64_t> dst_3;
+```
 
 ### The Nil Destination
 
 Abulafia provides a special type: `Nil`, with a matching constant: `nil`, that represents the concept of nothingness. Every pattern will always accept `nil` as a valid destination. Its use causes all parsers to stop generating any data[^2].
 
 
-[^1]:
-    Abulafia itself uses this approach when it makes sense. Have a look at `abulafia/patterns/leaf/char_literal.h` for example.
-[^2]:
-    This is a bit of a oversimplification. The parsers still generate data, but `Nil`'s assignments are all no-ops, so the compiler optimizes 
-    away the entire assignment routine of the parsers.
-
 ## Putting it all together
 
-```
+```c++
 #include <string>
 #include <vector>
 #include <cassert>
@@ -65,10 +64,11 @@ int main() {
   std::string data = "123456";
 
   // pattern
-  // A list of two-digits decimal-10 unsigned integer
+  // A list of two-digits decimal-10 unsigned integers
   auto pattern = *abu::Uint<10,2,2>; 
 
   // context
+  // Consume a pair of `std::string` iterators all at once
   abu::SingleForwardContext<std::string::const_iterator> context(data.begin(), 
                                                                  data.end());
  
@@ -76,12 +76,12 @@ int main() {
   std::vector<unsigned short> destination;
  
 
-  // together, they make a parser
+  // Together, they make a parser
   auto parser = abu::make_parser(pattern, context, destination);
 
   auto status = parser.consume();
 
-  assert(status == abu::result::SUCCESS);
+  assert(status == abu::Result::SUCCESS);
   assert(destination.size() == 3);
   assert(destination[0] == 12);
   assert(destination[1] == 34);
@@ -92,18 +92,20 @@ int main() {
 ```
 
 ## Making it cleaner
-This is all fairly verbose. Since parsing a container all at once is such a common pattern, Abulafia provides a shorthand method:
+This is all fairly verbose. Since parsing a container all at once is such a common pattern, Abulafia provides a shorthand method.
+Simple patterns can also be inlined directly into the parse call.
 
-```
+```c++
 #include <string>
 #include <vector>
 #include <cassert>
+
 #include "abulafia/abulafia.h"
 
 int main() {
   std::vector<unsigned short> destination;
 
-  auto status = abu::parse(*abu::Uint<10,2,2>,
+  auto status = abu::parse(*abu::Uint<10, 2, 2>,
                            "123456",
                            destination);
 
@@ -112,3 +114,9 @@ int main() {
   return 0;
 }
 ```
+
+[^1]:
+    Abulafia itself uses this approach when it makes sense. Have a look at `abulafia/patterns/leaf/char_literal.h` for example.
+[^2]:
+    This is a bit of a oversimplification. The parsers still generate data, but `Nil`'s assignments are all no-ops, so the compiler optimizes 
+    away the entire assignment routine of the parsers.
