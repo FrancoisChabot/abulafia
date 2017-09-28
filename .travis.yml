@@ -6,6 +6,13 @@ branches:
   except:
   - gh-pages
 
+addons:
+  apt:
+    sources:
+        - deadsnakes
+    packages:
+        - python3.4
+
 matrix:
   include:
     - os: linux
@@ -20,8 +27,9 @@ matrix:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 before_install:
+    - alias python=python3
     - eval "${MATRIX_EVAL}"
-    - pip install --user cpp-coveralls
+    - pip3 install --user cpp-coveralls
 
 script:
     - mkdir build
