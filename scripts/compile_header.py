@@ -1,9 +1,7 @@
 import argparse
 import os
 import sys
-
-if sys.version_info[0] < 3:
-    raise Exception("Must be using Python 3")
+from __future__ import print_function
 
 parser = argparse.ArgumentParser(description='Compiles a header by #including all local files.')
 parser.add_argument('--output', help='where to save the result', required=True)
