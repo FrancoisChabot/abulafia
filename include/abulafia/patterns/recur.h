@@ -63,7 +63,7 @@ template <typename CHILD_PAT_T, typename ATTR_T>
 struct RecurWeakener {
   template <typename T>
   auto operator()(T const& rhs) const {
-    return convert(rhs, *this);
+    return transform(rhs, *this);
   }
 
   auto operator()(Recur<CHILD_PAT_T, ATTR_T> const& tgt_recur) const {
@@ -77,7 +77,7 @@ auto weaken_recur(PAT_T const& pat) {
   using ATTR_T = typename RECUR_T::attr_t;
   RecurWeakener<CHILD_PAT_T, ATTR_T> transformation;
 
-  return convert(pat, transformation);
+  return transform(pat, transformation);
 }
 
 template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ATTR_T>
@@ -312,15 +312,17 @@ struct pattern_traits<
 
 }  // namespace ABULAFIA_NAMESPACE
 
-#define ABU_Recur_define(var, RECUR_TAG, pattern)                  \
-  using abu_##RECUR_TAG##_recur_t = decltype(var);                 \
-  using abu_##RECUR_TAG##_weakened_t =                             \
-      decltype(ABULAFIA_NAMESPACE :: weaken_recur<abu_##RECUR_TAG##_recur_t>(pattern));  \
-  struct RECUR_TAG : public abu_##RECUR_TAG##_weakened_t {         \
-    using pattern_t = abu_##RECUR_TAG##_weakened_t;                \
-    RECUR_TAG(decltype(pattern) const & p)                         \
-        : pattern_t(ABULAFIA_NAMESPACE :: weaken_recur<abu_##RECUR_TAG##_recur_t>(p)) {} \
-  };                                                               \
+#define ABU_Recur_define(var, RECUR_TAG, pattern)                             \
+  using abu_##RECUR_TAG##_recur_t = decltype(var);                            \
+  using abu_##RECUR_TAG##_weakened_t = decltype(                              \
+      ABULAFIA_NAMESPACE ::weaken_recur<abu_##RECUR_TAG##_recur_t>(pattern)); \
+  struct RECUR_TAG : public abu_##RECUR_TAG##_weakened_t {                    \
+    using pattern_t = abu_##RECUR_TAG##_weakened_t;                           \
+    RECUR_TAG(decltype(pattern) const & p)                                    \
+        : pattern_t(                                                          \
+              ABULAFIA_NAMESPACE ::weaken_recur<abu_##RECUR_TAG##_recur_t>(   \
+                  p)) {}                                                      \
+  };                                                                          \
   var = RECUR_TAG(pattern);
 
 #endif

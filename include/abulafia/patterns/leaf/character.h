@@ -19,9 +19,6 @@
 #include "abulafia/parser.h"
 #include "abulafia/pattern.h"
 
-#include <ios>
-#include <iostream>
-
 namespace ABULAFIA_NAMESPACE {
 
 // The Character pattern checks the next token against its character
@@ -73,7 +70,7 @@ enable_if_t<char_set::is_char_set<decay_t<T>>::value, Char<decay_t<T>>> char_(
 }
 
 template <typename CHAR_T, std::size_t LEN>
-inline auto char_(const CHAR_T(&l)[LEN]) {
+inline auto char_(const CHAR_T (&l)[LEN]) {
   return char_(char_set::set(l));
 }
 

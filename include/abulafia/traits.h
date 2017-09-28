@@ -68,7 +68,7 @@ inline auto make_pattern(T&& p) {
 }
 
 template <typename T, typename CB_T>
-auto convert(T const& tgt, CB_T const&) {
+auto transform(T const& tgt, CB_T const&) {
   return tgt;
 }
 

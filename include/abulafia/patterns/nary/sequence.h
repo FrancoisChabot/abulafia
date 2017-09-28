@@ -348,7 +348,7 @@ class Parser<CTX_T, DST_T, Seq<CHILD_PATS_T...>>
         child_parsers_ = child_parsers_t(
             std::in_place_index_t<new_id>(),
             make_parser_(ctx, force_lvalue(getDstFor<new_id>(dst)),
-                        new_c_pattern));
+                         new_c_pattern));
 
         return consume_from<new_id>(ctx, dst, pat);
       }

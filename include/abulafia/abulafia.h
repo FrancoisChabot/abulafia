@@ -64,4 +64,6 @@
 
 #include "abulafia/patterns.h"
 
+// Parsers
+#include "abulafia/parsers/coroutine/all.h"
 #endif
