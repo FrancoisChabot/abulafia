@@ -59,7 +59,6 @@ Abulafia is a headers-only library. In order to use it, you just have to make th
 ## Usage
 
 With abulafia, you can write surprisingly complex parsers in a few, very readable, lines of code:
-[comment]: <If you change this code, make sure tests/documentation/test_readme.cpp is updated to match.>
 ```c++
 
 #include "abulafia/abulafia.h"
