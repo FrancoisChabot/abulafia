@@ -59,7 +59,7 @@ endif()
 
 SET(ALL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia_all.h)
 
-find_package( PythonInterp 3.5 REQUIRED )
+find_package( PythonInterp 3 REQUIRED )
 
 add_custom_command(
   OUTPUT ${ALL_FILE}
