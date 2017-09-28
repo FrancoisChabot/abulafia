@@ -59,11 +59,13 @@ endif()
 
 SET(ALL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia_all.h)
 
+find_package( PythonInterp 3.5 REQUIRED )
+
 add_custom_command(
   OUTPUT ${ALL_FILE}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
   DEPENDS ${HEADER_PATHS}
-  COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/scripts/compile_header.py 
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/compile_header.py 
     --output=${ALL_FILE}
     --input=${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia.h)
 
