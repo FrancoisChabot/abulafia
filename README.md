@@ -1,5 +1,5 @@
 # Abulafia
-A C++ parsing framework
+A standalone C++ parsing framework
 
 [![build][badge.build]][build]
 [![build_win][badge.build_win]][build_win]
