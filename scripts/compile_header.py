@@ -1,6 +1,9 @@
+from __future__ import print_function
+
 import argparse
 import os
 import sys
+
 
 parser = argparse.ArgumentParser(description='Compiles a header by #including all local files.')
 parser.add_argument('--output', help='where to save the result', required=True)

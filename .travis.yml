@@ -5,7 +5,6 @@ dist: trusty
 branches:
   except:
   - gh-pages
-  - single_header
 
 matrix:
   include:
@@ -21,15 +20,19 @@ matrix:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 before_install:
-    - eval "${MATRIX_EVAL}"
-    - pip install --user cpp-coveralls
+  - eval "${MATRIX_EVAL}"
+  - pip install --user cpp-coveralls
+
 
 script:
     - mkdir build
     - cd build
+    - cp ../include/abulafia/abulafia_all.h ./abulafia_all_ref.h
+    - rm ../include/abulafia/abulafia_all.h
     - cmake -DCMAKE_VERBOSE_MAKEFILE=ON ..
     - cmake --build .
     - ctest
+    - cmp --silent ../include/abulafia/abulafia_all.h ./abulafia_all_ref.h
 
 after_success:
   - coveralls --root .. -E ".*googletest.*" -E ".*CMakeFiles.*" -E ".*tests/.*.cpp.*"
