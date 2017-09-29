@@ -16,7 +16,3 @@ If you are lazy, you can simply clang-format everything:
     find include -iname *.h | xargs clang-format -i -style=file
     find tests -iname *.h -o -iname *.cpp | xargs clang-format -i -style=file
     find examples -iname *.h -o -iname *.cpp | xargs clang-format -i -style=file
-
-## Coverage testing
-
-Automated coverage testing has been enabled, but please do not realy too much on it. However, due to the highly templated nature of Abulafia, its important not to rely on it too much.

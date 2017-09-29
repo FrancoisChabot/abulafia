@@ -3,7 +3,6 @@ A standalone C++ parsing framework
 
 [![build][badge.build]][build]
 [![build_win][badge.build_win]][build_win]
-[![coverage][badge.coverage]][coverage]
 [![on-godbolt][badge.on-godbolt]][on-godbolt]
 
 [badge.build]: https://travis-ci.org/FrancoisChabot/abulafia.svg?branch=master

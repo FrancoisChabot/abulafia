@@ -21,8 +21,6 @@ matrix:
 
 before_install:
   - eval "${MATRIX_EVAL}"
-  - pip install --user cpp-coveralls
-
 
 script:
     - mkdir build
@@ -33,9 +31,6 @@ script:
     - cmake --build .
     - ctest
     - cmp --silent ../include/abulafia/abulafia_all.h ./abulafia_all_ref.h
-
-after_success:
-  - coveralls --root .. -E ".*googletest.*" -E ".*CMakeFiles.*" -E ".*tests/.*.cpp.*"
 
 notifications:
   email: false
