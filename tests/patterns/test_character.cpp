@@ -53,18 +53,6 @@ TEST(test_char, char_range) {
   EXPECT_EQ(parse(num, "\0"), result::FAILURE);
 }
 
-TEST(test_char, char_set) {
-  auto num = char_({'a', 'l', 'z'});
-
-  EXPECT_EQ(parse(num, "a"), result::SUCCESS);
-  EXPECT_EQ(parse(num, "l"), result::SUCCESS);
-  EXPECT_EQ(parse(num, "z"), result::SUCCESS);
-
-  EXPECT_EQ(parse(num, "b"), result::FAILURE);
-  EXPECT_EQ(parse(num, "0"), result::FAILURE);
-  EXPECT_EQ(parse(num, "g"), result::FAILURE);
-}
-
 TEST(test_char, implicit_char_set) {
   auto space = char_set::set(" \r\n\t");
 

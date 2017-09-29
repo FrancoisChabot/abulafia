@@ -10,7 +10,9 @@
 #include <bitset>
 #include <cassert>
 #include <cstddef>
+#include <cstring>
 #include <exception>
+#include <limits>
 #include <list>
 #include <map>
 #include <memory>
@@ -31,23 +33,33 @@
 
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
+struct CharacterSet {};
 template <typename T>
-struct is_char_set : public std::false_type {};
+struct is_char_set : public std::is_base_of<CharacterSet, T> {};
+template<typename T, typename Enable=void>
+struct to_char_set_impl;
+template<typename T>
+struct to_char_set_impl<T, std::enable_if_t<is_char_set<T>::value>> {
+  static T const& convert(T const& v) {
+    return v;
+  }
+};
+template<typename T>
+auto to_char_set(T v) {
+  return to_char_set_impl<T>::convert(v);
+}
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 template <typename CHAR_T>
-struct Any {
+struct Any : public CharacterSet {
   using char_t = CHAR_T;
-  template <typename T>
-  bool is_valid(T const &) const {
+  bool is_valid(char_t const &) const {
     return true;
   }
 };
-template <typename T>
-struct is_char_set<Any<T>> : public std::true_type {};
 template <typename CHAR_T>
 Any<CHAR_T> any;
 }  // namespace char_set
@@ -87,18 +99,15 @@ using callable_result_t = typename function_traits<CALLABLE_T>::result_type;
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 template <typename CHAR_T, typename CB_T>
-struct DelegatedSet {
+struct DelegatedSet : public CharacterSet {
   using char_t = CHAR_T;
   explicit DelegatedSet(CB_T cb) : cb_(std::move(cb)) {}
-  template <typename T>
-  bool is_valid(T c) const {
+  bool is_valid(char_t const& c) const {
     return cb_(c);
   }
  private:
   CB_T cb_;
 };
-template <typename CHAR_T, typename CB_T>
-struct is_char_set<DelegatedSet<CHAR_T, CB_T>> : public std::true_type {};
 template <typename CHAR_T, typename CB_T>
 auto delegated(CB_T const& cb) {
   return DelegatedSet<CHAR_T, CB_T>(cb);
@@ -114,20 +123,23 @@ auto delegated(CB_T const& cb) {
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 template <typename ARG_T>
-struct Not {
+struct Not : public CharacterSet {
   using char_t = typename ARG_T::char_t;
   explicit Not(ARG_T arg) : arg_(std::move(arg)) {}
-  template <typename T>
-  bool is_valid(T const& c) const {
+  bool is_valid(char_t const& c) const {
     return !arg_.is_valid(c);
   }
  private:
   ARG_T arg_;
-  static_assert(is_char_set<ARG_T>::value,
-                "Trying to invert something that's not a character set.");
+  static_assert(is_char_set<ARG_T>::value);
 };
 template <typename ARG_T>
 struct is_char_set<Not<ARG_T>> : public std::true_type {};
+template <typename ARG_T,
+          typename Enable = std::enable_if_t<is_char_set<ARG_T>::value>>
+Not<ARG_T> operator~(ARG_T arg) {
+  return Not<ARG_T>{std::move(arg)};
+}
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -169,25 +181,32 @@ struct reset_if_collection<T, enable_if_t<is_collection<T>::value>> {
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 template <typename LHS_T, typename RHS_T>
-struct Or {
+struct Or : public CharacterSet {
   using char_t = typename LHS_T::char_t;
   Or(LHS_T lhs, RHS_T rhs) : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
-  template <typename T>
-  bool is_valid(T const& c) const {
+  bool is_valid(char_t const& c) const {
     return lhs_.is_valid(c) || rhs_.is_valid(c);
   }
  private:
   LHS_T lhs_;
   RHS_T rhs_;
-  static_assert(is_char_set<LHS_T>::value,
-                "Trying to Or something that's not a character set.");
-  static_assert(is_char_set<RHS_T>::value,
-                "Trying to Or something that's not a character set.");
-  static_assert(is_same<typename LHS_T::char_t, typename RHS_T::char_t>::value,
-                "character set mismatch");
+  static_assert(is_char_set<LHS_T>::value);
+  static_assert(is_char_set<RHS_T>::value);
+  static_assert(is_same<
+                  typename LHS_T::char_t,
+                  typename RHS_T::char_t>::value);
 };
 template <typename LHS_T, typename RHS_T>
-struct is_char_set<Or<LHS_T, RHS_T>> : public std::true_type {};
+auto or_impl(LHS_T lhs, RHS_T rhs) {
+  auto lhs_cs = to_char_set(std::decay_t<LHS_T>(lhs));
+  auto rhs_cs = to_char_set(std::decay_t<RHS_T>(rhs));
+  return Or<decltype(lhs_cs), decltype(rhs_cs)>(lhs_cs, rhs_cs) ;
+}
+template <typename LHS_T, typename RHS_T, typename=enable_if_t<is_char_set<LHS_T>::value ||
+  is_char_set<RHS_T>::value>>
+auto operator|(LHS_T lhs, RHS_T rhs) {
+  return or_impl(lhs, rhs);
+}
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -216,11 +235,12 @@ inline __declspec(noreturn) void unreachable() {}
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 template <typename CHAR_T>
-struct Range {
+struct Range : public CharacterSet {
   using char_t = CHAR_T;
-  Range(CHAR_T b, CHAR_T e) : begin_(b), end_(e) { assert(b <= e); }
-  template <typename T>
-  bool is_valid(T const& token) const {
+  Range(CHAR_T b, CHAR_T e) : begin_(b), end_(e) {
+    assert(b <= e);
+  }
+  bool is_valid(char_t const& token) const {
     return token >= begin_ && token <= end_;
   }
  private:
@@ -231,60 +251,65 @@ template <typename CHAR_T>
 inline auto range(CHAR_T b, CHAR_T e) {
   return Range<CHAR_T>(b, e);
 }
-template <typename T>
-struct is_char_set<Range<T>> : public std::true_type {};
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 template <typename CHAR_T>
-struct Set {
+struct Set : public CharacterSet {
   using char_t = CHAR_T;
-  template <typename CONTAINER_T>
-  Set(CONTAINER_T const& c) : characters_(std::begin(c), std::end(c)) {}
+  template <typename ITE_T>
+  Set(ITE_T b, ITE_T e) : characters_(b, e) {}
   template <typename T>
-  bool is_valid(const T& character) const {
+  bool is_valid(char_t const& character) const {
     return characters_.find(character) != characters_.end();
   }
-  std::set<CHAR_T, std::less<void>> characters_;
+  std::set<CHAR_T> characters_;
 };
-template <>
-struct Set<char> {
-  using char_t = char;
-  template <typename CONTAINER_T>
-  Set(CONTAINER_T const& list) {
-    for (auto const& c : list) {
-      unsigned char pos = static_cast<unsigned char>(c);
-      characters_[pos] = true;
+template<typename CHAR_T>
+struct IndexedSet : public CharacterSet {
+  using char_t = CHAR_T;
+  template <typename ITE_T>
+  IndexedSet(ITE_T b, ITE_T e) {
+    for (; b != e; ++b ) {
+      characters_[as_index(*b)] = true;
     }
   }
-  template <typename T>
-  bool is_valid(const T& character) const {
-    unsigned char pos = static_cast<unsigned char>(character);
-    return characters_.test(pos);
+  bool is_valid(const char_t& c) const {
+    return characters_.test(as_index(c));
   }
-  std::bitset<256> characters_;
+private:
+  using unsigned_t = std::make_unsigned_t<CHAR_T>;
+  static constexpr std::size_t as_index(CHAR_T c) {
+    return unsigned_t(c);
+  }
+  std::bitset<std::numeric_limits<unsigned_t>::max()+1> characters_;
 };
-template <typename T>
-struct is_char_set<Set<T>> : public std::true_type {};
-template <typename CONTAINER_T>
-inline auto set(CONTAINER_T const& l) {
-  return Set<typename CONTAINER_T::value_type>(l);
+template <>
+struct Set<char> : public IndexedSet<char> {
+  using IndexedSet::IndexedSet;
+};
+template <typename ITE>
+auto set(ITE b, ITE e) {
+  return Set<typename ITE::value_type>(b, e);
 }
-template <typename CHAR_T, std::size_t LEN>
-inline auto set(const CHAR_T (&l)[LEN]) {
-  // The cast to std::string is important to avoid treating the trailing null as
-  // a member of the set.
-  return Set<CHAR_T>(std::string(l));
+inline auto set(char const* v) {
+  return Set<char>(v, v + std::strlen(v));
 }
+template<>
+struct to_char_set_impl<const char*, void> {
+  static Set<char> convert(char const* v) {
+    return set(v);
+  }
+};
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 template <typename CHAR_T>
-struct Single {
+struct Single : public CharacterSet {
   using char_t = CHAR_T;
   explicit Single(CHAR_T c) : character_(c) {}
   template <typename T>
@@ -294,34 +319,16 @@ struct Single {
  private:
   CHAR_T character_;
 };
-template <typename T>
-struct is_char_set<Single<T>> : public std::true_type {};
 template <typename CHAR_T>
 auto single(CHAR_T c) {
   return Single<CHAR_T>(c);
 }
-}  // namespace char_set
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-namespace char_set {
-template <typename ARG_T,
-          typename Enable = enable_if_t<is_char_set<ARG_T>::value>>
-Not<ARG_T> operator~(ARG_T arg) {
-  return Not<ARG_T>{std::move(arg)};
-}
-template <typename LHS_T, typename RHS_T,
-          typename Enable = enable_if_t<is_char_set<LHS_T>::value &&
-                                        is_char_set<RHS_T>::value>>
-Or<LHS_T, RHS_T> operator|(LHS_T lhs, RHS_T rhs) {
-  return Or<LHS_T, RHS_T>{std::move(lhs), std::move(rhs)};
-}
-template <typename LHS_T,
-          typename Enable = enable_if_t<is_char_set<LHS_T>::value>>
-auto operator|(LHS_T lhs, typename LHS_T::char_t rhs) {
-  using single_t = Single<typename LHS_T::char_t>;
-  return Or<LHS_T, single_t>{std::move(lhs), single_t(std::move(rhs))};
-}
+template<>
+struct to_char_set_impl<char, void> {
+  static Single<char> convert(char const& v) {
+    return Single<char>(v);
+  }
+};
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1430,17 +1437,12 @@ enable_if_t<char_set::is_char_set<decay_t<T>>::value, Char<decay_t<T>>> char_(
     T&& chars) {
   return Char<decay_t<T>>(forward<T>(chars));
 }
-template <typename CHAR_T, std::size_t LEN>
-inline auto char_(const CHAR_T (&l)[LEN]) {
-  return char_(char_set::set(l));
-}
 template <typename T>
 auto char_(T begin, T end) {
   return Char<char_set::Range<T>>(char_set::Range<T>(begin, end));
 }
-template <typename T>
-auto char_(std::initializer_list<T> l) {
-  return Char<char_set::Set<T>>(char_set::Set<T>(l));
+inline auto char_(const char * str) {
+  return char_(char_set::set(str));
 }
 template <typename CHAR_SET_T>
 struct expr_traits<CHAR_SET_T,

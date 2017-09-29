@@ -17,13 +17,12 @@ namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 
 template <typename LHS_T, typename RHS_T>
-struct Or {
+struct Or : public CharacterSet {
   using char_t = typename LHS_T::char_t;
 
   Or(LHS_T lhs, RHS_T rhs) : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
-  template <typename T>
-  bool is_valid(T const& c) const {
+  bool is_valid(char_t const& c) const {
     return lhs_.is_valid(c) || rhs_.is_valid(c);
   }
 
@@ -31,16 +30,28 @@ struct Or {
   LHS_T lhs_;
   RHS_T rhs_;
 
-  static_assert(is_char_set<LHS_T>::value,
-                "Trying to Or something that's not a character set.");
-  static_assert(is_char_set<RHS_T>::value,
-                "Trying to Or something that's not a character set.");
-  static_assert(is_same<typename LHS_T::char_t, typename RHS_T::char_t>::value,
-                "character set mismatch");
+  static_assert(is_char_set<LHS_T>::value);
+  static_assert(is_char_set<RHS_T>::value);
+  static_assert(is_same<
+                  typename LHS_T::char_t, 
+                  typename RHS_T::char_t>::value);
 };
 
+
 template <typename LHS_T, typename RHS_T>
-struct is_char_set<Or<LHS_T, RHS_T>> : public std::true_type {};
+auto or_impl(LHS_T lhs, RHS_T rhs) {
+
+  auto lhs_cs = to_char_set(std::decay_t<LHS_T>(lhs));
+  auto rhs_cs = to_char_set(std::decay_t<RHS_T>(rhs));
+
+  return Or<decltype(lhs_cs), decltype(rhs_cs)>(lhs_cs, rhs_cs) ;
+}
+
+template <typename LHS_T, typename RHS_T, typename=enable_if_t<is_char_set<LHS_T>::value ||
+  is_char_set<RHS_T>::value>>
+auto operator|(LHS_T lhs, RHS_T rhs) {
+  return or_impl(lhs, rhs);
+}
 
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE

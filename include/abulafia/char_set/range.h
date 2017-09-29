@@ -17,13 +17,14 @@ namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 
 template <typename CHAR_T>
-struct Range {
+struct Range : public CharacterSet {
   using char_t = CHAR_T;
 
-  Range(CHAR_T b, CHAR_T e) : begin_(b), end_(e) { assert(b <= e); }
+  Range(CHAR_T b, CHAR_T e) : begin_(b), end_(e) { 
+    assert(b <= e); 
+  }
 
-  template <typename T>
-  bool is_valid(T const& token) const {
+  bool is_valid(char_t const& token) const {
     return token >= begin_ && token <= end_;
   }
 
@@ -37,9 +38,6 @@ inline auto range(CHAR_T b, CHAR_T e) {
   return Range<CHAR_T>(b, e);
 }
 
-template <typename T>
-struct is_char_set<Range<T>> : public std::true_type {};
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE
-
 #endif

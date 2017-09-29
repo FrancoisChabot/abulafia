@@ -13,65 +13,78 @@
 #include "abulafia/char_set/char_set.h"
 
 #include <bitset>
+#include <limits>
 #include <set>
+#include <cstring>
+#include <type_traits>
 
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 
 template <typename CHAR_T>
-struct Set {
+struct Set : public CharacterSet {
   using char_t = CHAR_T;
-  template <typename CONTAINER_T>
-  Set(CONTAINER_T const& c) : characters_(std::begin(c), std::end(c)) {}
+
+  template <typename ITE_T>
+  Set(ITE_T b, ITE_T e) : characters_(b, e) {}
 
   template <typename T>
-  bool is_valid(const T& character) const {
+  bool is_valid(char_t const& character) const {
     return characters_.find(character) != characters_.end();
   }
 
-  std::set<CHAR_T, std::less<void>> characters_;
+  std::set<CHAR_T> characters_;
 };
 
-// Character sets of chars are simple enough that they can be bitsets
-// TODO: Operation on bitset sets (such as oring two together) should yield
-// other bitsets.
-template <>
-struct Set<char> {
-  using char_t = char;
+// For small types, like char, Character sets are simple enough that they can be 
+// bitsets.
+template<typename CHAR_T>
+struct IndexedSet : public CharacterSet {
+  using char_t = CHAR_T;
 
-  template <typename CONTAINER_T>
-  Set(CONTAINER_T const& list) {
-    for (auto const& c : list) {
-      unsigned char pos = static_cast<unsigned char>(c);
-      characters_[pos] = true;
+  template <typename ITE_T>
+  IndexedSet(ITE_T b, ITE_T e) {
+    for (; b != e; ++b ) {
+      characters_[as_index(*b)] = true;
     }
   }
 
-  template <typename T>
-  bool is_valid(const T& character) const {
-    unsigned char pos = static_cast<unsigned char>(character);
-    return characters_.test(pos);
+  bool is_valid(const char_t& c) const {
+    return characters_.test(as_index(c));
   }
 
-  std::bitset<256> characters_;
+private:
+  using unsigned_t = std::make_unsigned_t<CHAR_T>;
+
+  static constexpr std::size_t as_index(CHAR_T c) {  
+    return unsigned_t(c);
+  }
+
+  std::bitset<std::numeric_limits<unsigned_t>::max()+1> characters_;
 };
 
-template <typename T>
-struct is_char_set<Set<T>> : public std::true_type {};
+template <>
+struct Set<char> : public IndexedSet<char> {
+  using IndexedSet::IndexedSet;
+};
 
-// Create from some stl-like container
-template <typename CONTAINER_T>
-inline auto set(CONTAINER_T const& l) {
-  return Set<typename CONTAINER_T::value_type>(l);
+// Create from a pair of iterators
+template <typename ITE>
+auto set(ITE b, ITE e) {
+  return Set<typename ITE::value_type>(b, e);
 }
 
-// Create from string literal
-template <typename CHAR_T, std::size_t LEN>
-inline auto set(const CHAR_T (&l)[LEN]) {
-  // The cast to std::string is important to avoid treating the trailing null as
-  // a member of the set.
-  return Set<CHAR_T>(std::string(l));
+// Create from a pair of iterators
+inline auto set(char const* v) {
+  return Set<char>(v, v + std::strlen(v));
 }
+
+template<>
+struct to_char_set_impl<const char*, void> {
+  static Set<char> convert(char const* v) {
+    return set(v);
+  }
+};
 
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE

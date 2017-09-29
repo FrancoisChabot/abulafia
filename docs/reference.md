@@ -1,3 +1,18 @@
+## Character Sets:
+pattern                        | Macthes                      |
+-------------------------------|------------------------------|
+`any<T>`                       | any character                |
+`single(v)`                    | ` == v`                      |
+`range(v_1, v_2)`              | `v_1 <=  <= v_2`             |
+`delegated(cb)`                | `cb()`                       |
+`not(charset)`                 | `!charset.has()`             |
+`~charset`                     | `not(charset)`               |
+`or(cs_1, cs_2)`               | `cs_1.has(v) || cs_2.has(v)` |
+`cs_1 | cs_2`                  | `or(CS_1, CS_2)`             |
+`set("abc")`                   | `a | b | c`                  |
+`set(ITE, ITE)`                | any character contained      |
+
+
 ## Patterns
 
 ### Character Patterns

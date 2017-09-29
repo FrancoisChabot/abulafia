@@ -19,8 +19,8 @@ auto pattern = *(ows >> int_);
 
 However, this can quickly become tedious, and makes parsers hard to read:
 ```c++
-auto alnum = char_set::range('a', 'z') + 
-             char_set::range('A', 'Z') + 
+auto alnum = char_set::range('a', 'z') | 
+             char_set::range('A', 'Z') | 
              char_set::range('0', '9');
 
 auto ows = ignore(*char_(" \r\n\t"));
@@ -39,8 +39,8 @@ Thankfully Abulafia provides us with **skippers**, which automate the task of ap
 each sub-parser.
 
 ```c++
-auto alnum = char_set::range('a', 'z') + 
-             char_set::range('A', 'Z') + 
+auto alnum = char_set::range('a', 'z') | 
+             char_set::range('A', 'Z') | 
              char_set::range('0', '9');
 
 auto name = lexeme(*char_(alnum));

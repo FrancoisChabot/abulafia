@@ -20,22 +20,18 @@ namespace char_set {
 // to a callback.
 // Abulafia will assume that cb_ is deterministic.
 template <typename CHAR_T, typename CB_T>
-struct DelegatedSet {
+struct DelegatedSet : public CharacterSet {
   using char_t = CHAR_T;
 
   explicit DelegatedSet(CB_T cb) : cb_(std::move(cb)) {}
 
-  template <typename T>
-  bool is_valid(T c) const {
+  bool is_valid(char_t const& c) const {
     return cb_(c);
   }
 
  private:
   CB_T cb_;
 };
-
-template <typename CHAR_T, typename CB_T>
-struct is_char_set<DelegatedSet<CHAR_T, CB_T>> : public std::true_type {};
 
 template <typename CHAR_T, typename CB_T>
 auto delegated(CB_T const& cb) {
@@ -49,7 +45,5 @@ auto delegated(CB_T const& cb) {
 }
 
 }  // namespace char_set
-
 }  // namespace ABULAFIA_NAMESPACE
-
 #endif

@@ -17,6 +17,7 @@ pages:
 - User Guide:
   - 'Introduction': 'guide/00_introduction.md'
   - 'Installation': 'guide/01_installation.md'
+  - 'Character Sets': 'guide/07_character_sets.md'
   - 'Parsers': 'guide/02_parsers.md'
   - 'Skippers': 'guide/03_skippers.md'
   - 'Resumable Parsers': 'guide/04_resumable_parsers.md'

@@ -16,17 +16,13 @@ namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 
 template <typename CHAR_T>
-struct Any {
+struct Any : public CharacterSet {
   using char_t = CHAR_T;
-
-  template <typename T>
-  bool is_valid(T const &) const {
+  
+  bool is_valid(char_t const &) const {
     return true;
   }
 };
-
-template <typename T>
-struct is_char_set<Any<T>> : public std::true_type {};
 
 template <typename CHAR_T>
 Any<CHAR_T> any;

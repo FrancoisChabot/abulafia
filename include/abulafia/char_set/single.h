@@ -16,7 +16,7 @@ namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 
 template <typename CHAR_T>
-struct Single {
+struct Single : public CharacterSet {
   using char_t = CHAR_T;
 
   explicit Single(CHAR_T c) : character_(c) {}
@@ -30,15 +30,18 @@ struct Single {
   CHAR_T character_;
 };
 
-template <typename T>
-struct is_char_set<Single<T>> : public std::true_type {};
-
 template <typename CHAR_T>
 auto single(CHAR_T c) {
   return Single<CHAR_T>(c);
 }
 
+template<>
+struct to_char_set_impl<char, void> {
+  static Single<char> convert(char const& v) {
+    return Single<char>(v);
+  }
+};
+
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE
-
 #endif

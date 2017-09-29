@@ -21,8 +21,6 @@
 #include "abulafia/char_set/set.h"
 #include "abulafia/char_set/single.h"
 
-#include "abulafia/char_set/operators.h"
-
 // Parsing Contexts
 
 #include "abulafia/contexts/container_sequence.h"

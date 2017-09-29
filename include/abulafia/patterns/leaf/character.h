@@ -57,6 +57,7 @@ auto char_() {
   return Char<char_set::Any<T>>(char_set::Any<T>());
 }
 
+
 template <typename T>
 enable_if_t<!char_set::is_char_set<T>::value, Char<char_set::Single<T>>> char_(
     T const& c) {
@@ -69,19 +70,13 @@ enable_if_t<char_set::is_char_set<decay_t<T>>::value, Char<decay_t<T>>> char_(
   return Char<decay_t<T>>(forward<T>(chars));
 }
 
-template <typename CHAR_T, std::size_t LEN>
-inline auto char_(const CHAR_T (&l)[LEN]) {
-  return char_(char_set::set(l));
-}
-
 template <typename T>
 auto char_(T begin, T end) {
   return Char<char_set::Range<T>>(char_set::Range<T>(begin, end));
 }
 
-template <typename T>
-auto char_(std::initializer_list<T> l) {
-  return Char<char_set::Set<T>>(char_set::Set<T>(l));
+inline auto char_(const char * str) {
+  return char_(char_set::set(str));
 }
 
 template <typename CHAR_SET_T>

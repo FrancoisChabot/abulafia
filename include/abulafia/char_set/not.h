@@ -13,30 +13,35 @@
 #include "abulafia/char_set/char_set.h"
 
 #include <utility>
+#include <type_traits>
 
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
 
 template <typename ARG_T>
-struct Not {
+struct Not : public CharacterSet {
   using char_t = typename ARG_T::char_t;
 
   explicit Not(ARG_T arg) : arg_(std::move(arg)) {}
 
-  template <typename T>
-  bool is_valid(T const& c) const {
+  bool is_valid(char_t const& c) const {
     return !arg_.is_valid(c);
   }
 
  private:
   ARG_T arg_;
 
-  static_assert(is_char_set<ARG_T>::value,
-                "Trying to invert something that's not a character set.");
+  static_assert(is_char_set<ARG_T>::value);
 };
 
 template <typename ARG_T>
 struct is_char_set<Not<ARG_T>> : public std::true_type {};
+
+template <typename ARG_T,
+          typename Enable = std::enable_if_t<is_char_set<ARG_T>::value>>
+Not<ARG_T> operator~(ARG_T arg) {
+  return Not<ARG_T>{std::move(arg)};
+}
 
 }  // namespace char_set
 }  // namespace ABULAFIA_NAMESPACE

@@ -13,6 +13,7 @@
 using namespace abu;
 
 TEST(test_or, simple_test) {
+  
   auto a = char_set::single('a');
   auto b = char_set::single('b');
 
