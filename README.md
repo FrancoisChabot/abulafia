@@ -58,6 +58,7 @@ Abulafia is a headers-only library. In order to use it, you just have to make th
 ## Usage
 
 With abulafia, you can write surprisingly complex parsers in a few, very readable, lines of code:
+
 ```c++
 
 #include "abulafia/abulafia.h"
@@ -81,6 +82,42 @@ int main() {
   }
   return 0;
 }
+```
+
+Working with custom types is also simple:
+
+**Note:** This example uses features that are still work in progress. It represents what will work once every piece is in place.
+```c++
+
+#include "abulafia/abulafia.h"
+
+struct Rectangle {
+  Rectangle() = default;
+  Rectangle(float in_w, float in_h) 
+    : x(0.0f), y(0.0f), w(in_w), h(in_h) {}
+  Rectangle(float in_x, float in_y, float in_w, float in_h) 
+    : x(in_x), y(in_y), w(in_w), h(in_h) {}
+  
+  float x;
+  float y;
+  float w;
+  float h;
+};
+
+int main() {
+  auto space = abu::char_(" \t\r\n");
+  auto rect = '[' >> 
+      (abu::float_ >> ',' >> abu::float_) |
+      (abu::float_ >> ',' >> abu::float_ >> ',' >> abu::float_ >> ',' >> abu::float_)
+      >> ']';
+  
+  Rectangle rect_a = abu::decode<Rectangle>("[1.0, 45.0]", abu::apply_skipper(rect, space));
+  Rectangle rect_b = abu::decode<Rectangle>("[1.0, 45.0, 1.0, 1.0]", abu::apply_skipper(rect, space));
+  
+  return 0;
+}
+
+
 ```
 
 ## Documentation
