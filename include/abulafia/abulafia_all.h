@@ -2266,6 +2266,33 @@ struct pat_attr_t<Not<PAT_T>, CTX_T> {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+template <typename PAT_T>
+class Optional : public Pattern<Optional<PAT_T>> {
+  PAT_T child_;
+ public:
+  Optional(PAT_T child) : child_(std::move(child)) {}
+  PAT_T const& operand() const { return child_; }
+};
+template <typename PAT_T, typename RECUR_TAG>
+struct pattern_traits<Optional<PAT_T>, RECUR_TAG> : public default_pattern_traits {
+  using attr_type = Nil;
+  enum {
+    BACKTRACKS = pattern_traits<PAT_T, RECUR_TAG>::BACKTRACKS,
+    PEEKABLE = true,
+    FAILS_CLEANLY = true,
+    MAY_NOT_CONSUME = true,
+    ATOMIC = true,
+    APPENDS_DST = pattern_traits<PAT_T, RECUR_TAG>::APPENDS_DST,
+    STABLE_APPENDS = true,
+  };
+};
+template <typename PAT_T, typename CTX_T>
+struct pat_attr_t<Optional<PAT_T>, CTX_T> {
+  using attr_type = std::optional<attr_t<PAT_T, CTX_T>>;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T,
           typename Enable = enable_if_t<is_valid_unary_operand<PAT_T>()>>
 auto operator*(PAT_T&& pat) {
@@ -2281,6 +2308,12 @@ template <typename PAT_T,
                                         Not<pattern_t<PAT_T>>>>
 auto operator!(PAT_T&& pat) {
   return Not<pattern_t<PAT_T>>(make_pattern(pat));
+}
+template <typename PAT_T,
+          typename Enable = enable_if_t<is_valid_unary_operand<PAT_T>(),
+                                        Not<pattern_t<PAT_T>>>>
+auto operator-(PAT_T&& pat) {
+  return Optional<pattern_t<PAT_T>>(make_pattern(pat));
 }
 template <
     typename LHS_T, typename RHS_T,
@@ -3020,6 +3053,39 @@ class Parser<CTX_T, DST_T, AttrCast<ATTR_T, CHILD_PAT_T>>
   }
   result peek(CTX_T& ctx, PAT_T const& pat) {
     return parser_.peek(ctx, pat.operand());
+  }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename CHILD_PAT_T>
+class Parser<CTX_T, DST_T, Optional<CHILD_PAT_T>> : public ParserBase<CTX_T, DST_T> {
+  using PAT_T = Optional<CHILD_PAT_T>;
+  using child_parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
+  child_parser_t parser_;
+ public:
+  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
+      : ParserBase<CTX_T, DST_T>(ctx, dst), parser_(ctx, dst, pat.operand()) {
+    ctx.prepare_rollback();
+  }
+  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+    if (this->performSkip(ctx) == result::PARTIAL) {
+      return result::PARTIAL;
+    }
+    auto status = parser_.consume(ctx, dst, pat.operand());
+    switch (status) {
+      case result::SUCCESS:
+        return result::SUCCESS;
+      case result::FAILURE:
+        ctx.commit_rollback();
+        return result::SUCCESS;
+      case result::PARTIAL:
+        return result::PARTIAL;
+    }
+    abu_unreachable();
+  }
+  result peek(CTX_T& ctx, PAT_T const& pat) {
+    return result::SUCCESS;
   }
 };
 }  // namespace ABULAFIA_NAMESPACE

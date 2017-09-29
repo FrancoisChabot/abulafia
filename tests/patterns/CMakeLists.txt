@@ -10,6 +10,7 @@ add_executable(pattern_tests
    test_list.cpp
    test_not.cpp
    test_pass_and_fail.cpp
+   test_optional.cpp
    test_recur.cpp
    test_repeat.cpp
    test_sequence.cpp

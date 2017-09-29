@@ -16,6 +16,7 @@
 #include "abulafia/patterns/nary/nary.h"
 #include "abulafia/patterns/nary/sequence.h"
 #include "abulafia/patterns/unary/not.h"
+#include "abulafia/patterns/unary/optional.h"
 #include "abulafia/patterns/unary/repeat.h"
 #include "abulafia/support/type_traits.h"
 
@@ -46,6 +47,15 @@ template <typename PAT_T,
 auto operator!(PAT_T&& pat) {
   return Not<pattern_t<PAT_T>>(make_pattern(pat));
 }
+
+// !pattern
+template <typename PAT_T,
+          typename Enable = enable_if_t<is_valid_unary_operand<PAT_T>(),
+                                        Not<pattern_t<PAT_T>>>>
+auto operator-(PAT_T&& pat) {
+  return Optional<pattern_t<PAT_T>>(make_pattern(pat));
+}
+
 
 // BINARY OPERATORS
 

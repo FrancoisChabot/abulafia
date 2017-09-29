@@ -55,6 +55,7 @@
 #include "abulafia/patterns/unary/action.h"
 #include "abulafia/patterns/unary/attr_cast.h"
 #include "abulafia/patterns/unary/not.h"
+#include "abulafia/patterns/unary/optional.h"
 #include "abulafia/patterns/unary/repeat.h"
 
 #include "abulafia/patterns/operators.h"
