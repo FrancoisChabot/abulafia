@@ -18,40 +18,40 @@
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename CHARSET_T>
-class Parser<CTX_T, DST_T, Char<CHARSET_T>> : public ParserBase<CTX_T, DST_T> {
+class CharImpl {
   using PAT_T = Char<CHARSET_T>;
 
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T>(ctx, dst) {}
+   CharImpl(CTX_T, DST_T, PAT_T const&) {}
 
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    // std::cout << "char is writing at: " << std::hex << (uint64_t)&dst <<
-    // std::endl;
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
+  result consume(CTX_T ctx, DST_T dst, PAT_T const& pat) {
+    if (ctx.data().empty()) {
+      return ctx.data().final_buffer() ? result::FAILURE : result::PARTIAL;
     }
 
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
-    }
-
-    auto next = ctx.next();
+    auto next = ctx.data().next();
     if (pat.char_set().is_valid(next)) {
       dst = next;
-      ctx.advance();
+      ctx.data().advance();
       return result::SUCCESS;
     }
     return result::FAILURE;
   }
 
-  result peek(CTX_T const& ctx, PAT_T const& pat) const {
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
+  result peek(CTX_T ctx, PAT_T const& pat) const {
+    if (ctx.data().empty()) {
+      return ctx.data().final_buffer() ? result::FAILURE : result::PARTIAL;
     }
 
-    return pat.char_set().is_valid(ctx.next()) ? result::SUCCESS
+    return pat.char_set().is_valid(ctx.data().next()) ? result::SUCCESS
                                                : result::FAILURE;
+  }
+
+};
+template <typename CTX_T, typename DST_T, typename CHARSET_T >
+struct ParserFactory<CTX_T, DST_T, Char<CHARSET_T>> {
+  static auto create(CTX_T ctx, DST_T dst, Char<CHARSET_T> const& pat) {
+    return CharImpl<CTX_T, DST_T, CHARSET_T>(ctx, dst, pat);
   }
 };
 }  // namespace ABULAFIA_NAMESPACE

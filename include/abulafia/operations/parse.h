@@ -10,7 +10,12 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/contexts/single_forward.h"
+#include "abulafia/data_source/single_forward.h"
+#include "abulafia/dst_wrapper/select_wrapper.h"
+
+#include "abulafia/parsers/coroutine/requirements.h"
+
+#include "abulafia/context.h"
 #include "abulafia/pattern.h"
 #include "abulafia/result.h"
 
@@ -24,12 +29,15 @@ template <typename PAT_T, typename DATA_RANGE_T, typename DST_T>
 result parse(const PAT_T& pat, const DATA_RANGE_T& data, DST_T& dst) {
   using iterator_t = decltype(std::begin(data));
 
+  SingleForwardContext<iterator_t> data_source(std::begin(data), std::end(data));
+
+  Context<SingleForwardContext<iterator_t>, Fail, DefaultReqs> real_ctx(data_source, fail);
+  auto real_dst = wrap_dst(dst);
   auto real_pat = make_pattern(pat);
-  SingleForwardContext<iterator_t> ctx(std::begin(data), std::end(data));
 
-  auto parser = make_parser_(ctx, dst, real_pat);
+  auto parser = make_parser_(real_ctx, real_dst, real_pat);
 
-  return parser.consume(ctx, dst, real_pat);
+  return parser.consume(real_ctx, real_dst, real_pat);
 }
 
 template <typename PAT_T, typename ITE_T, typename DST_T>

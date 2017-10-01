@@ -17,11 +17,15 @@ namespace ABULAFIA_NAMESPACE {
 // its DST.
 struct Nil {
   using value_type = Nil;
-
+  using dst_type = Nil;
   Nil() = default;
 
   template <typename T>
   Nil(T&) {}
+
+  Nil& get() {
+    return *this;
+  }
   // Can be assigned anything.
   template <typename T>
   Nil& operator=(T&&) {

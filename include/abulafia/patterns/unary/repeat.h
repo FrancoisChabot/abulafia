@@ -15,6 +15,8 @@
 #include "abulafia/patterns/helpers/buffer.h"
 #include "abulafia/support/nil.h"
 
+#include <vector>
+
 namespace ABULAFIA_NAMESPACE {
 
 template <typename PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>

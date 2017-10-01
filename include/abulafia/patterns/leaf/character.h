@@ -16,7 +16,6 @@
 #include "abulafia/char_set/set.h"
 #include "abulafia/char_set/single.h"
 
-#include "abulafia/parser.h"
 #include "abulafia/pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
@@ -28,8 +27,7 @@ class Char : public Pattern<Char<CHARSET_T>> {
   CHARSET_T char_set_;
 
  public:
-  Char(CHARSET_T&& chars) : char_set_(std::move(chars)) {}
-  Char(CHARSET_T const& chars) : char_set_(chars) {}
+  Char(CHARSET_T chars) : char_set_(std::move(chars)) {}
 
   CHARSET_T const& char_set() const { return char_set_; }
 };
@@ -39,9 +37,7 @@ template <typename CHARSET_T, typename RECUR_TAG>
 struct pattern_traits<Char<CHARSET_T>, RECUR_TAG>
     : public default_pattern_traits {
   enum {
-    ATOMIC = true,
     BACKTRACKS = false,
-    FAILS_CLEANLY = true,
     PEEKABLE = true,
     MAY_NOT_CONSUME = false,
   };

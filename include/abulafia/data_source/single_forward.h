@@ -38,7 +38,7 @@ class SingleForwardContext {
   enum { IS_RESUMABLE = false };
 
   SingleForwardContext(iterator b, iterator e) : current_(b), end_(e) {}
-
+  SingleForwardContext(SingleForwardContext const&) = delete;
   constexpr bool final_buffer() const { return true; }
 
   void prepare_rollback() { rollback_stack_.push(current_); }

@@ -18,17 +18,22 @@
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T>
-class Parser<CTX_T, Nil, Fail>
-    : public ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP> {
+class FailImpl : public ParserBase<CTX_T, Nil> {
   using PAT_T = Fail;
 
  public:
-  Parser(CTX_T& ctx, Nil&, PAT_T const&)
-      : ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP>(ctx, nil) {}
+   FailImpl(CTX_T ctx, Nil, PAT_T const&)
+      : ParserBase<CTX_T>(ctx) {}
 
-  result consume(CTX_T&, Nil&, PAT_T const&) { return result::FAILURE; }
+  result consume(CTX_T, Nil, PAT_T const&) { return result::FAILURE; }
+  result peek(CTX_T, PAT_T const&) { return result::FAILURE; }
+};
 
-  result peek(CTX_T&, PAT_T const&) { return result::FAILURE; }
+template <typename CTX_T>
+struct ParserFactory<CTX_T, Nil, Fail> {
+  static auto create(CTX_T ctx, Nil dst, Fail const& pat) {
+    return FailImpl(ctx, dst, pat);
+  }
 };
 
 }  // namespace ABULAFIA_NAMESPACE

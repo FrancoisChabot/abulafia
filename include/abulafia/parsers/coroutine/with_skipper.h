@@ -16,21 +16,21 @@
 namespace ABULAFIA_NAMESPACE {
 
 template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename SKIP_T>
-class Parser<CTX_T, DST_T, WithSkipper<CHILD_PAT_T, SKIP_T>>
-    : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
-  // PARSER_OPT_NO_SKIP because we need to kill any existing skipper
-  using PAT_T = WithSkipper<CHILD_PAT_T, SKIP_T>;
+class WithSkipperImpl : public ParserBase<CTX_T> {
+  using ctx_t = CTX_T;
+  using dst_t = DST_T;
+  using pat_t = WithSkipper<CHILD_PAT_T, SKIP_T>;
 
-  using sub_ctx_t = SkipperAdapter<CTX_T, SKIP_T>;
-  Parser<sub_ctx_t, DST_T, CHILD_PAT_T> child_parser_;
+  using sub_ctx_t = typename ctx_t::template set_skipper_t<SKIP_T>;
+  Parser<sub_ctx_t, dst_t, CHILD_PAT_T> child_parser_;
 
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP>(ctx, dst),
-        child_parser_(force_lvalue(sub_ctx_t(ctx, pat.getSkip())), dst,
+   WithSkipperImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
+      : ParserBase<CTX_T, DST_T>(ctx, dst),
+        child_parser_(ctx., dst,
                       pat.getChild()) {}
 
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
+  result consume(ctx_t ctx, dst_t dst, pat_t const& pat) {
     sub_ctx_t sub_ctx(ctx, pat.getSkip());
     return child_parser_.consume(sub_ctx, dst, pat.getChild());
   }

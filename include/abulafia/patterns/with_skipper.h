@@ -10,7 +10,6 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/contexts/skipper_adapter.h"
 #include "abulafia/parser.h"
 #include "abulafia/pattern.h"
 #include "abulafia/support/type_traits.h"

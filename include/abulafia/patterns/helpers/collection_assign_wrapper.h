@@ -21,19 +21,6 @@ namespace details {
 
 template <typename T, typename Enable = void>
 void reset_if_container(T& dst);
-
-template <typename CONT_T, typename... ARGS>
-void append_to_container(CONT_T& container, ARGS&&... args) {
-  container.emplace_back(forward<ARGS>(args)...);
-}
-
-// std::basic_string does not have an emplace_back, and is a commonly used type.
-template <class CharT, class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>, typename... ARGS>
-void append_to_container(std::basic_string<CharT, Traits, Allocator>& container,
-                         ARGS&&... args) {
-  container.push_back(forward<ARGS>(args)...);
-}
 }  // namespace details
 template <typename T>
 struct DefaultCollectionAssignWrapper {
@@ -47,14 +34,12 @@ struct DefaultCollectionAssignWrapper {
   // on its target.
   template <typename U>
   DefaultCollectionAssignWrapper& operator=(U&& rhs) {
-    details::append_to_container(dst_, forward<U>(rhs));
     return *this;
   }
 
   // The wrapper can also pose as the target itself.
   template <typename U>
   void emplace_back(U&& rhs) {
-    details::append_to_container(dst_, forward<U>(rhs));
   }
 
   template <typename ite>

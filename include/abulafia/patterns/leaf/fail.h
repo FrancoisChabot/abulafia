@@ -10,7 +10,6 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
 #include "abulafia/pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
