@@ -21,7 +21,7 @@ struct Nil {
   Nil() = default;
 
   template <typename T>
-  Nil(T&) {}
+  Nil(T const&) {}
 
   Nil& get() {
     return *this;

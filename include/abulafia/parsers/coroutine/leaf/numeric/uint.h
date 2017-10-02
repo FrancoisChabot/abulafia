@@ -17,64 +17,41 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, int BASE, std::size_t DIGITS_MIN,
-          std::size_t DIGITS_MAX>
-class UintImpl {
+template <typename CTX_T, typename DST_T,
+  std::size_t BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
+class UIntImpl {
 public:
-  using ctx_t = CTX_T;
-  using dst_t = DST_T;
   using pat_t = Uint<BASE, DIGITS_MIN, DIGITS_MAX>;
+
   using digit_vals = DigitValues<BASE>;
 
-  template<typename NEW_DST_T>
-  using change_dst_t = UintImpl<CTX_T, NEW_DST_T, BASE, DIGITS_MIN, DIGITS_MAX>;
-
-   UintImpl(ctx_t, dst_t dst, pat_t const&) {
+  UIntImpl(CTX_T, DST_T dst, pat_t const&) {
     dst.get() = 0;
   }
 
-  result peek(ctx_t ctx, pat_t const&) const {
-    static_assert(DIGITS_MIN == 1, "we should not be peeking here.");
-
-    if (ctx.empty()) {
-      if (ctx.final_buffer()) {
-        return result::FAILURE;
-      } else {
-        return result::PARTIAL;
-      }
-    }
-
-    auto next = ctx.next();
-    if (digit_vals::is_valid(next)) {
-      return result::SUCCESS;
-    } else {
-      return result::FAILURE;
-    }
-  }
-
-  result consume(ctx_t ctx, dst_t dst, pat_t const&) {
+  Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
     while (true) {
       if (ctx.data().empty()) {
         if (ctx.data().final_buffer()) {
-          return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+          return digit_count_ >= DIGITS_MIN ? Result::SUCCESS : Result::FAILURE;
         } else {
-          return result::PARTIAL;
+          return Result::PARTIAL;
         }
       }
 
       auto next = ctx.data().next();
       if (digit_vals::is_valid(next)) {
-        dst.get() *= BASE;
+        dst.get() *= typename DST_T::dst_type(BASE);
         dst.get() += digit_vals::value(next);
 
         ++digit_count_;
         ctx.data().advance();
 
         if (digit_count_ == DIGITS_MAX) {
-          return result::SUCCESS;
+          return Result::SUCCESS;
         }
       } else {
-        return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+        return digit_count_ >= DIGITS_MIN ? Result::SUCCESS : Result::FAILURE;
       }
     }
   }
@@ -83,18 +60,18 @@ public:
   std::size_t digit_count_ = 0;
 };
 
-template <typename CTX_T, typename DST_T, int BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
-struct ParserFactory<CTX_T, DST_T, Uint<BASE, DIGITS_MIN, DIGITS_MAX>> {
-  static auto create(CTX_T ctx, DST_T dst, Uint<BASE, DIGITS_MIN, DIGITS_MAX> const& pat) {
-    constexpr bool apply_atomic = !std::is_same<Nil, DST_T>::value;
-    constexpr bool apply_fails_cleanly = DIGITS_MAX != 1;
+template<std::size_t BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
+struct ParserFactory<Uint<BASE, DIGITS_MIN, DIGITS_MAX>> {
+  using pat_t = Uint<BASE, DIGITS_MIN, DIGITS_MAX>;
 
-    using a = UintImpl<CTX_T, DST_T, BASE, DIGITS_MIN, DIGITS_MAX>;
-    using b = fulfill_req_if_t<a, Req::ATOMIC, apply_atomic>;
-    using c = fulfill_req_if_t<b, Req::FAILS_CLEANLY, apply_fails_cleanly>;
+  enum {
+    //TODO: We could provide ATOMIC in the DIGITS_MIN == DIGITS_MAX case
+    ATOMIC = false,
+    FAILS_CLEANLY = DIGITS_MAX == 1,
+  };
 
-    return c(ctx, dst, pat);
-  }
+  template<typename CTX_T, typename DST_T, typename REQ_T>
+  using type = UIntImpl<CTX_T, DST_T, BASE, DIGITS_MIN, DIGITS_MAX>;
 };
 
 }  // namespace ABULAFIA_NAMESPACE

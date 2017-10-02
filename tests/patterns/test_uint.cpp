@@ -16,12 +16,12 @@ TEST(test_uint, test_default_pattern) {
   unsigned int dst = 0;
 
   // Basic use case.
-  auto status = parse(pattern, "12", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("12", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(12U, dst);
 
-  status = parse(pattern, "1", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  status = parse("1", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(1U, dst);
 
   // Interrupted number
@@ -30,12 +30,12 @@ TEST(test_uint, test_default_pattern) {
   // EXPECT_EQ(54U, dst);
 
   // Empty string.
-  status = parse(pattern, "", dst);
-  EXPECT_EQ(status, result::FAILURE);
+  status = parse("", pattern, dst);
+  EXPECT_EQ(status, Result::FAILURE);
 
   // Bad string
-  status = parse(pattern, "a123", dst);
-  EXPECT_EQ(status, result::FAILURE);
+  status = parse("a123", pattern, dst);
+  EXPECT_EQ(status, Result::FAILURE);
 }
 
 TEST(test_uint, test_arbitrary_base) {
@@ -44,8 +44,8 @@ TEST(test_uint, test_arbitrary_base) {
   unsigned int dst = 0;
 
   // Basic use case.
-  auto status = parse(pattern, "12", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("12", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(5U, dst);
 }
 
@@ -55,18 +55,18 @@ TEST(test_uint, test_min_digits) {
   unsigned int dst = 0;
 
   // Perfect match.
-  auto status = parse(pattern, "123", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("123", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(123U, dst);
 
   // More than expected.
-  status = parse(pattern, "1234", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  status = parse("1234", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(1234U, dst);
 
   // Not enough digits.
-  status = parse(pattern, "12");
-  EXPECT_EQ(status, result::FAILURE);
+  status = parse("12", pattern);
+  EXPECT_EQ(status, Result::FAILURE);
 }
 
 TEST(test_uint, test_max_digits) {
@@ -75,13 +75,13 @@ TEST(test_uint, test_max_digits) {
   unsigned int dst = 0;
 
   // Perfect match.
-  auto status = parse(pattern, "123", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("123", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(123U, dst);
 
   // Off by one.
-  status = parse(pattern, "1234", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  status = parse("1234", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(123U, dst);
 
   // make sure that the stream is in the right place once we reached the end

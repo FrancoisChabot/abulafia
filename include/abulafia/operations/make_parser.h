@@ -14,6 +14,7 @@
 #include "abulafia/pattern.h"
 #include "abulafia/result.h"
 #include "abulafia/support/nil.h"
+#include "abulafia/parsers/coroutine/parser_factory.h"
 
 namespace ABULAFIA_NAMESPACE {
 
@@ -22,14 +23,14 @@ struct ParserInterface {
   ParserInterface(REAL_PAT_T const& pat, CTX_T& ctx, DST_T& dst)
       : pat_(pat), ctx_(ctx), dst_(dst), parser_(ctx, dst, pat) {}
 
-  result consume() { return parser_.consume(ctx_, dst_, pat_); }
+  Result consume() { return parser_.consume(ctx_, dst_, pat_); }
 
  private:
   REAL_PAT_T const& pat_;
   CTX_T& ctx_;
   DST_T& dst_;
 
-  Parser<CTX_T, DST_T, REAL_PAT_T> parser_;
+  Parser<CTX_T, DST_T, REAL_PAT_T, DefaultReqs> parser_;
 };
 
 template <typename PAT_T, typename DATASOURCE_T, typename DST_T>

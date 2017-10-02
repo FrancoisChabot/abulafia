@@ -13,7 +13,8 @@
 #include "abulafia/data_source/single_forward.h"
 #include "abulafia/dst_wrapper/select_wrapper.h"
 
-#include "abulafia/parsers/coroutine/requirements.h"
+#include "abulafia/parsers/coroutine/parser_factory.h"
+#include "abulafia/patterns/leaf/fail.h"
 
 #include "abulafia/context.h"
 #include "abulafia/pattern.h"
@@ -25,37 +26,34 @@ namespace ABULAFIA_NAMESPACE {
 // and executes it immediately. It's implied that this will be a
 // single buffer parser.
 // If you need a multi-buffer parser, use begin_parse() instead.
-template <typename PAT_T, typename DATA_RANGE_T, typename DST_T>
-result parse(const PAT_T& pat, const DATA_RANGE_T& data, DST_T& dst) {
-  using iterator_t = decltype(std::begin(data));
 
-  SingleForwardContext<iterator_t> data_source(std::begin(data), std::end(data));
+template <typename ITE_T, typename PAT_T, typename DST_T>
+Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
 
-  Context<SingleForwardContext<iterator_t>, Fail, DefaultReqs> real_ctx(data_source, fail);
-  auto real_dst = wrap_dst(dst);
+  SingleForwardDataSource<ITE_T> data(b, e);
+
   auto real_pat = make_pattern(pat);
+  auto real_dst = wrap_dst(dst);
+  Context<SingleForwardDataSource<ITE_T>, Fail> real_ctx(data, fail);
 
-  auto parser = make_parser_(real_ctx, real_dst, real_pat);
+  auto parser = make_parser_(real_ctx, real_dst, DefaultReqs(), real_pat);
 
   return parser.consume(real_ctx, real_dst, real_pat);
 }
 
-template <typename PAT_T, typename ITE_T, typename DST_T>
-result parse(const PAT_T& pat, ITE_T b, ITE_T e, DST_T& dst) {
-  auto real_pat = make_pattern(pat);
-  SingleForwardContext<ITE_T> ctx(b, e);
 
-  auto parser = make_parser_(ctx, dst, real_pat);
 
-  return parser.consume(ctx, dst, real_pat);
+template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
+Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
+  return parse(std::begin(data), std::end(data), pat, dst);
 }
+
 
 // calling parse() with no dst implies using a Nil as destination.
 // The resulting parser simply checks that the range matches the pattern.
 template <typename PAT_T, typename DATA_RANGE_T>
-result parse(const PAT_T& pat, const DATA_RANGE_T& data) {
-  Nil fake_dest;
-  return parse(pat, data, fake_dest);
+Result parse(const DATA_RANGE_T& data, const PAT_T& pat) {
+  return parse(data, pat, nil);
 }
 }  // namespace ABULAFIA_NAMESPACE
 

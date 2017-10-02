@@ -9,6 +9,8 @@
 #define ABULAFIA_COLLECTION_WRAPPER_H_
 
 #include "abulafia/config.h"
+#include <string>
+#include <utility>
 
 namespace ABULAFIA_NAMESPACE {
 
@@ -16,7 +18,7 @@ namespace ABULAFIA_NAMESPACE {
 
     template <typename CONT_T, typename... ARGS>
     void append_to_container(CONT_T& container, ARGS&&... args) {
-      container.emplace_back(forward<ARGS>(args)...);
+      container.emplace_back(std::forward<ARGS>(args)...);
     }
 
     // std::basic_string does not have an emplace_back, and is a commonly used type.
@@ -24,7 +26,7 @@ namespace ABULAFIA_NAMESPACE {
       class Allocator = std::allocator<CharT>, typename... ARGS>
       void append_to_container(std::basic_string<CharT, Traits, Allocator>& container,
         ARGS&&... args) {
-      container.push_back(forward<ARGS>(args)...);
+      container.push_back(std::forward<ARGS>(args)...);
     }
   }  // namespace details
 
@@ -38,7 +40,7 @@ namespace ABULAFIA_NAMESPACE {
 
     template<typename U>
     CollectionWrapper& operator=(U&& rhs) {
-      details::append_to_container(v_, forward<U>(rhs));
+      details::append_to_container(v_, std::forward<U>(rhs));
       return *this;
     }
     void clear() {

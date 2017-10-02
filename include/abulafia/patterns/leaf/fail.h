@@ -17,23 +17,13 @@ namespace ABULAFIA_NAMESPACE {
 // The Fail pattern always fails, and does not emit anything.
 class Fail : public Pattern<Fail> {};
 
-template <typename RECUR_TAG>
-struct pattern_traits<Fail, RECUR_TAG> : public default_pattern_traits {
-  enum {
-    ATOMIC = true,
-    BACKTRACKS = false,
-    FAILS_CLEANLY = true,
-    PEEKABLE = true,
-    // a bit of a white lie. It never succeeds so it does not matter
-    MAY_NOT_CONSUME = false,
-
-  };
-};
-
 template <typename CTX_T>
 struct pat_attr_t<Fail, CTX_T> {
   using attr_type = Nil;
 };
+
+static constexpr Fail fail;
+
 
 }  // namespace ABULAFIA_NAMESPACE
 

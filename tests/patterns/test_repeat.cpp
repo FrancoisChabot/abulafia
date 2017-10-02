@@ -14,8 +14,8 @@ TEST(test_repeat, string_test) {
   auto pattern = *char_();
 
   std::string dst;
-  auto status = parse(pattern, std::string("abc"), dst);  
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse(std::string("abc"), pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ("abc", dst);
 }
 
@@ -24,17 +24,17 @@ TEST(test_repeat, simple_test) {
 
   std::vector<unsigned int> dst;
 
-  auto status = parse(pattern, "2345", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("2345", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   ASSERT_EQ(2U, dst.size());
   EXPECT_EQ(23U, dst[0]);
   EXPECT_EQ(45U, dst[1]);
 
-  status = parse(pattern, "abc");
-  EXPECT_EQ(status, result::SUCCESS);
+  status = parse("abc", pattern);
+  EXPECT_EQ(status, Result::SUCCESS);
 
-  status = parse(pattern, "");
-  EXPECT_EQ(status, result::SUCCESS);
+  status = parse("", pattern);
+  EXPECT_EQ(status, Result::SUCCESS);
 }
 
 TEST(test_repeat, test_plus) {
@@ -42,16 +42,16 @@ TEST(test_repeat, test_plus) {
 
   std::vector<unsigned int> dst;
 
-  auto status = parse(pattern, "23", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("23", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   ASSERT_EQ(1U, dst.size());
   EXPECT_EQ(23U, dst[0]);
 
-  status = parse(pattern, "abc");
-  EXPECT_EQ(status, result::FAILURE);
+  status = parse("abc", pattern);
+  EXPECT_EQ(status, Result::FAILURE);
 
-  status = parse(pattern, "");
-  EXPECT_EQ(status, result::FAILURE);
+  status = parse("", pattern);
+  EXPECT_EQ(status, Result::FAILURE);
 }
 
 TEST(test_repeat, test_max_count) {
@@ -59,37 +59,29 @@ TEST(test_repeat, test_max_count) {
 
   std::vector<unsigned int> dst;
 
-  auto status = parse(pattern, "1234", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("1234", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   ASSERT_EQ(3U, dst.size());
   EXPECT_EQ(1U, dst[0]);
   EXPECT_EQ(2U, dst[1]);
   EXPECT_EQ(3U, dst[2]);
 }
-
+/*
 TEST(test_repeat, test_chained_repeat_with_min) {
   auto pattern = *(repeat<2, 2>(char_('a', 'z')));
 
   std::string dst;
 
-  auto status = parse(pattern, "aabbcc", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("aabbcc", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ("aabbcc", dst);
-/*
-  std::vector<std::string> dst_as_vector_of_string;
-  status = parse(pattern, "aabbcc", dst_as_vector_of_string);
-  EXPECT_EQ(status, result::SUCCESS);
-  ASSERT_EQ(3, dst_as_vector_of_string.size());
-  EXPECT_EQ("aa", dst_as_vector_of_string[0]);
-  EXPECT_EQ("bb", dst_as_vector_of_string[1]);
-  EXPECT_EQ("cc", dst_as_vector_of_string[2]);
-  */
+
   // make sure that failures do not affect result
-  status = parse(pattern, "aabbccd", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  status = parse("aabbccd", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ("aabbcc", dst);
 }
-/*
+
 TEST(test_repeat, test_chained_repeat_with_min_double) {
   // this will cause us to insert() on a wrapper
   auto pattern = *+(repeat<2, 2>(char_('a', 'z')));

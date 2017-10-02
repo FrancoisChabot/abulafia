@@ -15,16 +15,15 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T,
-          std::size_t MIN_REP, std::size_t MAX_REP>
-class RepeatImpl : public ParserBase<CTX_T> {
+template <typename CTX_T, typename DST_T, typename REQ_T, 
+  typename CHILD_PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
+class RepeatImpl {
   using ctx_t = CTX_T;
   using dst_t = DST_T;
+  using req_t = REQ_T;
   using pat_t = Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>;
 
-
-
-  struct child_req_t : public ctx_t::req_t {
+  struct child_req_t : public req_t {
     enum {
       // The aternative is to push_back on start, and pop_back on failure,
       // which gets a little messy.
@@ -37,68 +36,61 @@ class RepeatImpl : public ParserBase<CTX_T> {
     };
   };
 
-
-  using child_ctx_t = override_context_reqs_t<ctx_t, child_req_t>;
   using child_dst_t = dst_t;
-  using child_pat_t = CHILD_PAT_T;
-  using child_parser_t = Parser<child_ctx_t, child_dst_t, child_pat_t>;
+  using child_parser_t = Parser<ctx_t, child_dst_t, child_req_t, CHILD_PAT_T>;
 
   std::size_t count_ = 0;
   child_parser_t child_parser_;
 
  public:
   RepeatImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
-      : ParserBase<ctx_t>(ctx),
-        child_parser_(ctx.overrideReqs(child_req_t()), child_dst_t(dst), pat.operand()) {
+      : child_parser_(ctx, child_dst_t(dst), pat.operand()) {
     dst.clear();
   }
 
-  result consume(ctx_t ctx, dst_t dst, pat_t const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
+  Result consume(ctx_t ctx, dst_t dst, pat_t const& pat) {
 
-    auto child_ctx = ctx.overrideReqs(child_req_t());
     while (1) {
-      auto child_res = child_parser_.consume(child_ctx, child_dst_t(dst), pat.operand());
+      auto child_res = child_parser_.consume(ctx, child_dst_t(dst), pat.operand());
       switch (child_res) {
-        case result::FAILURE:
+        case Result::FAILURE:
           if (count_ >= MIN_REP) {
-            return result::SUCCESS;
+            return Result::SUCCESS;
           } else {
-            return result::FAILURE;
+            return Result::FAILURE;
           }
 
-        case result::PARTIAL:
-          return result::PARTIAL;
-        case result::SUCCESS:
+        case Result::PARTIAL:
+          return Result::PARTIAL;
+        case Result::SUCCESS:
           count_++;
 
           if (MAX_REP != 0 && count_ == MAX_REP) {
-            return result::SUCCESS;
+            return Result::SUCCESS;
           }
 
           // If we are still going, then we need to reset the child's parser
-          child_parser_ = child_parser_t(child_ctx, dst, pat.operand());
+          child_parser_ = child_parser_t(ctx, dst, pat.operand());
       }
     }
   }
 };
 
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T,
-  std::size_t MIN_REP, std::size_t MAX_REP>
-struct ParserFactory<CTX_T, DST_T, Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>> {
-  static auto create(CTX_T ctx, DST_T dst, Repeat<CHILD_PAT_T, MIN_REP, MAX_REP> const& pat) {
-    // Check which requirements we need to fullfill
-    constexpr bool apply_fails_cleanly = MIN_REP != MAX_REP || MAX_REP == 0;
 
-    // Determine if we need to re-wrap the dst
 
-    using a = RepeatImpl<CTX_T, DST_T, CHILD_PAT_T, MIN_REP, MAX_REP>;
-    using b = fulfill_req_if_t<a, Req::FAILS_CLEANLY, apply_fails_cleanly>;
 
-    return b(ctx, dst, pat);
-  }
+
+template <typename CHILD_PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
+struct ParserFactory<Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>> {
+  using pat_t = Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>;
+
+  enum {
+    ATOMIC = false,
+    FAILS_CLEANLY = MIN_REP == MAX_REP && MAX_REP != 0,
+  };
+
+  template<typename CTX_T, typename DST_T, typename REQ_T>
+  using type = RepeatImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, MIN_REP, MAX_REP>;
 };
 }  // namespace ABULAFIA_NAMESPACE
 

@@ -9,29 +9,32 @@
 #define ABULAFIA_PARSERS_COROUTINE_ADAPTER_ATOMIC_H_
 
 #include "abulafia/config.h"
+#include "abulafia/dst_wrapper/select_wrapper.h"
 
 namespace ABULAFIA_NAMESPACE {
 
   // This is to be used to enforce ATOMIC on a parser
   // that does not naturally meet that requirement
-  template<typename PARSER_T>
+  template<typename CTX_T, typename DST_T, typename REQ_T, typename PARSER_FACTORY_T>
   class AtomicAdapter {
   public:
-    using ctx_t = typename PARSER_T::ctx_t;
-    using dst_t = typename PARSER_T::dst_t;
-    using pat_t = typename PARSER_T::pat_t;
-    using buffer_t = typename dst_t::dst_type;
+    using pat_t = typename PARSER_FACTORY_T::pat_t;
+    using buffer_t = typename DST_T::dst_type;
 
-    using adapted_dst_t = ValueWrapper<buffer_t>;
-    using adapted_parser_t = typename PARSER_T::template change_dst_t<adapted_dst_t>;
+    struct adapted_reqs_t : public REQ_T {
+      enum { ATOMIC = false };
+    };
 
-    AtomicAdapter(ctx_t ctx, dst_t, pat_t const& pat)
+    using adapted_dst_t = typename SelectDstWrapper<buffer_t>::type;
+    using child_parser_t = typename PARSER_FACTORY_T:: template type<CTX_T, adapted_dst_t, adapted_reqs_t>;
+
+    AtomicAdapter(CTX_T ctx, DST_T, pat_t const& pat)
       : adapted_parser_(ctx, adapted_dst_t(buffer_), pat) {
     }
 
-    result consume(ctx_t ctx, dst_t dst, pat_t const& pat) {
+    Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
       auto status = adapted_parser_.consume(ctx, adapted_dst_t(buffer_), pat);
-      if (status == result::SUCCESS) {
+      if (status == Result::SUCCESS) {
         dst = buffer_;
       }
       return status;
@@ -39,7 +42,24 @@ namespace ABULAFIA_NAMESPACE {
 
   private:
     buffer_t buffer_;
-    adapted_parser_t adapted_parser_;
+    child_parser_t adapted_parser_;
+  };
+
+
+  template<typename FACTORY_T>
+  struct AtomicFactoryAdapter {
+    static_assert(!FACTORY_T::ATOMIC);
+
+    using pat_t = typename FACTORY_T::pat_t;
+
+    enum {
+      ATOMIC = true,
+      FAILS_CLEANLY = FACTORY_T::FAILS_CLEANLY,
+    };
+
+    
+    template<typename CTX_T, typename DST_T, typename REQ_T>
+    using type = AtomicAdapter<CTX_T, DST_T, REQ_T, FACTORY_T>;
   };
 
 }  // namespace ABULAFIA_NAMESPACE

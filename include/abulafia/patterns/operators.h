@@ -26,19 +26,6 @@ namespace ABULAFIA_NAMESPACE {
 
 // UNARY OPERATORS
 
-// *pattern
-template <typename PAT_T,
-          typename Enable = enable_if_t<is_valid_unary_operand<PAT_T>()>>
-auto operator*(PAT_T pat) {
-  return repeat<0, 0>(std::move(pat));
-}
-
-// +pattern
-template <typename PAT_T,
-          typename Enable = enable_if_t<is_valid_unary_operand<PAT_T>()>>
-auto operator+(PAT_T&& pat) {
-  return repeat<1, 0>(forward<PAT_T>(pat));
-}
 
 // !pattern
 template <typename PAT_T,

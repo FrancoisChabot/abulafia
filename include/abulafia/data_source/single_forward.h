@@ -5,8 +5,8 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_CONTEXTS_SINGLE_FORWARD_H_
-#define ABULAFIA_CONTEXTS_SINGLE_FORWARD_H_
+#ifndef ABULAFIA_DATASOURCES_SINGLE_FORWARD_H_
+#define ABULAFIA_DATASOURCES_SINGLE_FORWARD_H_
 
 #include "abulafia/config.h"
 
@@ -19,7 +19,7 @@ namespace ABULAFIA_NAMESPACE {
 // receive anything else. It maintains a light rollback stack that
 // has no cost associated with in in next/advance/empty.
 template <typename ITE_T>
-class SingleForwardContext {
+class SingleForwardDataSource {
   using iterator = ITE_T;
   std::stack<iterator> rollback_stack_;
 
@@ -32,13 +32,13 @@ class SingleForwardContext {
   };
 
   using value_type = decltype(*(ITE_T()));
-  using base_ctx_t = SingleForwardContext<ITE_T>;
+  using base_ctx_t = SingleForwardDataSource<ITE_T>;
 
   base_ctx_t& root_ctx() { return *this; }
   enum { IS_RESUMABLE = false };
 
-  SingleForwardContext(iterator b, iterator e) : current_(b), end_(e) {}
-  SingleForwardContext(SingleForwardContext const&) = delete;
+  SingleForwardDataSource(iterator b, iterator e) : current_(b), end_(e) {}
+  SingleForwardDataSource(SingleForwardDataSource const&) = delete;
   constexpr bool final_buffer() const { return true; }
 
   void prepare_rollback() { rollback_stack_.push(current_); }

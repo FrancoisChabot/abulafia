@@ -28,7 +28,7 @@ static constexpr Int<10, 1, 0> int_;
 static constexpr Uint<10, 1, 0> uint_;
 
 static constexpr Eoi eoi;
-static constexpr Fail fail;
+
 static constexpr Pass pass;
 
 // Function-base API

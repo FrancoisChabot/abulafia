@@ -15,30 +15,17 @@
 namespace ABULAFIA_NAMESPACE {
 
 // The Uint Pattern
-template <int BASE, std::size_t DIGITS_MIN = 1, std::size_t DIGITS_MAX = 0>
+template <std::size_t BASE, std::size_t DIGITS_MIN = 1, std::size_t DIGITS_MAX = 0>
 class Uint : public Pattern<Uint<BASE, DIGITS_MIN, DIGITS_MAX>> {
+public:
+  static constexpr std::size_t base() { return BASE; }
+  static constexpr std::size_t digits_min() { return DIGITS_MIN; }
+  static constexpr std::size_t digits_max() { return DIGITS_MAX; }
+
+
   static_assert(DIGITS_MIN >= 1, "Numeric parser must parse at least 1 digit");
   static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0,
                 "Max < Min? really?");
-};
-
-template <int BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX,
-          typename RECUR_TAG>
-struct pattern_traits<Uint<BASE, DIGITS_MIN, DIGITS_MAX>, RECUR_TAG>
-    : public default_pattern_traits {
-  enum {
-    ATOMIC = false,
-    BACKTRACKS = false,
-    FAILS_CLEANLY = DIGITS_MAX == 1,
-    PEEKABLE = DIGITS_MIN == 1,
-    MAY_NOT_CONSUME = false,
-  };
-};
-
-template <int BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX,
-          typename CTX_T>
-struct pat_attr_t<Uint<BASE, DIGITS_MIN, DIGITS_MAX>, CTX_T> {
-  using attr_type = unsigned int;
 };
 
 }  // namespace ABULAFIA_NAMESPACE

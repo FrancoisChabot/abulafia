@@ -15,7 +15,7 @@
 #include "abulafia/parsers/coroutine/leaf/character.h"
 //#include "abulafia/parsers/coroutine/leaf/eoi.h"
 
-#include "abulafia/parsers/coroutine/leaf/fail.h"
+//#include "abulafia/parsers/coroutine/leaf/fail.h"
 //#include "abulafia/parsers/coroutine/leaf/pass.h"
 //#include "abulafia/parsers/coroutine/leaf/string_literal.h"
 //#include "abulafia/parsers/coroutine/leaf/string_symbol.h"
@@ -33,6 +33,6 @@
 #include "abulafia/parsers/coroutine/unary/repeat.h"
 
 //#include "abulafia/parsers/coroutine/recur.h"
-#include "abulafia/parsers/coroutine/with_skipper.h"
+//#include "abulafia/parsers/coroutine/with_skipper.h"
 
 #endif

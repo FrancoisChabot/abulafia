@@ -11,7 +11,6 @@
 #include "abulafia/config.h"
 
 #include "abulafia/pattern.h"
-#include "abulafia/patterns/helpers/buffer.h"
 #include "abulafia/patterns/unary/repeat.h"
 #include "abulafia/support/assert.h"
 #include "abulafia/support/nil.h"

@@ -24,35 +24,31 @@ class CharImpl {
  public:
    CharImpl(CTX_T, DST_T, PAT_T const&) {}
 
-  result consume(CTX_T ctx, DST_T dst, PAT_T const& pat) {
+  Result consume(CTX_T ctx, DST_T dst, PAT_T const& pat) {
     if (ctx.data().empty()) {
-      return ctx.data().final_buffer() ? result::FAILURE : result::PARTIAL;
+      return ctx.data().final_buffer() ? Result::FAILURE : Result::PARTIAL;
     }
 
     auto next = ctx.data().next();
     if (pat.char_set().is_valid(next)) {
       dst = next;
       ctx.data().advance();
-      return result::SUCCESS;
+      return Result::SUCCESS;
     }
-    return result::FAILURE;
+    return Result::FAILURE;
   }
-
-  result peek(CTX_T ctx, PAT_T const& pat) const {
-    if (ctx.data().empty()) {
-      return ctx.data().final_buffer() ? result::FAILURE : result::PARTIAL;
-    }
-
-    return pat.char_set().is_valid(ctx.data().next()) ? result::SUCCESS
-                                               : result::FAILURE;
-  }
-
 };
-template <typename CTX_T, typename DST_T, typename CHARSET_T >
-struct ParserFactory<CTX_T, DST_T, Char<CHARSET_T>> {
-  static auto create(CTX_T ctx, DST_T dst, Char<CHARSET_T> const& pat) {
-    return CharImpl<CTX_T, DST_T, CHARSET_T>(ctx, dst, pat);
-  }
+template <typename CHARSET_T >
+struct ParserFactory<Char<CHARSET_T>> {
+  using pat_t = Char<CHARSET_T>;
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+
+  template<typename CTX_T, typename DST_T, typename REQ_T>
+  using type = CharImpl<CTX_T, DST_T, CHARSET_T>;
 };
 }  // namespace ABULAFIA_NAMESPACE
 
