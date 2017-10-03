@@ -21,7 +21,7 @@ template <typename CTX_T, typename DST_T,
   std::size_t BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
 class UIntImpl {
 public:
-  using pat_t = Uint<BASE, DIGITS_MIN, DIGITS_MAX>;
+  using pat_t = UInt<BASE, DIGITS_MIN, DIGITS_MAX>;
 
   using digit_vals = DigitValues<BASE>;
 
@@ -61,8 +61,8 @@ public:
 };
 
 template<std::size_t BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
-struct ParserFactory<Uint<BASE, DIGITS_MIN, DIGITS_MAX>> {
-  using pat_t = Uint<BASE, DIGITS_MIN, DIGITS_MAX>;
+struct ParserFactory<UInt<BASE, DIGITS_MIN, DIGITS_MAX>> {
+  using pat_t = UInt<BASE, DIGITS_MIN, DIGITS_MAX>;
 
   enum {
     //TODO: We could provide ATOMIC in the DIGITS_MIN == DIGITS_MAX case

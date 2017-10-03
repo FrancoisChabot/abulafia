@@ -16,7 +16,7 @@
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
-
+/*
 template <typename CTX_T, typename DST_T, typename... CHILD_PATS_T>
 class Parser<CTX_T, DST_T, Seq<CHILD_PATS_T...>>
     : public ParserBase<CTX_T, DST_T> {
@@ -96,6 +96,7 @@ class Parser<CTX_T, DST_T, Seq<CHILD_PATS_T...>>
     return child_res;
   }
 };
+*/
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

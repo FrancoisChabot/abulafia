@@ -14,7 +14,7 @@
 #include "abulafia/patterns/recur.h"
 
 namespace ABULAFIA_NAMESPACE {
-
+/*
 template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ATTR_T>
 class Parser<CTX_T, DST_T, Recur<CHILD_PAT_T, ATTR_T>>
     : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
@@ -64,6 +64,7 @@ class Parser<CTX_T, DST_T, WeakRecur<CHILD_PAT_T, ATTR_T>>
     return child_parser_->consume(ctx, dst, pat.operand());
   }
 };
+*/
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

@@ -9,6 +9,8 @@
 #define ABULAFIA_PARSERS_COROUTINE_ADAPTER_ATOMIC_H_
 
 #include "abulafia/config.h"
+
+#include "abulafia/result.h"
 #include "abulafia/dst_wrapper/select_wrapper.h"
 
 namespace ABULAFIA_NAMESPACE {

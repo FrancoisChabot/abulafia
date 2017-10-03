@@ -32,9 +32,7 @@ class SingleForwardDataSource {
   };
 
   using value_type = decltype(*(ITE_T()));
-  using base_ctx_t = SingleForwardDataSource<ITE_T>;
 
-  base_ctx_t& root_ctx() { return *this; }
   enum { IS_RESUMABLE = false };
 
   SingleForwardDataSource(iterator b, iterator e) : current_(b), end_(e) {}
@@ -62,6 +60,8 @@ class SingleForwardDataSource {
   }
 
   bool empty() const { return current_ == end_; }
+
+  bool isResumable() {return false;}
 };
 
 }  // namespace ABULAFIA_NAMESPACE

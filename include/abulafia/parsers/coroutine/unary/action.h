@@ -14,12 +14,13 @@
 #include "abulafia/patterns/unary/action.h"
 
 namespace ABULAFIA_NAMESPACE {
+  /*
 template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename ACT_T>
 class Parser<CTX_T, DST_T, Action<CHILD_PAT_T, ACT_T>>
     : public ParserBase<CTX_T, DST_T, PARSER_OPT_NO_SKIP> {
   using PAT_T = Action<CHILD_PAT_T, ACT_T>;
 
-  using child_ctx_t = CTX_T;  // for now, but I suspect this may change.
+  using child_ctx_t = CTX_T;
   using landing_type_t = typename act_::determine_landing_type<ACT_T>::type;
   using child_parser_t = Parser<child_ctx_t, landing_type_t, CHILD_PAT_T>;
 
@@ -40,6 +41,7 @@ class Parser<CTX_T, DST_T, Action<CHILD_PAT_T, ACT_T>>
     return status;
   }
 };
+*/
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

@@ -10,24 +10,19 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/leaf/leaf_pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
 
-// The Uint Pattern
+// Pattern for a unsigned integer
 template <std::size_t BASE, std::size_t DIGITS_MIN = 1, std::size_t DIGITS_MAX = 0>
-class Uint : public Pattern<Uint<BASE, DIGITS_MIN, DIGITS_MAX>> {
+class UInt : public LeafPattern<UInt<BASE, DIGITS_MIN, DIGITS_MAX>> {
 public:
-  static constexpr std::size_t base() { return BASE; }
-  static constexpr std::size_t digits_min() { return DIGITS_MIN; }
-  static constexpr std::size_t digits_max() { return DIGITS_MAX; }
-
-
-  static_assert(DIGITS_MIN >= 1, "Numeric parser must parse at least 1 digit");
-  static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0,
-                "Max < Min? really?");
+  static_assert(DIGITS_MIN >= 1);
+  static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0);
 };
 
+static constexpr UInt<10, 1, 0> uint_;
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

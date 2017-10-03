@@ -10,7 +10,6 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
 #include "abulafia/parsers/helpers/digit_values.h"
 #include "abulafia/patterns/leaf/numeric/uint.h"
 #include "abulafia/support/assert.h"
@@ -24,6 +23,7 @@ namespace ABULAFIA_NAMESPACE {
     enum {
       ATOMIC = false,
       FAILS_CLEANLY = false,
+      CONSUMES_ON_SUCCESS = false,
     };
   };
 
@@ -58,7 +58,7 @@ namespace ABULAFIA_NAMESPACE {
 
       //TODO: Apply skipper here.
 
-      using parser_type = typename c::type<CTX_T, DST_T, REQ_T>;
+      using parser_type = typename c::template type<CTX_T, DST_T, REQ_T>;
       return parser_type(ctx, dst, pat);
     }
   };

@@ -5,8 +5,8 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_TRAITS_H_
-#define ABULAFIA_TRAITS_H_
+#ifndef ABULAFIA_PATTERNS_TRAITS_H_
+#define ABULAFIA_PATTERNS_TRAITS_H_
 
 #include "abulafia/config.h"
 
@@ -22,12 +22,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename T, typename Enable = void>
 struct expr_traits {
   enum { is_pattern = false, converts_to_pattern = false };
-  static void make_pattern(T) {
-    // We use is_same here to ensure the assert does not get evaluated until
-    // the template is instantiated.
-    static_assert(!is_same<T, T>::value,
-                  "type is not a pattern, or convertible to one");
-  }
 };
 
 template <typename T>
@@ -65,11 +59,6 @@ inline auto make_pattern(T&& p) {
                     expr_traits<decay_t<T>>::converts_to_pattern,
                 "Cannot create pattern from T");
   return expr_traits<decay_t<T>>::make_pattern(forward<T>(p));
-}
-
-template <typename T, typename CB_T>
-auto transform(T const& tgt, CB_T const&) {
-  return tgt;
 }
 
 }  // namespace ABULAFIA_NAMESPACE

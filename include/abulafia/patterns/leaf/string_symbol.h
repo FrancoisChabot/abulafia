@@ -10,8 +10,7 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/leaf/leaf_pattern.h"
 
 #include <map>
 #include <optional>
@@ -20,7 +19,7 @@
 namespace ABULAFIA_NAMESPACE {
 
 template <typename CHAR_T, typename VAL_T>
-class Symbol : public Pattern<Symbol<CHAR_T, VAL_T>> {
+class Symbol : public LeafPattern<Symbol<CHAR_T, VAL_T>> {
   // symbols->value map will be stored as a trie
   struct Node {
     std::map<CHAR_T, Node> child;
@@ -54,23 +53,6 @@ template <typename CHAR_T, typename VAL_T>
 auto symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals) {
   return Symbol<CHAR_T, VAL_T>(vals);
 }
-
-template <typename CHAR_T, typename VAL_T, typename RECUR_TAG>
-struct pattern_traits<Symbol<CHAR_T, VAL_T>, RECUR_TAG>
-    : public default_pattern_traits {
-  enum {
-    ATOMIC = true,
-    BACKTRACKS = true,
-    PEEKABLE = false,
-    FAILS_CLEANLY = false,
-    MAY_NOT_CONSUME = false,
-  };
-};
-
-template <typename CHAR_T, typename VAL_T, typename CTX_T>
-struct pat_attr_t<Symbol<CHAR_T, VAL_T>, CTX_T> {
-  using attr_type = VAL_T;
-};
 
 }  // namespace ABULAFIA_NAMESPACE
 

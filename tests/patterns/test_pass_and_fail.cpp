@@ -7,19 +7,20 @@
 
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
 TEST(test_pass, simple_test) {
-  EXPECT_EQ(parse(pass, "hello"), result::SUCCESS);
-  EXPECT_EQ(parse(pass, "a"), result::SUCCESS);
-  EXPECT_EQ(parse(pass, std::string("")), result::SUCCESS);
-  EXPECT_EQ(parse(pass, ""), result::SUCCESS);
+  testPatternSuccess("a", pass, nil);
+  testPatternSuccess("hello", pass, nil);
+  testPatternSuccess("", pass, nil);
+  testPatternSuccess("\0", pass, nil);
 }
 
 TEST(test_fail, simple_test) {
-  EXPECT_EQ(parse(fail, "hello"), result::FAILURE);
-  EXPECT_EQ(parse(fail, "a"), result::FAILURE);
-  EXPECT_EQ(parse(fail, std::string("")), result::FAILURE);
-  EXPECT_EQ(parse(fail, ""), result::FAILURE);
+  testPatternFailure<Nil>("a", fail);
+  testPatternFailure<Nil>("hello", fail);
+  testPatternFailure<Nil>("", fail);
+  testPatternFailure<Nil>("\0", fail);
 }

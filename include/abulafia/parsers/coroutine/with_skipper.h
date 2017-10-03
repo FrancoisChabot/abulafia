@@ -14,7 +14,7 @@
 #include "abulafia/patterns/with_skipper.h"
 
 namespace ABULAFIA_NAMESPACE {
-
+/*
 template <typename CTX_T, typename DST_T, typename CHILD_PAT_T, typename SKIP_T>
 class WithSkipperImpl : public ParserBase<CTX_T> {
   using ctx_t = CTX_T;
@@ -35,6 +35,7 @@ class WithSkipperImpl : public ParserBase<CTX_T> {
     return child_parser_.consume(sub_ctx, dst, pat.getChild());
   }
 };
+*/
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

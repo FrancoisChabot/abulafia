@@ -86,7 +86,7 @@ TEST(test_list, list_of_lists) {
 
 TEST(test_list, list_of_unstable_append) {
   // comma separated list of between 2 and three single digit uints
-  auto pattern = (repeat<2, 3>(Uint<10, 1, 1>()) % ',');
+  auto pattern = (repeat<2, 3>(UInt<10, 1, 1>()) % ',');
 
   std::vector<std::vector<unsigned int>> dst;
 

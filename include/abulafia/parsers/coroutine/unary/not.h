@@ -14,7 +14,7 @@
 #include "abulafia/patterns/unary/not.h"
 
 namespace ABULAFIA_NAMESPACE {
-
+/*
 template <typename CTX_T, typename CHILD_PAT_T>
 class Parser<CTX_T, Nil, Not<CHILD_PAT_T>> : public ParserBase<CTX_T, Nil> {
   using DST_T = Nil;
@@ -78,6 +78,7 @@ class Parser<CTX_T, Nil, Not<CHILD_PAT_T>> : public ParserBase<CTX_T, Nil> {
     abu_unreachable();
   }
 };
+*/
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

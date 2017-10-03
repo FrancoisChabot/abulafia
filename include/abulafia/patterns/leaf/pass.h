@@ -10,29 +10,14 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/leaf/leaf_pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
 
-// The Pass pattern always passes, and does not emit anything.
-class Pass : public Pattern<Pass> {};
+// The Fail pattern always fails, and does not emit anything.
+class Pass : public LeafPattern<Pass> {};
 
-template <typename RECUR_TAG>
-struct pattern_traits<Pass, RECUR_TAG> : public default_pattern_traits {
-  enum {
-    BACKTRACKS = false,
-    FAILS_CLEANLY = true,
-    PEEKABLE = true,
-    MAY_NOT_CONSUME = true,
-    ATOMIC = true,
-  };
-};
-
-template <typename CTX_T>
-struct pat_attr_t<Pass, CTX_T> {
-  using attr_type = Nil;
-};
+static constexpr Pass pass;
 
 }  // namespace ABULAFIA_NAMESPACE
 

@@ -13,7 +13,7 @@ using namespace abu;
 
 TEST(test_action, simple_action) {
   int count = 0;
-  auto pattern = *apply_action(Uint<10, 2, 2>(), [&]() { ++count; });
+  auto pattern = *apply_action(UInt<10, 2, 2>(), [&]() { ++count; });
 
   auto success = parse(pattern, "123456");
   EXPECT_EQ(result::SUCCESS, success);
@@ -23,7 +23,7 @@ TEST(test_action, simple_action) {
 TEST(test_action, consuming_action) {
   int count = 0;
   auto pattern =
-      *apply_action(Uint<10, 2, 2>(), [&](unsigned int v) { count += v; });
+      *apply_action(UInt<10, 2, 2>(), [&](unsigned int v) { count += v; });
 
   auto success = parse(pattern, "123456");
   EXPECT_EQ(result::SUCCESS, success);
@@ -40,7 +40,7 @@ TEST(test_action, emmiting_action) {
                    unsigned int>::value,
       "");
 
-  auto pattern = *apply_action(Uint<10, 2, 2>(), action);
+  auto pattern = *apply_action(UInt<10, 2, 2>(), action);
 
   std::vector<int> result;
   auto success = parse(pattern, "123456", result);

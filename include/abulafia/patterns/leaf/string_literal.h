@@ -10,8 +10,7 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/leaf/leaf_pattern.h"
 
 #include <cassert>
 #include <string>
@@ -21,7 +20,7 @@ namespace ABULAFIA_NAMESPACE {
 // The string literal matches agaisnt a sequence of tokens without
 // emmiting anything.
 template <typename CHAR_T>
-class StringLiteral : public Pattern<StringLiteral<CHAR_T>> {
+class StringLiteral : public LeafPattern<StringLiteral<CHAR_T>> {
   std::basic_string<CHAR_T> str_;
 
  public:
@@ -56,25 +55,6 @@ struct expr_traits<char32_t const*> {
   static StringLiteral<char32_t> make_pattern(char32_t const* v) {
     return lit(v);
   }
-};
-
-template <typename T, typename RECUR_TAG>
-struct pattern_traits<StringLiteral<T>, RECUR_TAG>
-    : public default_pattern_traits {
-  using attr_type = Nil;
-
-  enum {
-    ATOMIC = true,
-    BACKTRACKS = false,
-    PEEKABLE = false,
-    FAILS_CLEANLY = false,
-    MAY_NOT_CONSUME = false,
-  };
-};
-
-template <typename T, typename CTX_T>
-struct pat_attr_t<StringLiteral<T>, CTX_T> {
-  using attr_type = Nil;
 };
 
 }  // namespace ABULAFIA_NAMESPACE

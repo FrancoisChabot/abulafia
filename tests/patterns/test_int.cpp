@@ -17,19 +17,23 @@ TEST(test_int, test_default_pattern) {
   int dst = 0;
 
   // Basic use case.
-  auto status = parse(pattern, "12", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("12", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(12, dst);
 
-  status = parse(pattern, "-1", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  status = parse("-1", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ(-1, dst);
 
+  status = parse("+14", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
+  EXPECT_EQ(14, dst);
+
   // Empty string.
-  status = parse(pattern, "", dst);
-  EXPECT_EQ(status, result::FAILURE);
+  status = parse("", pattern, dst);
+  EXPECT_EQ(status, Result::FAILURE);
 
   // Bad string
-  status = parse(pattern, "a123", dst);
-  EXPECT_EQ(status, result::FAILURE);
+  status = parse("a123", pattern, dst);
+  EXPECT_EQ(status, Result::FAILURE);
 }

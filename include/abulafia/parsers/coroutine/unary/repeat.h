@@ -18,12 +18,14 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename REQ_T, 
   typename CHILD_PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
 class RepeatImpl {
+  static_assert(!REQ_T::CONSUMES_ON_SUCCESS || MIN_REP > 0);
+
   using ctx_t = CTX_T;
   using dst_t = DST_T;
   using req_t = REQ_T;
   using pat_t = Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>;
 
-  struct child_req_t : public req_t {
+  struct child_req_t {
     enum {
       // The aternative is to push_back on start, and pop_back on failure,
       // which gets a little messy.
@@ -32,7 +34,10 @@ class RepeatImpl {
       // This is extremely important, since we can succeed even if the child parser fails.
       // The exception to this is if MIN_REP == MAX_REP (except for 0). In which case, failure 
       // of the child guarantees failure of the parent.
-      FAILS_CLEANLY = MIN_REP != MAX_REP || MAX_REP == 0
+      FAILS_CLEANLY = MIN_REP != MAX_REP || MAX_REP == 0,
+
+      // Propagate
+      CONSUMES_ON_SUCCESS = REQ_T::CONSUMES_ON_SUCCESS
     };
   };
 
@@ -75,9 +80,6 @@ class RepeatImpl {
     }
   }
 };
-
-
-
 
 
 template <typename CHILD_PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>

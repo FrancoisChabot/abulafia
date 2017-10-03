@@ -17,7 +17,7 @@
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
-
+/*
 template <typename CTX_T, typename DST_T, typename OP_T, typename NEG_T>
 class Parser<CTX_T, DST_T, Except<OP_T, NEG_T>>
     : public ParserBase<CTX_T, DST_T> {
@@ -77,7 +77,7 @@ class Parser<CTX_T, DST_T, Except<OP_T, NEG_T>>
     return std::get<1>(child_parsers_).consume(ctx, dst, pat.op());
   }
 };
-
+*/
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

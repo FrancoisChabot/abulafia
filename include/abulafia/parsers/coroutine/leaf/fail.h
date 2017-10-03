@@ -11,31 +11,34 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/patterns/leaf/fail.h"
+#include "abulafia/patterns/leaf/pass.h"
 #include "abulafia/support/assert.h"
-
-#include <variant>
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T>
-class FailImpl{
+class FailImpl {
   using ctx_t = CTX_T;
   using dst_t = Nil;
   using pat_t = Fail;
 
  public:
-   FailImpl(CTX_T ctx, Nil, PAT_T const&)
-      : ParserBase<CTX_T>(ctx) {}
+  FailImpl(CTX_T, Nil, Fail const&) {}
 
-  Result consume(CTX_T, Nil, PAT_T const&) { return Result::FAILURE; }
-  Result peek(CTX_T, PAT_T const&) { return Result::FAILURE; }
+  Result consume(CTX_T, Nil, Fail const&) { return Result::FAILURE; }
+  Result peek(CTX_T, Fail const&) { return Result::FAILURE; }
 };
 
-template <typename CTX_T, typename REQ_T>
-struct ParserFactory<CTX_T, Nil, REQ_T, Fail> {
-  static auto create(CTX_T ctx, Nil dst, Fail const& pat) {
-    return FailImpl(ctx, dst, pat);
-  }
+template<>
+struct ParserFactory<Fail> {
+  using pat_t = Fail;
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+
+  template<typename CTX_T, typename DST_T, typename REQ_T>
+  using type = FailImpl<CTX_T>;
 };
 
 

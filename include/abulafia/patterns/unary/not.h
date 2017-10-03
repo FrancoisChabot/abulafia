@@ -11,7 +11,7 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/pattern.h"
 #include "abulafia/support/assert.h"
 
 namespace ABULAFIA_NAMESPACE {
@@ -27,25 +27,13 @@ class Not : public Pattern<Not<PAT_T>> {
   PAT_T const& operand() const { return child_; }
 };
 
-template <typename PAT_T, typename RECUR_TAG>
-struct pattern_traits<Not<PAT_T>, RECUR_TAG> : public default_pattern_traits {
-  using attr_type = Nil;
+template <typename PAT_T,
+          typename Enable = enable_if_t<is_valid_unary_operand<PAT_T>(),
+                                        Not<pattern_t<PAT_T>>>>
+auto operator!(PAT_T&& pat) {
+  return Not<pattern_t<PAT_T>>(make_pattern(pat));
+}
 
-  enum {
-
-    // if we can get our info by peeking, then we will not need to backtrack
-    BACKTRACKS = !pattern_traits<PAT_T, RECUR_TAG>::PEEKABLE,
-    PEEKABLE = pattern_traits<PAT_T, RECUR_TAG>::PEEKABLE,
-    FAILS_CLEANLY = true,
-    MAY_NOT_CONSUME = true,
-    ATOMIC = true,
-  };
-};
-
-template <typename PAT_T, typename CTX_T>
-struct pat_attr_t<Not<PAT_T>, CTX_T> {
-  using attr_type = Nil;
-};
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

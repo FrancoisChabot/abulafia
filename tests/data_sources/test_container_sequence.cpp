@@ -25,7 +25,7 @@ struct FakeData {
 TEST(test_container_sequence, take_ownership) {
   bool alive = false;
   {
-    ContainerSequenceContext<FakeData> ctx;
+    ContainerSequenceDataSource<FakeData> ctx;
     auto data = std::make_unique<FakeData>(&alive);
 
     EXPECT_TRUE(alive);
@@ -39,7 +39,7 @@ TEST(test_container_sequence, take_ownership) {
 TEST(test_container_sequence, handles_shared_ptr) {
   bool alive = false;
   {
-    ContainerSequenceContext<FakeData> ctx;
+    ContainerSequenceDataSource<FakeData> ctx;
     auto data = std::make_shared<FakeData>(&alive);
     EXPECT_TRUE(alive);
     ctx.add_buffer(data, IsFinal::FINAL);
@@ -50,14 +50,14 @@ TEST(test_container_sequence, handles_shared_ptr) {
 }
 
 TEST(test_container_sequence, handles_object) {
-  ContainerSequenceContext<std::string> ctx;
+  ContainerSequenceDataSource<std::string> ctx;
 
   ctx.add_buffer("abcd", IsFinal::FINAL);
   EXPECT_EQ('a', ctx.next());
 }
 
 TEST(test_container_sequence, handles_multiple_buffers) {
-  ContainerSequenceContext<std::string> ctx;
+  ContainerSequenceDataSource<std::string> ctx;
 
   ctx.add_buffer("ab");
   ctx.add_buffer("c");
@@ -85,7 +85,7 @@ TEST(test_container_sequence, handles_multiple_buffers) {
 }
 
 TEST(test_container_sequence, perform_rollback_to_start) {
-  ContainerSequenceContext<std::string> ctx;
+  ContainerSequenceDataSource<std::string> ctx;
 
   ctx.add_buffer("12");
   ctx.add_buffer("34");
@@ -102,7 +102,7 @@ TEST(test_container_sequence, perform_rollback_to_start) {
 }
 
 TEST(test_container_sequence, perform_rollback_to_middle) {
-  ContainerSequenceContext<std::string> ctx;
+  ContainerSequenceDataSource<std::string> ctx;
 
   ctx.add_buffer("12");
   ctx.add_buffer("34");
@@ -122,7 +122,7 @@ TEST(test_container_sequence, perform_rollback_to_middle) {
 }
 
 TEST(test_container_sequence, perform_rollback_from_empty) {
-  ContainerSequenceContext<std::string> ctx;
+  ContainerSequenceDataSource<std::string> ctx;
 
   ctx.add_buffer("12");
   ctx.add_buffer("34");
@@ -139,7 +139,7 @@ TEST(test_container_sequence, perform_rollback_from_empty) {
 }
 
 TEST(test_container_sequence, immediate_rollback) {
-  ContainerSequenceContext<std::string> ctx;
+  ContainerSequenceDataSource<std::string> ctx;
 
   ctx.add_buffer("12");
   ctx.add_buffer("34");
@@ -153,7 +153,7 @@ TEST(test_container_sequence, immediate_rollback) {
 }
 
 TEST(test_container_sequence, perform_multiple_rollback) {
-  ContainerSequenceContext<std::string> ctx;
+  ContainerSequenceDataSource<std::string> ctx;
 
   ctx.add_buffer("12");
   ctx.add_buffer("34");
@@ -180,7 +180,7 @@ TEST(test_container_sequence, perform_multiple_rollback) {
 }
 
 TEST(test_container_sequence, cancel_rollback) {
-  ContainerSequenceContext<std::string> ctx;
+  ContainerSequenceDataSource<std::string> ctx;
 
   ctx.add_buffer("12");
   ctx.add_buffer("34");

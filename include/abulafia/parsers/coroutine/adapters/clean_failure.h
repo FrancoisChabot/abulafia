@@ -10,6 +10,8 @@
 
 #include "abulafia/config.h"
 
+#include "abulafia/result.h"
+
 namespace ABULAFIA_NAMESPACE {
 
 // This is to be used to enforce FAILS_CLEANLY on a parser
@@ -28,7 +30,6 @@ public:
   };
 
   using child_parser_t = typename PARSER_FACTORY_T:: template type<CTX_T, DST_T, adapted_reqs_t>;
-
 
   CleanFailureAdapter(CTX_T ctx, DST_T dst, pat_t const& pat)
     : adapted_parser_(ctx, dst, pat) {
@@ -66,7 +67,6 @@ private:
       FAILS_CLEANLY = true,
     };
 
-    
     template<typename CTX_T, typename DST_T, typename REQ_T>
     using type = CleanFailureAdapter<CTX_T, DST_T, REQ_T, FACTORY_T>;
   };

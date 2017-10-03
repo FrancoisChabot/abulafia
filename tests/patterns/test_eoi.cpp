@@ -7,16 +7,11 @@
 
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
-
+#include "test_utils.h"
 using namespace abu;
 
 TEST(test_eoi, simple_test) {
-  EXPECT_EQ(parse(eoi, "hello"), result::FAILURE);
-  EXPECT_EQ(parse(eoi, "a"), result::FAILURE);
-  EXPECT_EQ(parse(eoi, std::string("")), result::SUCCESS);
-  EXPECT_EQ(parse(eoi, std::string_view("")), result::SUCCESS);
-
-  // the trailing \0 counts, unfortunately
-  EXPECT_EQ(parse(eoi, ""), result::FAILURE);
-  // EXPECT_EQ(parse('\0' >> eoi, ""), result::SUCCESS);
+  testPatternFailure<Nil>("a", eoi);
+  testPatternFailure<Nil>("hello", eoi);
+  testPatternSuccess("", eoi, nil);
 }

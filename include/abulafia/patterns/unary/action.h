@@ -11,7 +11,7 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/pattern.h"
 #include "abulafia/support/function_traits.h"
 
 namespace ABULAFIA_NAMESPACE {
@@ -103,25 +103,6 @@ class Action : public Pattern<Action<CHILD_PAT_T, ACT_T>> {
 
   CHILD_PAT_T const& child_pattern() const { return pat_; }
   ACT_T const& action() const { return act_; }
-};
-
-template <typename CHILD_PAT_T, typename ACT_T, typename RECUR_TAG>
-struct pattern_traits<Action<CHILD_PAT_T, ACT_T>, RECUR_TAG>
-    : public default_pattern_traits {
-  enum {
-    BACKTRACKS = pattern_traits<CHILD_PAT_T, RECUR_TAG>::BACKTRACKS,
-    FAILS_CLEANLY = pattern_traits<CHILD_PAT_T, RECUR_TAG>::FAILS_CLEANLY,
-    MAY_NOT_CONSUME = pattern_traits<CHILD_PAT_T, RECUR_TAG>::MAY_NOT_CONSUME,
-    PEEKABLE = false,
-    ATOMIC = true,
-    APPENDS_DST = false,     // yish...
-    STABLE_APPENDS = false,  // yish...
-  };
-};
-
-template <typename CHILD_PAT_T, typename ACT_T, typename CTX_T>
-struct pat_attr_t<Action<CHILD_PAT_T, ACT_T>, CTX_T> {
-  using attr_type = typename act_::determine_emmited_type<ACT_T>::type;
 };
 
 template <typename PAT_T, typename ACT_T>

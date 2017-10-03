@@ -36,7 +36,7 @@ TEST(test_except, simple_test) {
 }
 /*
 TEST(test_except, test_partial_match) {
-  auto pattern = *(Uint<10, 2, 2>() - "23");
+  auto pattern = *(UInt<10, 2, 2>() - "23");
 
   std::vector<unsigned int> dst;
   // Basic use case.

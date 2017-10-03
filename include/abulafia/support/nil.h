@@ -46,6 +46,7 @@ struct Nil {
     return *this;
   }
 
+  bool operator==(Nil const&) const {return true;}
   // Can pose as anything, as long as it can be default-constructed.
   template <typename T>
   operator T() const {

@@ -11,7 +11,7 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/pattern.h"
 #include "abulafia/support/nil.h"
 
 #include <vector>
@@ -23,8 +23,7 @@ class Repeat : public Pattern<Repeat<PAT_T, MIN_REP, MAX_REP>> {
   PAT_T operand_;
 
  public:
-  Repeat(const PAT_T& op) : operand_(op) {}
-  Repeat(PAT_T&& op) : operand_(std::move(op)) {}
+  Repeat(const PAT_T op) : operand_(std::move(op)) {}
 
   PAT_T const& operand() const { return operand_; }
 };
@@ -35,9 +34,9 @@ auto transform(Repeat<PAT_T, MIN_REP, MAX_REP> const& tgt, CB_T const& cb) {
 }
 
 template <std::size_t MIN_REP = 0, std::size_t MAX_REP = 0, typename PAT_T>
-inline auto repeat(PAT_T&& pat) {
+inline auto repeat(PAT_T pat) {
   return Repeat<pattern_t<PAT_T>, MIN_REP, MAX_REP>(
-      make_pattern(forward<PAT_T>(pat)));
+      make_pattern(std::move(pat)));
 }
 
 // *pattern

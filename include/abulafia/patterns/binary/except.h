@@ -10,7 +10,9 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/pattern.h"
+
+#include <utility>
 
 namespace ABULAFIA_NAMESPACE {
 
@@ -30,36 +32,25 @@ class Except : public Pattern<Except<OP_T, NEG_T>> {
   neg_t const& neg() const { return neg_; }
 };
 
-template <typename LHS_T, typename RHS_T, typename RECUR_TAG>
-struct pattern_traits<Except<LHS_T, RHS_T>, RECUR_TAG> {
-  enum {
-    ATOMIC = pattern_traits<LHS_T, RECUR_TAG>::ATOMIC,
-    BACKTRACKS = pattern_traits<LHS_T, RECUR_TAG>::BACKTRACKS ||
-                 pattern_traits<RHS_T, RECUR_TAG>::BACKTRACKS ||
-                 !pattern_traits<RHS_T, RECUR_TAG>::FAILS_CLEANLY,
-    FAILS_CLEANLY = pattern_traits<LHS_T, RECUR_TAG>::FAILS_CLEANLY,
-    PEEKABLE = pattern_traits<LHS_T, RECUR_TAG>::PEEKABLE &&
-               pattern_traits<RHS_T, RECUR_TAG>::PEEKABLE,
-    MAY_NOT_CONSUME = pattern_traits<LHS_T, RECUR_TAG>::MAY_NOT_CONSUME,
-    APPENDS_DST = pattern_traits<LHS_T, RECUR_TAG>::APPENDS_DST,
-    STABLE_APPENDS = pattern_traits<LHS_T, RECUR_TAG>::STABLE_APPENDS,
-  };
-};
-
-template <typename LHS_T, typename RHS_T, typename CTX_T>
-struct pat_attr_t<Except<LHS_T, RHS_T>, CTX_T> {
-  using attr_type = abu::attr_t<LHS_T, CTX_T>;
-};
-
-template <typename LHS_T, typename RHS_T, typename CB_T>
-auto transform(Except<LHS_T, RHS_T> const& tgt, CB_T const& cb) {
+template <typename OP_T, typename NEG_T, typename CB_T>
+auto transform(Except<OP_T, NEG_T> const& tgt, CB_T const& cb) {
   auto new_op = cb(tgt.op());
   auto new_neg = cb(tgt.neg());
 
-  using new_op_t = decltype(new_op);
-  using new_sep_t = decltype(new_neg);
+  return Except<decltype(new_op), decltype(new_neg)>(std::move(new_op), std::move(new_neg));
+}
 
-  return Except<new_op_t, new_sep_t>(std::move(new_op), std::move(new_neg));
+template <typename OP_T, typename NEG_T>
+auto except(OP_T lhs, NEG_T rhs) {
+  return Except<OP_T, NEG_T>(
+      make_pattern(std::move(lhs)), make_pattern(std::move(rhs)));
+}
+
+// pattern - pattern
+template <typename LHS_T, typename RHS_T,
+    typename Enable = enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>()>>
+auto operator-(LHS_T lhs, RHS_T rhs) {
+  return except(std::move(lhs), std::move(rhs));
 }
 
 }  // namespace ABULAFIA_NAMESPACE

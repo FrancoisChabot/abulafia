@@ -5,25 +5,17 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#include <unordered_set>
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
 TEST(test_alternative, simple_test) {
-  auto pattern = Uint<2, 4, 4>() | Uint<10, 2, 2>();
-  std::unordered_set<int> test;
-  unsigned int result = 0;
+  auto pattern = UInt<2, 4, 4>() | UInt<10, 2, 2>();
 
-  auto success = parse(pattern, "1010", result);
-  EXPECT_EQ(result::SUCCESS, success);
-  EXPECT_EQ(10U, result);
+  testPatternSuccess("1010", pattern, 10U);
+  testPatternSuccess("24", pattern, 24U);
+  testPatternFailure<int>("2", pattern);
 
-  success = parse(pattern, "24", result);
-  EXPECT_EQ(result::SUCCESS, success);
-  EXPECT_EQ(24U, result);
-
-  success = parse(pattern, "2", result);
-  EXPECT_EQ(result::FAILURE, success);
 }

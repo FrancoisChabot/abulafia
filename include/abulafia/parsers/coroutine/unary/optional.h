@@ -14,7 +14,7 @@
 #include "abulafia/patterns/unary/optional.h"
 
 namespace ABULAFIA_NAMESPACE {
-
+/*
 template <typename CTX_T, typename DST_T, typename CHILD_PAT_T>
 class Parser<CTX_T, DST_T, Optional<CHILD_PAT_T>> : public ParserBase<CTX_T, DST_T> {
   using PAT_T = Optional<CHILD_PAT_T>;
@@ -51,6 +51,7 @@ class Parser<CTX_T, DST_T, Optional<CHILD_PAT_T>> : public ParserBase<CTX_T, DST
     return result::SUCCESS;
   }
 };
+*/
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

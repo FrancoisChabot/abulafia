@@ -17,7 +17,7 @@
 #include "abulafia/patterns/leaf/fail.h"
 
 #include "abulafia/context.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/pattern.h"
 #include "abulafia/result.h"
 
 namespace ABULAFIA_NAMESPACE {

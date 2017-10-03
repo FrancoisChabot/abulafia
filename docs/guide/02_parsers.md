@@ -21,7 +21,7 @@ Furthermore, patterns are composed using **value semantics**. This means that wr
 // Parses hexadecimal numbers, expecting them to be prefixed by the standard 0x
 template<std::size_t MIN_DIGITS, std::size_t MAX_DIGITS>
 auto prefixed_hex() {
-  return (lit("0x") | lit("0X") >> Uint<16, MIN_DIGITS, MAX_DIGITS>();
+  return (lit("0x") | lit("0X") >> UInt<16, MIN_DIGITS, MAX_DIGITS>();
 }
 ```
 
@@ -65,7 +65,7 @@ int main() {
 
   // pattern
   // A list of two-digits decimal-10 unsigned integers
-  auto pattern = *abu::Uint<10,2,2>();
+  auto pattern = *abu::UInt<10,2,2>();
 
   // context
   // Consume a pair of `std::string` iterators all at once
@@ -105,7 +105,7 @@ Simple patterns can also be inlined directly into the parse call.
 int main() {
   std::vector<unsigned short> destination;
 
-  auto status = abu::parse(*abu::Uint<10, 2, 2>,
+  auto status = abu::parse(*abu::UInt<10, 2, 2>,
                            "123456",
                            destination);
 

@@ -1,7 +1,9 @@
 add_library(abu_test_main test_main.cpp)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 add_subdirectory(char_set)
-add_subdirectory(contexts)
+add_subdirectory(data_sources)
 add_subdirectory(patterns)
 add_subdirectory(operations)
 add_subdirectory(documentation)

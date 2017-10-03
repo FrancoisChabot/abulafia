@@ -11,14 +11,13 @@
 #include "abulafia/config.h"
 
 #include "abulafia/patterns/binary/list.h"
-#include "abulafia/patterns/helpers/buffer.h"
 #include "abulafia/support/assert.h"
 #include "abulafia/support/nil.h"
 
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
-
+/*
 template <typename CTX_T, typename DST_T, typename VAL_PAT_T,
           typename SEP_PAT_T>
 class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
@@ -104,6 +103,7 @@ class Parser<CTX_T, DST_T, List<VAL_PAT_T, SEP_PAT_T>>
   }
 };
 
+*/
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

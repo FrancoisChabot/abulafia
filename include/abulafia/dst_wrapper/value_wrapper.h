@@ -10,6 +10,10 @@
 
 #include "abulafia/config.h"
 
+#include "abulafia/support/nil.h"
+
+#include <utility>
+
 namespace ABULAFIA_NAMESPACE {
   
   template<typename T>

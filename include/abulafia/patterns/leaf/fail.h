@@ -10,20 +10,14 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/leaf/leaf_pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
 
 // The Fail pattern always fails, and does not emit anything.
-class Fail : public Pattern<Fail> {};
-
-template <typename CTX_T>
-struct pat_attr_t<Fail, CTX_T> {
-  using attr_type = Nil;
-};
+class Fail : public LeafPattern<Fail> {};
 
 static constexpr Fail fail;
-
 
 }  // namespace ABULAFIA_NAMESPACE
 
