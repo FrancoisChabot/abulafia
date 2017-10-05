@@ -33,7 +33,6 @@
 // Patterns
 #include "abulafia/patterns/all.h"
 
-
 // Parsers
 #include "abulafia/parsers/coroutine/all.h"
 

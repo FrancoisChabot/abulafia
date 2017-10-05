@@ -15,29 +15,27 @@
 #include <utility>
 
 namespace ABULAFIA_NAMESPACE {
-  
-  template<typename T>
-  class ValueWrapper {
-  public:
-    using dst_type = T;
 
-    ValueWrapper(T& v) : v_(v) {}
-    ValueWrapper(ValueWrapper const&) = default;
+template <typename T>
+class ValueWrapper {
+ public:
+  using dst_type = T;
 
-    template<typename U>
-    ValueWrapper& operator=(U&& v) {
-      v_ = std::forward<U>(v);
-      return *this;
-    }
+  ValueWrapper(T& v) : v_(v) {}
+  ValueWrapper(ValueWrapper const&) = default;
 
-    // using this implies that we are NOT atomic in nature.
-    T& get() {
-      return v_;
-    }
+  template <typename U>
+  ValueWrapper& operator=(U&& v) {
+    v_ = std::forward<U>(v);
+    return *this;
+  }
 
-  private:
-    T& v_;
-  };
+  // using this implies that we are NOT atomic in nature.
+  T& get() { return v_; }
+
+ private:
+  T& v_;
+};
 
 }  // namespace ABULAFIA_NAMESPACE
 

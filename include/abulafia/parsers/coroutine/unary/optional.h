@@ -16,9 +16,9 @@
 namespace ABULAFIA_NAMESPACE {
 /*
 template <typename CTX_T, typename DST_T, typename CHILD_PAT_T>
-class Parser<CTX_T, DST_T, Optional<CHILD_PAT_T>> : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = Optional<CHILD_PAT_T>;
-  using child_parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
+class Parser<CTX_T, DST_T, Optional<CHILD_PAT_T>> : public ParserBase<CTX_T,
+DST_T> { using PAT_T = Optional<CHILD_PAT_T>; using child_parser_t =
+Parser<CTX_T, DST_T, CHILD_PAT_T>;
 
   child_parser_t parser_;
 

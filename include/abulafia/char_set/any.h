@@ -18,10 +18,8 @@ namespace char_set {
 template <typename CHAR_T>
 struct Any : public CharacterSet {
   using char_t = CHAR_T;
-  
-  bool is_valid(char_t const &) const {
-    return true;
-  }
+
+  bool is_valid(char_t const &) const { return true; }
 };
 
 template <typename CHAR_T>

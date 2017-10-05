@@ -11,8 +11,8 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/patterns/pattern.h"
 #include "abulafia/patterns/nary/nary_pattern.h"
+#include "abulafia/patterns/pattern.h"
 
 #include <variant>
 

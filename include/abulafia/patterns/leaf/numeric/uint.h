@@ -15,9 +15,10 @@
 namespace ABULAFIA_NAMESPACE {
 
 // Pattern for a unsigned integer
-template <std::size_t BASE, std::size_t DIGITS_MIN = 1, std::size_t DIGITS_MAX = 0>
+template <std::size_t BASE, std::size_t DIGITS_MIN = 1,
+          std::size_t DIGITS_MAX = 0>
 class UInt : public LeafPattern<UInt<BASE, DIGITS_MIN, DIGITS_MAX>> {
-public:
+ public:
   static_assert(DIGITS_MIN >= 1);
   static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0);
 };

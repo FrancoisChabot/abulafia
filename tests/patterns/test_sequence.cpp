@@ -7,41 +7,30 @@
 
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
 TEST(test_sequence, simple_test) {
   auto pattern = lit("a") >> lit("b");
 
-  auto status = parse(pattern, std::string("ab"));
-  EXPECT_EQ(result::SUCCESS, status);
+  testPatternSuccess("ab", pattern, nil);
 }
 
 TEST(test_sequence, sequence_into_value) {
   auto pattern = lit('-') >> char_() >> lit('-');
 
-  char dst = '0';
-
-  auto status = parse(pattern, std::string("-c-"), dst);
-  EXPECT_EQ(result::SUCCESS, status);
-  EXPECT_EQ('c', dst);
+  testPatternSuccess("-c-", pattern, 'c');
 }
 
 TEST(test_sequence, sequence_into_vector) {
   auto pattern = *char_('a') >> lit('-') >> *char_('b');
 
-  std::string dst("junk");
-  auto status = parse(pattern, std::string("aaa-bb"), dst);
-  EXPECT_EQ(result::SUCCESS, status);
-  EXPECT_EQ("aaabb", dst);
+  testPatternSuccess("aaa-bb", pattern, std::string("aaabb"));
 }
 
 TEST(test_sequence, sequence_into_tuple) {
   auto pattern = int_ >> lit('-') >> int_ >> lit('-') >> int_;
 
-  std::tuple<int, int, int> dst;
-  std::tuple<int, int, int> expected(1, 2, 3);
-  auto status = parse(pattern, std::string("1-2-3"), dst);
-  EXPECT_EQ(result::SUCCESS, status);
-  EXPECT_EQ(expected, dst);
+  testPatternSuccess("1-2-3", pattern, std::tuple<int, int, int>(1, 2, 3));
 }

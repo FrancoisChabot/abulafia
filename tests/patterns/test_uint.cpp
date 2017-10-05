@@ -45,7 +45,6 @@ TEST(test_uint, test_min_digits) {
 TEST(test_uint, test_max_digits) {
   auto pattern = UInt<10, 1, 3>();
 
-
   // Perfect match.
   testPatternSuccess("123", pattern, 123U);
 
@@ -53,5 +52,5 @@ TEST(test_uint, test_max_digits) {
   testPatternSuccess("1234", pattern, 123U);
 
   // make sure that the stream is in the right place once we reached the end
-  //testPatternSuccess("1234", pattern >> '4', 123U);
+  // testPatternSuccess("1234", pattern >> '4', 123U);
 }

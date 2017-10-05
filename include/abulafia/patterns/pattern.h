@@ -10,21 +10,22 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/support/type_traits.h"
 #include "abulafia/patterns/traits.h"
+#include "abulafia/support/type_traits.h"
 
 namespace ABULAFIA_NAMESPACE {
 
+class PatternBase {};
+
 template <typename CRTP_T>
-class Pattern {
-public:
+class Pattern : public PatternBase {
+ public:
   using pat_t = CRTP_T;
 };
 
 // Catch-all set of traits for every subclass of pattern.
 template <typename T>
-struct expr_traits<
-    T, enable_if_t<is_base_of_template<decay_t<T>, Pattern>::value>> {
+struct expr_traits<T, enable_if_t<std::is_base_of<PatternBase, T>::value>> {
   enum { is_pattern = true, converts_to_pattern = false };
 
   static const T& make_pattern(const T& v) { return v; }

@@ -14,7 +14,7 @@ TEST(test_single_forward_context, create_from_string) {
   std::string data = "1234567890";
 
   SingleForwardDataSource<std::string::iterator> ctx(std::begin(data),
-                                                  std::end(data));
+                                                     std::end(data));
   EXPECT_FALSE(ctx.empty());
 
   EXPECT_EQ('1', ctx.next());
@@ -46,7 +46,7 @@ TEST(test_single_forward_context, perform_rollback_to_start) {
   std::string data = "1234567890";
 
   SingleForwardDataSource<std::string::iterator> ctx(std::begin(data),
-                                                  std::end(data));
+                                                     std::end(data));
 
   ctx.prepare_rollback();
   ctx.advance();
@@ -60,7 +60,7 @@ TEST(test_single_forward_context, perform_rollback_to_middle) {
   std::string data = "1234567890";
 
   SingleForwardDataSource<std::string::iterator> ctx(std::begin(data),
-                                                  std::end(data));
+                                                     std::end(data));
   ctx.advance();
   ctx.advance();
 
@@ -76,7 +76,7 @@ TEST(test_single_forward_context, perform_rollback_from_empty) {
   std::string data = "1234567890";
 
   SingleForwardDataSource<std::string::iterator> ctx(std::begin(data),
-                                                  std::end(data));
+                                                     std::end(data));
 
   ctx.prepare_rollback();
   while (!ctx.empty()) {
@@ -90,7 +90,7 @@ TEST(test_single_forward_context, immediate_rollback) {
   std::string data = "1234567890";
 
   SingleForwardDataSource<std::string::iterator> ctx(std::begin(data),
-                                                  std::end(data));
+                                                     std::end(data));
 
   ctx.prepare_rollback();
   ctx.commit_rollback();
@@ -101,7 +101,7 @@ TEST(test_single_forward_context, perform_multiple_rollback) {
   std::string data = "1234567890";
 
   SingleForwardDataSource<std::string::iterator> ctx(std::begin(data),
-                                                  std::end(data));
+                                                     std::end(data));
 
   ctx.prepare_rollback();
   ctx.prepare_rollback();
@@ -125,7 +125,7 @@ TEST(test_single_forward_context, cancel_rollback) {
   std::string data = "1234567890";
 
   SingleForwardDataSource<std::string::iterator> ctx(std::begin(data),
-                                                  std::end(data));
+                                                     std::end(data));
 
   ctx.prepare_rollback();
   ctx.advance();

@@ -17,49 +17,56 @@
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
-/*
+
 template <typename CTX_T, typename DST_T, typename CHAR_T, typename VAL_T>
-class Parser<CTX_T, DST_T, CharSymbol<CHAR_T, VAL_T>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = CharSymbol<CHAR_T, VAL_T>;
-
+class CharSymbolImpl {
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst) {}
+  using pat_t = CharSymbol<CHAR_T, VAL_T>;
 
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
+  CharSymbolImpl(CTX_T, DST_T, pat_t const&) {}
+
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+    if (ctx.data().empty()) {
+      return ctx.data().final_buffer() ? Result::FAILURE : Result::PARTIAL;
     }
 
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
-    }
-
-    auto next = ctx.next();
+    auto next = ctx.data().next();
     auto found = pat.mapping().find(next);
     if (found == pat.mapping().end()) {
-      return result::FAILURE;
+      return Result::FAILURE;
     }
 
     dst = found->second;
-    return result::SUCCESS;
+    return Result::SUCCESS;
   }
 
-  result peek(CTX_T& ctx, PAT_T const& pat) {
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
+  Result peek(CTX_T& ctx, pat_t const& pat) {
+    if (ctx.data().empty()) {
+      return ctx.data().final_buffer() ? Result::FAILURE : Result::PARTIAL;
     }
 
-    auto next = ctx.next();
+    auto next = ctx.data().next();
     auto found = pat.mapping().find(next);
     if (found == pat.mapping().end()) {
-      return result::FAILURE;
+      return Result::FAILURE;
     }
-    return result::SUCCESS;
+    return Result::SUCCESS;
   }
 };
-*/
+
+template <typename CHAR_T, typename VAL_T>
+struct ParserFactory<CharSymbol<CHAR_T, VAL_T>> {
+  using pat_t = CharSymbol<CHAR_T, VAL_T>;
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = CharSymbolImpl<CTX_T, DST_T, CHAR_T, VAL_T>;
+};
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

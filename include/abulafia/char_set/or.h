@@ -32,23 +32,20 @@ struct Or : public CharacterSet {
 
   static_assert(is_char_set<LHS_T>::value);
   static_assert(is_char_set<RHS_T>::value);
-  static_assert(is_same<
-                  typename LHS_T::char_t, 
-                  typename RHS_T::char_t>::value);
+  static_assert(is_same<typename LHS_T::char_t, typename RHS_T::char_t>::value);
 };
-
 
 template <typename LHS_T, typename RHS_T>
 auto or_impl(LHS_T lhs, RHS_T rhs) {
-
   auto lhs_cs = to_char_set(std::decay_t<LHS_T>(lhs));
   auto rhs_cs = to_char_set(std::decay_t<RHS_T>(rhs));
 
-  return Or<decltype(lhs_cs), decltype(rhs_cs)>(lhs_cs, rhs_cs) ;
+  return Or<decltype(lhs_cs), decltype(rhs_cs)>(lhs_cs, rhs_cs);
 }
 
-template <typename LHS_T, typename RHS_T, typename=enable_if_t<is_char_set<LHS_T>::value ||
-  is_char_set<RHS_T>::value>>
+template <typename LHS_T, typename RHS_T,
+          typename = enable_if_t<is_char_set<LHS_T>::value ||
+                                 is_char_set<RHS_T>::value>>
 auto operator|(LHS_T lhs, RHS_T rhs) {
   return or_impl(lhs, rhs);
 }

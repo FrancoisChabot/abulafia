@@ -49,8 +49,8 @@ constexpr bool are_valid_binary_operands() {
 }
 
 template <typename T>
-using pattern_t = decay_t<decltype(
-    expr_traits<decay_t<T>>::make_pattern(*reinterpret_cast<decay_t<T>*>(0)))>;
+using pattern_t =
+    decay_t<decltype(expr_traits<decay_t<T>>::make_pattern(std::declval<T>()))>;
 
 // Utility function to make a pattern out of a value (if possible).
 template <typename T>

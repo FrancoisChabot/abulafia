@@ -31,7 +31,6 @@ TEST(test_repeat, test_plus) {
   testPatternSuccess("23", pattern, std::vector<int>({23}));
   testPatternFailure<std::vector<int>>("abc", pattern);
   testPatternFailure<std::vector<int>>("", pattern);
-
 }
 
 TEST(test_repeat, test_max_count) {
@@ -39,7 +38,7 @@ TEST(test_repeat, test_max_count) {
 
   std::vector<unsigned int> dst;
 
-  testPatternSuccess("1234", pattern, std::vector<int>({1,2,3}));
+  testPatternSuccess("1234", pattern, std::vector<int>({1, 2, 3}));
 }
 /*
 TEST(test_repeat, test_chained_repeat_with_min) {

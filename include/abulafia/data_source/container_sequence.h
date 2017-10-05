@@ -44,7 +44,6 @@ class ContainerSequenceDataSource {
   std::vector<rollback_entry_t> rollback_stack_;
   unsigned int empty_rollbacks_ = 0;
 
-
  public:
   using value_type = typename CONTAINER_T::value_type;
 
@@ -56,20 +55,21 @@ class ContainerSequenceDataSource {
                   IsFinal f = IsFinal::NOT_FINAL) {
     assert(!final_);
 
-    bool is_empty = empty();
+    if (b->begin() != b->end()) {
+      bool is_empty = empty();
 
-    buffers_.push_back(b);
+      buffers_.push_back(b);
 
-    // if we were empty, bootstrap.
-    if (is_empty) {
-      current_buffer_ = std::prev(buffers_.end());
-      current_ = (*current_buffer_)->begin();
-      for (unsigned int i = 0; i < empty_rollbacks_; ++i) {
-        rollback_stack_.emplace_back(current_, current_buffer_);
+      // if we were empty, bootstrap.
+      if (is_empty) {
+        current_buffer_ = std::prev(buffers_.end());
+        current_ = (*current_buffer_)->begin();
+        for (unsigned int i = 0; i < empty_rollbacks_; ++i) {
+          rollback_stack_.emplace_back(current_, current_buffer_);
+        }
+        empty_rollbacks_ = 0;
       }
-      empty_rollbacks_ = 0;
     }
-
     final_ = f == IsFinal::FINAL;
   }
 
@@ -117,11 +117,9 @@ class ContainerSequenceDataSource {
   bool empty() const { return current_buffer_ == buffers_.end(); }
 
   void prepare_rollback() {
-
     if (empty()) {
       ++empty_rollbacks_;
-    }
-    else {
+    } else {
       rollback_stack_.emplace_back(current_, current_buffer_);
     }
   }
@@ -129,8 +127,7 @@ class ContainerSequenceDataSource {
   void commit_rollback() {
     if (empty_rollbacks_) {
       --empty_rollbacks_;
-    }
-    else {
+    } else {
       current_buffer_ = rollback_stack_.back().second;
       current_ = rollback_stack_.back().first;
       rollback_stack_.pop_back();
@@ -141,15 +138,14 @@ class ContainerSequenceDataSource {
   void cancel_rollback() {
     if (empty_rollbacks_) {
       --empty_rollbacks_;
-    }
-    else {
+    } else {
       rollback_stack_.pop_back();
       cleanup_rollback_();
     }
   }
 
-  bool isResumable() {return true;}
-  
+  static constexpr bool isResumable() { return true; }
+
  private:
   void cleanup_rollback_() {
     // The only hold that matters is the front of the rollback stack.

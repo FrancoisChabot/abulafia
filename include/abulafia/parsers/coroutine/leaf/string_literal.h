@@ -17,43 +17,52 @@
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
-/*
 template <typename CTX_T, typename DST_T, typename CHAR_T>
-class Parser<CTX_T, DST_T, StringLiteral<CHAR_T>>
-    : public ParserBase<CTX_T, DST_T> {
+class StringLiteralImpl {
   using PAT_T = StringLiteral<CHAR_T>;
 
   typename std::basic_string<CHAR_T>::const_iterator next_expected_;
 
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst), next_expected_(pat.begin()) {}
+  StringLiteralImpl(CTX_T, DST_T, PAT_T const& pat)
+      : next_expected_(pat.begin()) {}
 
-  result consume(CTX_T& ctx, Nil&, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-
+  Result consume(CTX_T ctx, DST_T, PAT_T const& pat) {
     while (1) {
       if (next_expected_ == pat.end()) {
-        return result::SUCCESS;
+        return Result::SUCCESS;
       }
 
-      if (ctx.empty()) {
-        return ctx.final_buffer() ? result::FAILURE : result::PARTIAL;
+      if (ctx.data().empty()) {
+        return ctx.data().final_buffer() ? Result::FAILURE : Result::PARTIAL;
       }
 
-      auto next = ctx.next();
+      auto next = ctx.data().next();
       if (next == *next_expected_) {
-        ctx.advance();
+        ctx.data().advance();
         ++next_expected_;
       } else {
-        return result::FAILURE;
+        return Result::FAILURE;
       }
     }
   }
 };
-*/
+
+template <typename CHAR_T>
+struct ParserFactory<StringLiteral<CHAR_T>> {
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
+
+  using pat_t = StringLiteral<CHAR_T>;
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = false,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = StringLiteralImpl<CTX_T, DST_T, CHAR_T>;
+};
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

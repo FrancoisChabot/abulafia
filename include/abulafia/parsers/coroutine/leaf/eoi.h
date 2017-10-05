@@ -14,7 +14,6 @@
 #include "abulafia/patterns/leaf/eoi.h"
 #include "abulafia/support/assert.h"
 
-
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T>
 class EoiImpl {
@@ -25,10 +24,8 @@ class EoiImpl {
  public:
   EoiImpl(CTX_T, Nil, Eoi const&) {}
 
-  Result consume(CTX_T ctx, Nil, Eoi const& pat) {
-    return peek(ctx, pat); 
-  }
-  
+  Result consume(CTX_T ctx, Nil, Eoi const& pat) { return peek(ctx, pat); }
+
   Result peek(CTX_T ctx, Eoi const&) {
     if (ctx.data().empty()) {
       return ctx.data().final_buffer() ? Result::SUCCESS : Result::PARTIAL;
@@ -37,7 +34,7 @@ class EoiImpl {
   }
 };
 
-template<>
+template <>
 struct ParserFactory<Eoi> {
   using pat_t = Eoi;
 
@@ -46,10 +43,9 @@ struct ParserFactory<Eoi> {
     FAILS_CLEANLY = true,
   };
 
-  template<typename CTX_T, typename DST_T, typename REQ_T>
+  template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = EoiImpl<CTX_T>;
 };
-
 
 }  // namespace ABULAFIA_NAMESPACE
 

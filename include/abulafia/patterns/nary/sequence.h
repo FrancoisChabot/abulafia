@@ -11,14 +11,13 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/patterns/pattern.h"
 #include "abulafia/patterns/nary/nary_pattern.h"
-#include "abulafia/support/type_traits.h"
+#include "abulafia/patterns/pattern.h"
 
-#include <utility>
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
+
 // The sequence nary pattern.
 template <typename... CHILD_PATS_T>
 class Seq : public Pattern<Seq<CHILD_PATS_T...>> {

@@ -11,7 +11,6 @@
 using namespace abu;
 
 TEST(test_optional, test_pass) {
-
   auto pat = -char_(char_set::any<char>) >> +char_('a', 'z');
 
   EXPECT_EQ(parse(pat, "hello"), result::SUCCESS);

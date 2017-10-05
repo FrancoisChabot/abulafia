@@ -15,8 +15,8 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, typename REQ_T, 
-  typename CHILD_PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
+          std::size_t MIN_REP, std::size_t MAX_REP>
 class RepeatImpl {
   static_assert(!REQ_T::CONSUMES_ON_SUCCESS || MIN_REP > 0);
 
@@ -31,8 +31,10 @@ class RepeatImpl {
       // which gets a little messy.
       ATOMIC = true,
 
-      // This is extremely important, since we can succeed even if the child parser fails.
-      // The exception to this is if MIN_REP == MAX_REP (except for 0). In which case, failure 
+      // This is extremely important, since we can succeed even if the child
+      // parser fails.
+      // The exception to this is if MIN_REP == MAX_REP (except for 0). In which
+      // case, failure
       // of the child guarantees failure of the parent.
       FAILS_CLEANLY = MIN_REP != MAX_REP || MAX_REP == 0,
 
@@ -49,14 +51,12 @@ class RepeatImpl {
 
  public:
   RepeatImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
-      : child_parser_(ctx, child_dst_t(dst), pat.operand()) {
-    dst.clear();
-  }
+      : child_parser_(ctx, child_dst_t(dst), pat.operand()) {}
 
   Result consume(ctx_t ctx, dst_t dst, pat_t const& pat) {
-
     while (1) {
-      auto child_res = child_parser_.consume(ctx, child_dst_t(dst), pat.operand());
+      auto child_res =
+          child_parser_.consume(ctx, child_dst_t(dst), pat.operand());
       switch (child_res) {
         case Result::FAILURE:
           if (count_ >= MIN_REP) {
@@ -81,17 +81,20 @@ class RepeatImpl {
   }
 };
 
-
 template <typename CHILD_PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
 struct ParserFactory<Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>> {
   using pat_t = Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>;
+
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<CHILD_PAT_T>::dst_behavior();
+  }
 
   enum {
     ATOMIC = false,
     FAILS_CLEANLY = MIN_REP == MAX_REP && MAX_REP != 0,
   };
 
-  template<typename CTX_T, typename DST_T, typename REQ_T>
+  template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = RepeatImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, MIN_REP, MAX_REP>;
 };
 }  // namespace ABULAFIA_NAMESPACE

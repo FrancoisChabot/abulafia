@@ -28,7 +28,6 @@ class Optional : public Pattern<Optional<PAT_T>> {
   PAT_T const& operand() const { return child_; }
 };
 
-
 // !pattern
 template <typename PAT_T,
           typename Enable = enable_if_t<is_valid_unary_operand<PAT_T>()>>

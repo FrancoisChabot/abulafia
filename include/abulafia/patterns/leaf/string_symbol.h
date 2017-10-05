@@ -13,6 +13,7 @@
 #include "abulafia/patterns/leaf/leaf_pattern.h"
 
 #include <map>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 
@@ -26,14 +27,16 @@ class Symbol : public LeafPattern<Symbol<CHAR_T, VAL_T>> {
     std::optional<VAL_T> val;
   };
 
-  Node root_;
+  std::shared_ptr<Node> root_;
 
  public:
   using node_t = Node;
 
-  Symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals) {
+  Symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals)
+      : root_(std::make_shared<Node>()) {
     for (auto const& entry : vals) {
-      node_t* next = &root_;
+      node_t* next = root_.get();
+
       for (auto const& chr : entry.first) {
         next = &next->child[chr];
       }
@@ -46,7 +49,7 @@ class Symbol : public LeafPattern<Symbol<CHAR_T, VAL_T>> {
     }
   }
 
-  Node const* root() const { return &root_; }
+  Node const* root() const { return root_.get(); }
 };
 
 template <typename CHAR_T, typename VAL_T>

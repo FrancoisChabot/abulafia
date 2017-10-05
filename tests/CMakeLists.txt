@@ -5,7 +5,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(char_set)
 add_subdirectory(data_sources)
 add_subdirectory(patterns)
-add_subdirectory(operations)
 add_subdirectory(documentation)
 
 SET(HEADER_SAN_SRC "")

@@ -22,7 +22,7 @@ class CharImpl {
   using PAT_T = Char<CHARSET_T>;
 
  public:
-   CharImpl(CTX_T, DST_T, PAT_T const&) {}
+  CharImpl(CTX_T, DST_T, PAT_T const&) {}
 
   Result consume(CTX_T ctx, DST_T dst, PAT_T const& pat) {
     if (ctx.data().empty()) {
@@ -38,16 +38,18 @@ class CharImpl {
     return Result::FAILURE;
   }
 };
-template <typename CHARSET_T >
+template <typename CHARSET_T>
 struct ParserFactory<Char<CHARSET_T>> {
   using pat_t = Char<CHARSET_T>;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
 
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
   };
 
-  template<typename CTX_T, typename DST_T, typename REQ_T>
+  template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = CharImpl<CTX_T, DST_T, CHARSET_T>;
 };
 }  // namespace ABULAFIA_NAMESPACE

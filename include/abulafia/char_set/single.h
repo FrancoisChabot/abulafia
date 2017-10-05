@@ -35,11 +35,9 @@ auto single(CHAR_T c) {
   return Single<CHAR_T>(c);
 }
 
-template<>
+template <>
 struct to_char_set_impl<char, void> {
-  static Single<char> convert(char const& v) {
-    return Single<char>(v);
-  }
+  static Single<char> convert(char const& v) { return Single<char>(v); }
 };
 
 }  // namespace char_set

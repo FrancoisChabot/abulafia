@@ -13,9 +13,9 @@
 #include "abulafia/char_set/char_set.h"
 
 #include <bitset>
+#include <cstring>
 #include <limits>
 #include <set>
-#include <cstring>
 #include <type_traits>
 
 namespace ABULAFIA_NAMESPACE {
@@ -36,31 +36,27 @@ struct Set : public CharacterSet {
   std::set<CHAR_T> characters_;
 };
 
-// For small types, like char, Character sets are simple enough that they can be 
+// For small types, like char, Character sets are simple enough that they can be
 // bitsets.
-template<typename CHAR_T>
+template <typename CHAR_T>
 struct IndexedSet : public CharacterSet {
   using char_t = CHAR_T;
 
   template <typename ITE_T>
   IndexedSet(ITE_T b, ITE_T e) {
-    for (; b != e; ++b ) {
+    for (; b != e; ++b) {
       characters_[as_index(*b)] = true;
     }
   }
 
-  bool is_valid(const char_t& c) const {
-    return characters_.test(as_index(c));
-  }
+  bool is_valid(const char_t& c) const { return characters_.test(as_index(c)); }
 
-private:
+ private:
   using unsigned_t = std::make_unsigned_t<CHAR_T>;
 
-  static constexpr std::size_t as_index(CHAR_T c) {  
-    return unsigned_t(c);
-  }
+  static constexpr std::size_t as_index(CHAR_T c) { return unsigned_t(c); }
 
-  std::bitset<std::numeric_limits<unsigned_t>::max()+1> characters_;
+  std::bitset<std::numeric_limits<unsigned_t>::max() + 1> characters_;
 };
 
 template <>
@@ -75,15 +71,11 @@ auto set(ITE b, ITE e) {
 }
 
 // Create from a pair of iterators
-inline auto set(char const* v) {
-  return Set<char>(v, v + std::strlen(v));
-}
+inline auto set(char const* v) { return Set<char>(v, v + std::strlen(v)); }
 
-template<>
+template <>
 struct to_char_set_impl<const char*, void> {
-  static Set<char> convert(char const* v) {
-    return set(v);
-  }
+  static Set<char> convert(char const* v) { return set(v); }
 };
 
 }  // namespace char_set

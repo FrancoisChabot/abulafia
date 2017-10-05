@@ -13,6 +13,7 @@
 #include "abulafia/patterns/leaf/leaf_pattern.h"
 
 #include <cassert>
+#include <memory>
 #include <string>
 
 namespace ABULAFIA_NAMESPACE {
@@ -21,19 +22,16 @@ namespace ABULAFIA_NAMESPACE {
 // emmiting anything.
 template <typename CHAR_T>
 class StringLiteral : public LeafPattern<StringLiteral<CHAR_T>> {
-  std::basic_string<CHAR_T> str_;
+  std::shared_ptr<std::basic_string<CHAR_T>> str_;
 
  public:
-  StringLiteral(std::basic_string<CHAR_T> const& str) : str_(str) {
-    assert(str_.size() > 0);
+  StringLiteral(std::basic_string<CHAR_T> str)
+      : str_(std::make_shared<std::basic_string<CHAR_T>>(std::move(str))) {
+    assert(str_->size() > 0);
   }
 
-  StringLiteral(std::basic_string<CHAR_T>&& str) : str_(std::move(str)) {
-    assert(str_.size() > 0);
-  }
-
-  auto begin() const { return str_.begin(); }
-  auto end() const { return str_.end(); }
+  auto begin() const { return str_->begin(); }
+  auto end() const { return str_->end(); }
 };
 
 template <typename CHAR_T>

@@ -15,8 +15,7 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, typename REQ_T, 
-  typename CHILD_PAT_T>
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T>
 class DiscardImpl {
   using ctx_t = CTX_T;
   using dst_t = DST_T;
@@ -36,17 +35,18 @@ class DiscardImpl {
   }
 };
 
-
 template <typename CHILD_PAT_T>
 struct ParserFactory<Discard<CHILD_PAT_T>> {
   using pat_t = Discard<CHILD_PAT_T>;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
 
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
   };
 
-  template<typename CTX_T, typename DST_T, typename REQ_T>
+  template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = DiscardImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
 };
 }  // namespace ABULAFIA_NAMESPACE

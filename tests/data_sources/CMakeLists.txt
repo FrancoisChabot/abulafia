@@ -4,6 +4,6 @@ add_executable(datasource_tests
 )
 
 target_link_libraries(datasource_tests abu_test_main gtest)
-add_test(datasource_tests contexts_tests)
+add_test(datasource_tests datasource_tests)
 
 set_target_properties(datasource_tests PROPERTIES FOLDER "tests")

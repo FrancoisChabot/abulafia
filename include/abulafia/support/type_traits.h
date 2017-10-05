@@ -10,13 +10,13 @@
 
 #include "abulafia/config.h"
 
-#include <tuple>
-#include <vector>
 #include <deque>
 #include <list>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 // Importing standard C++ trait and utilities directly in the abulafia
 // namespace.
@@ -42,7 +42,6 @@ struct is_tuple : public std::false_type {};
 template <typename... ARGS_T>
 struct is_tuple<std::tuple<ARGS_T...>> : public std::true_type {};
 
-
 // Collection
 template <typename T>
 struct is_collection : public std::false_type {};
@@ -59,7 +58,6 @@ struct is_collection<std::deque<T, ALLOC>> : public std::true_type {};
 template <typename C, typename T, typename A>
 struct is_collection<std::basic_string<C, T, A>> : public std::true_type {};
 
-
 template <typename T, typename ENABLE = void>
 struct reset_if_collection {
   static void exec(T&) {}
@@ -70,16 +68,16 @@ struct reset_if_collection<T, enable_if_t<is_collection<T>::value>> {
   static void exec(T& c) { c.clear(); }
 };
 
-
-//Credit: https://stackoverflow.com/a/34672753/4442671
-template <template <typename...> class C, typename...Ts>
+// Credit: https://stackoverflow.com/a/34672753/4442671
+template <template <typename...> class C, typename... Ts>
 std::true_type is_base_of_template_impl(const C<Ts...>*);
 
 template <template <typename...> class C>
 std::false_type is_base_of_template_impl(...);
 
 template <typename T, template <typename...> class C>
-using is_base_of_template = decltype(is_base_of_template_impl<C>(std::declval<T*>()));
+using is_base_of_template =
+    decltype(is_base_of_template_impl<C>(std::declval<T*>()));
 
 }  // namespace ABULAFIA_NAMESPACE
 #endif

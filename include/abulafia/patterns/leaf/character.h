@@ -54,9 +54,7 @@ auto char_(T begin, T end) {
   return Char<char_set::Range<T>>(char_set::Range<T>(begin, end));
 }
 
-inline auto char_(const char * str) {
-  return char_(char_set::set(str));
-}
+inline auto char_(const char* str) { return char_(char_set::set(str)); }
 
 template <typename CHAR_SET_T>
 struct expr_traits<CHAR_SET_T,

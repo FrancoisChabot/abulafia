@@ -13,19 +13,19 @@
 #include "abulafia/patterns/pattern.h"
 #include "abulafia/support/type_traits.h"
 
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 namespace ABULAFIA_NAMESPACE {
-  template<typename CRTP>
-  struct LeafPattern : public Pattern<CRTP> {};
+template <typename CRTP>
+struct LeafPattern : public Pattern<CRTP> {};
 
-  template <typename T, 
-    typename CB_T, 
+template <
+    typename T, typename CB_T,
     typename = std::enable_if_t<is_base_of_template<T, LeafPattern>::value>>
-  T transform(T const& tgt, CB_T const&) {
-    return tgt;
-  }
+T transform(T const& tgt, CB_T const&) {
+  return tgt;
+}
 
 }  // namespace ABULAFIA_NAMESPACE
 

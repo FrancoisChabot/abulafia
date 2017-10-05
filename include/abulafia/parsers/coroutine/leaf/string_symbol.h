@@ -17,76 +17,83 @@
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
-  /*
+
 template <typename CTX_T, typename DST_T, typename CHAR_T, typename VAL_T>
-class Parser<CTX_T, DST_T, Symbol<CHAR_T, VAL_T>>
-    : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = Symbol<CHAR_T, VAL_T>;
-  using node_t = typename PAT_T::node_t;
+class SymbolImpl {
+  using pat_t = Symbol<CHAR_T, VAL_T>;
+  using node_t = typename pat_t::node_t;
 
   node_t const* next_ = nullptr;
   node_t const* current_valid_ = nullptr;
 
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst), next_(pat.root()) {}
+  SymbolImpl(CTX_T, DST_T, pat_t const& pat) : next_(pat.root()) {}
 
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-
+  Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
     while (1) {
-      if (ctx.empty()) {
-        if (ctx.final_buffer()) {
+      if (ctx.data().empty()) {
+        if (ctx.data().final_buffer()) {
           if (current_valid_) {
             dst = *current_valid_->val;
-            ctx.commit_rollback();
-            return result::SUCCESS;
+            ctx.data().commit_rollback();
+            return Result::SUCCESS;
           } else {
-            return result::FAILURE;
+            return Result::FAILURE;
           }
         } else {
           // If we were conclusively done, we would have returned success
           // before looping.
-          return result::PARTIAL;
+          return Result::PARTIAL;
         }
       }
 
-      auto next = ctx.next();
+      auto next = ctx.data().next();
       auto found = next_->child.find(next);
       if (found == next_->child.end()) {
         // the next character leads nowhere
         if (current_valid_) {
           // we had a match along the way
           dst = *current_valid_->val;
-          ctx.commit_rollback();
-          return result::SUCCESS;
+          ctx.data().commit_rollback();
+          return Result::SUCCESS;
         }
-        return result::FAILURE;
+        return Result::FAILURE;
       } else {
         // consume the value
-        ctx.advance();
+        ctx.data().advance();
         next_ = &found->second;
         if (next_->val) {
           // we got a hit!
           if (current_valid_) {
-            ctx.cancel_rollback();
+            ctx.data().cancel_rollback();
           }
 
           if (next_->child.empty()) {
             // nowhere to go from here
             dst = *next_->val;
-            return result::SUCCESS;
+            return Result::SUCCESS;
           }
           current_valid_ = next_;
-          ctx.prepare_rollback();
+          ctx.data().prepare_rollback();
         }
       }
     }
   }
 };
-*/
+
+template <typename CHAR_T, typename VAL_T>
+struct ParserFactory<Symbol<CHAR_T, VAL_T>> {
+  using pat_t = Symbol<CHAR_T, VAL_T>;
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = false,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = SymbolImpl<CTX_T, DST_T, CHAR_T, VAL_T>;
+};
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

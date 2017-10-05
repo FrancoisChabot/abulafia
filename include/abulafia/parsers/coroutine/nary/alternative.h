@@ -13,29 +13,29 @@
 #include "abulafia/parser.h"
 #include "abulafia/patterns/nary/alternative.h"
 #include "abulafia/support/visit_val.h"
+
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, typename REQ_T, typename... CHILD_PATS_T>
+template <typename CTX_T, typename DST_T, typename REQ_T,
+          typename... CHILD_PATS_T>
 class AltImpl {
   using pat_t = Alt<CHILD_PATS_T...>;
 
-
   struct child_req_t : public REQ_T {
-    enum {
-      FAILS_CLEANLY = true
-    };
+    enum { FAILS_CLEANLY = true };
   };
 
-  using child_parsers_t = std::variant<Parser<CTX_T, DST_T, child_req_t, CHILD_PATS_T>...>;
-
+  using child_parsers_t =
+      std::variant<Parser<CTX_T, DST_T, child_req_t, CHILD_PATS_T>...>;
 
   child_parsers_t child_parsers_;
 
  public:
   AltImpl(CTX_T& ctx, DST_T& dst, pat_t const& pat)
-      : child_parsers_(std::in_place_index_t<0>(), ctx, dst, getChild<0>(pat)) {}
+      : child_parsers_(std::in_place_index_t<0>(), ctx, dst, getChild<0>(pat)) {
+  }
 
   Result consume(CTX_T& ctx, DST_T& dst, pat_t const& pat) {
     if (ctx.data().isResumable()) {
@@ -67,18 +67,15 @@ class AltImpl {
         constexpr int new_id = next_id < sizeof...(CHILD_PATS_T) ? next_id : 0;
         auto const& new_c_pattern = getChild<new_id>(pat);
 
-        child_parsers_ = child_parsers_t(std::in_place_index_t<new_id>(),
-                                         ctx, dst, new_c_pattern);
+        child_parsers_ = child_parsers_t(std::in_place_index_t<new_id>(), ctx,
+                                         dst, new_c_pattern);
 
         return consume_from<new_id>(ctx, dst, pat);
       }
     }
     return child_res;
   }
-
 };
-
-
 
 template <typename... CHILD_PATS_T>
 struct ParserFactory<Alt<CHILD_PATS_T...>> {
@@ -89,7 +86,7 @@ struct ParserFactory<Alt<CHILD_PATS_T...>> {
     FAILS_CLEANLY = true,
   };
 
-  template<typename CTX_T, typename DST_T, typename REQ_T>
+  template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = AltImpl<CTX_T, DST_T, REQ_T, CHILD_PATS_T...>;
 };
 

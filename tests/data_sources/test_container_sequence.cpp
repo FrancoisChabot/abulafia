@@ -14,7 +14,7 @@ struct FakeData {
   using const_iterator = char*;
   using value_type = char;
   char* begin() { return nullptr; }
-  char* end() { return nullptr; }
+  char* end() { return (char*)1; }
 
   bool* tgt;
 

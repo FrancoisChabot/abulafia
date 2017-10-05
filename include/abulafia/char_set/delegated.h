@@ -25,9 +25,7 @@ struct DelegatedSet : public CharacterSet {
 
   explicit DelegatedSet(CB_T cb) : cb_(std::move(cb)) {}
 
-  bool is_valid(char_t const& c) const {
-    return cb_(c);
-  }
+  bool is_valid(char_t const& c) const { return cb_(c); }
 
  private:
   CB_T cb_;

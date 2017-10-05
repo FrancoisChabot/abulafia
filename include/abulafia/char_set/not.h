@@ -12,8 +12,8 @@
 
 #include "abulafia/char_set/char_set.h"
 
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 namespace ABULAFIA_NAMESPACE {
 namespace char_set {
@@ -24,9 +24,7 @@ struct Not : public CharacterSet {
 
   explicit Not(ARG_T arg) : arg_(std::move(arg)) {}
 
-  bool is_valid(char_t const& c) const {
-    return !arg_.is_valid(c);
-  }
+  bool is_valid(char_t const& c) const { return !arg_.is_valid(c); }
 
  private:
   ARG_T arg_;

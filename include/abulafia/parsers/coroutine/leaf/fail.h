@@ -28,7 +28,7 @@ class FailImpl {
   Result peek(CTX_T, Fail const&) { return Result::FAILURE; }
 };
 
-template<>
+template <>
 struct ParserFactory<Fail> {
   using pat_t = Fail;
 
@@ -37,10 +37,9 @@ struct ParserFactory<Fail> {
     FAILS_CLEANLY = true,
   };
 
-  template<typename CTX_T, typename DST_T, typename REQ_T>
+  template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = FailImpl<CTX_T>;
 };
-
 
 }  // namespace ABULAFIA_NAMESPACE
 

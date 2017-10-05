@@ -37,17 +37,19 @@ auto transform(Except<OP_T, NEG_T> const& tgt, CB_T const& cb) {
   auto new_op = cb(tgt.op());
   auto new_neg = cb(tgt.neg());
 
-  return Except<decltype(new_op), decltype(new_neg)>(std::move(new_op), std::move(new_neg));
+  return Except<decltype(new_op), decltype(new_neg)>(std::move(new_op),
+                                                     std::move(new_neg));
 }
 
 template <typename OP_T, typename NEG_T>
 auto except(OP_T lhs, NEG_T rhs) {
-  return Except<OP_T, NEG_T>(
+  return Except<pattern_t<OP_T>, pattern_t<NEG_T>>(
       make_pattern(std::move(lhs)), make_pattern(std::move(rhs)));
 }
 
 // pattern - pattern
-template <typename LHS_T, typename RHS_T,
+template <
+    typename LHS_T, typename RHS_T,
     typename Enable = enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>()>>
 auto operator-(LHS_T lhs, RHS_T rhs) {
   return except(std::move(lhs), std::move(rhs));

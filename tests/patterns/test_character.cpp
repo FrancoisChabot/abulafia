@@ -21,7 +21,6 @@ TEST(test_char, simple_test) {
 TEST(test_char, expect_specific_char) {
   auto plus = char_('+');
 
-
   testPatternSuccess("+", plus, '+');
   testPatternSuccess("+-", plus, '+');
   testPatternFailure<char>("", plus);
@@ -34,10 +33,10 @@ TEST(test_char, char_range) {
   testPatternSuccess("0", num, '0');
   testPatternSuccess("9", num, '9');
   testPatternSuccess("5", num, '5');
- 
+
   testPatternFailure<char>("a", num);
   testPatternFailure<char>("A", num);
-  testPatternFailure<char>("\0", num); 
+  testPatternFailure<char>("\0", num);
 }
 
 TEST(test_char, implicit_char_set) {
@@ -49,5 +48,5 @@ TEST(test_char, implicit_char_set) {
 
   testPatternFailure<char>("a", space);
   testPatternFailure<char>("l ", space);
-  testPatternFailure<char>("", space); 
+  testPatternFailure<char>("", space);
 }

@@ -7,6 +7,7 @@
 
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
@@ -16,29 +17,13 @@ TEST(test_symbol, simple_test) {
 
   auto pattern = symbol(symbols);
 
-  int dst;
-  auto status = parse(pattern, "a", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(1, dst);
+  testPatternSuccess("a", pattern, 1);
 
-  status = parse(pattern, "b", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(2, dst);
-
-  status = parse(pattern, "c", dst);
-  EXPECT_EQ(status, result::FAILURE);
-
-  status = parse(pattern, "ab", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(3, dst);
-
-  status = parse(pattern, "baf", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(4, dst);
-
-  status = parse(pattern, "longer", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(5, dst);
+  testPatternSuccess("b", pattern, 2);
+  testPatternSuccess("ab", pattern, 3);
+  testPatternSuccess("baf", pattern, 4);
+  testPatternSuccess("longer", pattern, 5);
+  testPatternFailure<int>("xyz", pattern);
 }
 
 TEST(test_symbol, edge_cases) {
@@ -47,15 +32,7 @@ TEST(test_symbol, edge_cases) {
 
   auto pattern = symbol(symbols);
 
-  int dst;
-  auto status = parse(pattern, "ac", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(1, dst);
-
-  status = parse(pattern, "ba", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(2, dst);
-
-  status = parse(pattern, "longe", dst);
-  EXPECT_EQ(status, result::FAILURE);
+  testPatternSuccess("ac", pattern, 1);
+  testPatternSuccess("ba", pattern, 2);
+  testPatternFailure<int>("longe", pattern);
 }

@@ -30,7 +30,7 @@ class PassImpl {
   Result peek(CTX_T, Pass const&) { return Result::SUCCESS; }
 };
 
-template<>
+template <>
 struct ParserFactory<Pass> {
   using pat_t = Pass;
 
@@ -39,10 +39,9 @@ struct ParserFactory<Pass> {
     FAILS_CLEANLY = true,
   };
 
-  template<typename CTX_T, typename DST_T, typename REQ_T>
+  template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = PassImpl<CTX_T, REQ_T>;
 };
-
 
 }  // namespace ABULAFIA_NAMESPACE
 
