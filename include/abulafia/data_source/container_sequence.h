@@ -5,8 +5,8 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_CONTEXTS_CONTAINER_SEQUENCE_H_
-#define ABULAFIA_CONTEXTS_CONTAINER_SEQUENCE_H_
+#ifndef ABULAFIA_DATASOURCES_CONTAINER_SEQUENCE_H_
+#define ABULAFIA_DATASOURCES_CONTAINER_SEQUENCE_H_
 
 #include "abulafia/config.h"
 
@@ -29,7 +29,7 @@ namespace ABULAFIA_NAMESPACE {
 enum class IsFinal { FINAL, NOT_FINAL };
 
 template <typename CONTAINER_T>
-class ContainerSequenceContext {
+class ContainerSequenceDataSource {
   using iterator = typename CONTAINER_T::const_iterator;
   using buffer_list_t = std::list<std::shared_ptr<CONTAINER_T>>;
   using buffer_iterator = typename buffer_list_t::iterator;
@@ -42,31 +42,34 @@ class ContainerSequenceContext {
 
   using rollback_entry_t = std::pair<iterator, buffer_iterator>;
   std::vector<rollback_entry_t> rollback_stack_;
+  unsigned int empty_rollbacks_ = 0;
 
  public:
   using value_type = typename CONTAINER_T::value_type;
-  using base_ctx_t = ContainerSequenceContext<CONTAINER_T>;
 
-  base_ctx_t& root_ctx() { return *this; }
   enum { IS_RESUMABLE = true };
 
-  ContainerSequenceContext() : current_buffer_(buffers_.end()) {}
+  ContainerSequenceDataSource() : current_buffer_(buffers_.end()) {}
 
   void add_buffer(std::shared_ptr<CONTAINER_T> b,
                   IsFinal f = IsFinal::NOT_FINAL) {
     assert(!final_);
 
-    // push_back can invalidate our iterator.
-    bool is_empty = empty();
+    if (b->begin() != b->end()) {
+      bool is_empty = empty();
 
-    buffers_.push_back(b);
+      buffers_.push_back(b);
 
-    // if we were empty, bootstrap.
-    if (is_empty) {
-      current_buffer_ = std::prev(buffers_.end());
-      current_ = (*current_buffer_)->begin();
+      // if we were empty, bootstrap.
+      if (is_empty) {
+        current_buffer_ = std::prev(buffers_.end());
+        current_ = (*current_buffer_)->begin();
+        for (unsigned int i = 0; i < empty_rollbacks_; ++i) {
+          rollback_stack_.emplace_back(current_, current_buffer_);
+        }
+        empty_rollbacks_ = 0;
+      }
     }
-
     final_ = f == IsFinal::FINAL;
   }
 
@@ -114,22 +117,34 @@ class ContainerSequenceContext {
   bool empty() const { return current_buffer_ == buffers_.end(); }
 
   void prepare_rollback() {
-    assert(!empty());
-
-    rollback_stack_.emplace_back(current_, current_buffer_);
+    if (empty()) {
+      ++empty_rollbacks_;
+    } else {
+      rollback_stack_.emplace_back(current_, current_buffer_);
+    }
   }
 
   void commit_rollback() {
-    current_buffer_ = rollback_stack_.back().second;
-    current_ = rollback_stack_.back().first;
-    rollback_stack_.pop_back();
-    cleanup_rollback_();
+    if (empty_rollbacks_) {
+      --empty_rollbacks_;
+    } else {
+      current_buffer_ = rollback_stack_.back().second;
+      current_ = rollback_stack_.back().first;
+      rollback_stack_.pop_back();
+      cleanup_rollback_();
+    }
   }
 
   void cancel_rollback() {
-    rollback_stack_.pop_back();
-    cleanup_rollback_();
+    if (empty_rollbacks_) {
+      --empty_rollbacks_;
+    } else {
+      rollback_stack_.pop_back();
+      cleanup_rollback_();
+    }
   }
+
+  static constexpr bool isResumable() { return true; }
 
  private:
   void cleanup_rollback_() {

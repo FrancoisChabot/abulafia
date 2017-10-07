@@ -10,32 +10,14 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/leaf/leaf_pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
 
-// The End-of-input expects to hit the end of the input data, and won't emit
-// anything.
-class Eoi : public Pattern<Eoi> {};
+// The Fail pattern always fails, and does not emit anything.
+class Eoi : public LeafPattern<Eoi> {};
 
-template <typename RECUR_TAG>
-struct pattern_traits<Eoi, RECUR_TAG> : public default_pattern_traits {
-  using attr_type = Nil;
-
-  enum {
-    BACKTRACKS = false,
-    FAILS_CLEANLY = true,
-    MAY_NOT_CONSUME = false,
-    PEEKABLE = true,
-    ATOMIC = true,
-  };
-};
-
-template <typename CTX_T>
-struct pat_attr_t<Eoi, CTX_T> {
-  using attr_type = Nil;
-};
+static constexpr Eoi eoi;
 
 }  // namespace ABULAFIA_NAMESPACE
 

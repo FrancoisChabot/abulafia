@@ -17,66 +17,59 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, int BASE, std::size_t DIGITS_MIN,
-          std::size_t DIGITS_MAX>
-class Parser<CTX_T, DST_T, Int<BASE, DIGITS_MIN, DIGITS_MAX>>
-    : public ParserBase<CTX_T, DST_T> {
-  using digit_vals = DigitValues<BASE>;
-  using PAT_T = Int<BASE, DIGITS_MIN, DIGITS_MAX>;
-
+template <typename CTX_T, typename DST_T, std::size_t BASE,
+          std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
+class IntImpl {
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T>(ctx, dst) {
-    dst = 0;
-  }
+  using pat_t = Int<BASE, DIGITS_MIN, DIGITS_MAX>;
 
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
+  using digit_vals = DigitValues<BASE>;
 
+  IntImpl(CTX_T, DST_T dst, pat_t const&) { dst.get() = 0; }
+
+  Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
     while (true) {
-      if (ctx.empty()) {
-        if (ctx.final_buffer()) {
-          return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+      if (ctx.data().empty()) {
+        if (ctx.data().final_buffer()) {
+          return digit_count_ >= DIGITS_MIN ? Result::SUCCESS : Result::FAILURE;
         } else {
-          return result::PARTIAL;
+          return Result::PARTIAL;
         }
       }
 
-      auto next = ctx.next();
+      auto next = ctx.data().next();
       if (digit_count_ == 0 && look_for_sign_) {
         look_for_sign_ = false;
         if (next == '-') {
-          ctx.advance();
+          ctx.data().advance();
           neg_ = true;
           continue;
         }
 
         if (next == '+') {
-          ctx.advance();
+          ctx.data().advance();
           continue;
         }
       }
 
       if (digit_vals::is_valid(next)) {
-        dst *= BASE;
-        dst += digit_vals::value(next);
+        dst.get() *= BASE;
+        dst.get() += digit_vals::value(next);
 
         ++digit_count_;
-        ctx.advance();
+        ctx.data().advance();
 
         if (digit_count_ == DIGITS_MAX) {
           if (neg_) {
-            dst *= -1;
+            dst.get() *= -1;
           }
-          return result::SUCCESS;
+          return Result::SUCCESS;
         }
       } else {
         if (neg_) {
-          dst *= -1;
+          dst.get() *= -1;
         }
-        return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+        return digit_count_ >= DIGITS_MIN ? Result::SUCCESS : Result::FAILURE;
       }
     }
   }
@@ -85,6 +78,22 @@ class Parser<CTX_T, DST_T, Int<BASE, DIGITS_MIN, DIGITS_MAX>>
   std::size_t digit_count_ = 0;
   bool look_for_sign_ = true;
   bool neg_ = false;
+};
+
+template <std::size_t BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
+struct ParserFactory<Int<BASE, DIGITS_MIN, DIGITS_MAX>> {
+  using pat_t = Int<BASE, DIGITS_MIN, DIGITS_MAX>;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
+
+  enum {
+    // TODO: We could provide ATOMIC in the DIGITS_MIN == DIGITS_MAX case
+    ATOMIC = false,
+    FAILS_CLEANLY = DIGITS_MAX == 1,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = IntImpl<CTX_T, DST_T, BASE, DIGITS_MIN, DIGITS_MAX>;
 };
 
 }  // namespace ABULAFIA_NAMESPACE

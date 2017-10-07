@@ -11,7 +11,7 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/pattern.h"
 #include "abulafia/support/assert.h"
 
 #include <optional>
@@ -28,25 +28,13 @@ class Optional : public Pattern<Optional<PAT_T>> {
   PAT_T const& operand() const { return child_; }
 };
 
-template <typename PAT_T, typename RECUR_TAG>
-struct pattern_traits<Optional<PAT_T>, RECUR_TAG> : public default_pattern_traits {
-  using attr_type = Nil;
+// !pattern
+template <typename PAT_T,
+          typename Enable = enable_if_t<is_valid_unary_operand<PAT_T>()>>
+auto operator-(PAT_T&& pat) {
+  return Optional<pattern_t<PAT_T>>(make_pattern(pat));
+}
 
-  enum {
-    BACKTRACKS = pattern_traits<PAT_T, RECUR_TAG>::BACKTRACKS,
-    PEEKABLE = true,
-    FAILS_CLEANLY = true,
-    MAY_NOT_CONSUME = true,
-    ATOMIC = true,
-    APPENDS_DST = pattern_traits<PAT_T, RECUR_TAG>::APPENDS_DST,
-    STABLE_APPENDS = true,
-  };
-};
-
-template <typename PAT_T, typename CTX_T>
-struct pat_attr_t<Optional<PAT_T>, CTX_T> {
-  using attr_type = std::optional<attr_t<PAT_T, CTX_T>>;
-};
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

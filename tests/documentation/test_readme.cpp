@@ -20,9 +20,9 @@ TEST(test_readme, the_readme) {
       abu::apply_skipper(with_brackets, abu::char_(" \t\r\n"));
 
   std::vector<int> dst;
-  auto status = abu::parse(ignoring_whitespace, "[1, 2, 3, 4, 5]", dst);
+  auto status = abu::parse("[1, 2, 3, 4, 5]", ignoring_whitespace, dst);
 
-  EXPECT_EQ(status, abu::result::SUCCESS);
+  EXPECT_EQ(status, abu::Result::SUCCESS);
   EXPECT_EQ(dst[0], 1);
   EXPECT_EQ(dst[1], 2);
   EXPECT_EQ(dst[2], 3);

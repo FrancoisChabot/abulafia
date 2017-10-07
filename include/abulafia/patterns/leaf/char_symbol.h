@@ -10,41 +10,26 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/leaf/leaf_pattern.h"
 
 #include <map>
-#include <optional>
-#include <stdexcept>
 
 namespace ABULAFIA_NAMESPACE {
 
 template <typename CHAR_T, typename VAL_T>
-class CharSymbol : public Pattern<CharSymbol<CHAR_T, VAL_T>> {
+class CharSymbol : public LeafPattern<CharSymbol<CHAR_T, VAL_T>> {
   std::map<CHAR_T, VAL_T> mapping_;
 
  public:
-  CharSymbol(std::map<CHAR_T, VAL_T> const& vals) : mapping_(vals) {}
+  CharSymbol(std::map<CHAR_T, VAL_T> vals) : mapping_(std::move(vals)) {}
 
   std::map<CHAR_T, VAL_T> const& mapping() const { return mapping_; }
 };
 
-template <typename CHAR_T, typename VAL_T, typename RECUR_TAG>
-struct pattern_traits<CharSymbol<CHAR_T, VAL_T>, RECUR_TAG>
-    : public default_pattern_traits {
-  enum {
-    ATOMIC = true,
-    BACKTRACKS = true,
-    PEEKABLE = true,
-    FAILS_CLEANLY = true,
-    MAY_NOT_CONSUME = false,
-  };
-};
-
-template <typename CHAR_T, typename VAL_T, typename CTX_T>
-struct pat_attr_t<CharSymbol<CHAR_T, VAL_T>, CTX_T> {
-  using attr_type = VAL_T;
-};
+template <typename CHAR_T, typename VAL_T>
+auto symbol(std::map<CHAR_T, VAL_T> const& vals) {
+  return CharSymbol<CHAR_T, VAL_T>(vals);
+}
 
 }  // namespace ABULAFIA_NAMESPACE
 

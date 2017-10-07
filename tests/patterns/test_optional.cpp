@@ -7,14 +7,14 @@
 
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
 TEST(test_optional, test_pass) {
+  auto pattern = -char_(char_set::any<char>) >> +char_('a', 'z');
 
-  auto pat = -char_(char_set::any<char>) >> +char_('a', 'z');
-
-  EXPECT_EQ(parse(pat, "hello"), result::SUCCESS);
-  EXPECT_EQ(parse(pat, "1ello"), result::SUCCESS);
-  EXPECT_EQ(parse(pat, "12ello"), result::FAILURE);
+  testPatternSuccess("hello", pattern, nil);
+  testPatternSuccess("1ello", pattern, nil);
+  testPatternFailure<Nil>("12ello", pattern);
 }

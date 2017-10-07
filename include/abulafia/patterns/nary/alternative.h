@@ -11,29 +11,12 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/pattern.h"
-#include "abulafia/patterns/nary/nary.h"
-#include "abulafia/support/variant_utils.h"
-#include "abulafia/support/visit_val.h"
+#include "abulafia/patterns/nary/nary_pattern.h"
+#include "abulafia/patterns/pattern.h"
 
 #include <variant>
 
 namespace ABULAFIA_NAMESPACE {
-
-namespace alt_ {
-
-template <typename CTX_T, typename T, typename... TYPES_T>
-struct get_attr {
-  using type = attr_t<T, CTX_T>;
-};
-
-template <typename CTX_T, typename T, typename U, typename... TYPES_T>
-struct get_attr<CTX_T, T, U, TYPES_T...> {
-  using type =
-      typename variant_cat<attr_t<T, CTX_T>,
-                           typename get_attr<CTX_T, U, TYPES_T...>::type>::type;
-};
-}  // namespace alt_
 
 // The alternative nary pattern.
 template <typename... CHILD_PATS_T>
@@ -41,7 +24,7 @@ class Alt : public Pattern<Alt<CHILD_PATS_T...>> {
  public:
   using child_tuple_t = std::tuple<CHILD_PATS_T...>;
 
-  Alt(child_tuple_t const& childs) : childs_(childs) {}
+  Alt(child_tuple_t childs) : childs_(std::move(childs)) {}
 
   child_tuple_t const& childs() const { return childs_; }
 
@@ -60,34 +43,15 @@ auto alt(T&&... args) {
   return ret_type(std::make_tuple(forward<T>(args)...));
 }
 
-template <typename RECUR_TAG, typename... CHILD_PATS>
-struct pattern_traits<Alt<CHILD_PATS...>, RECUR_TAG>
-    : public default_pattern_traits {
-  enum {
-    ATOMIC = all_pat_traits<RECUR_TAG, CHILD_PATS...>::ATOMIC,
-
-    // technically, the last one doesn't matter
-    BACKTRACKS = any_pat_traits<RECUR_TAG, CHILD_PATS...>::BACKTRACKS ||
-                 !all_pat_traits<RECUR_TAG, CHILD_PATS...>::FAILS_CLEANLY,
-    // technically should be just the last one
-    FAILS_CLEANLY = all_pat_traits<RECUR_TAG, CHILD_PATS...>::FAILS_CLEANLY,
-    MAY_NOT_CONSUME = any_pat_traits<RECUR_TAG, CHILD_PATS...>::MAY_NOT_CONSUME,
-    PEEKABLE = all_pat_traits<RECUR_TAG, CHILD_PATS...>::PEEKABLE,
-
-    // Because of this, should any child be a repeat, and the dst be a sequence,
-    // any non-repeat childs should be pushing back.
-    APPENDS_DST = any_pat_traits<RECUR_TAG, CHILD_PATS...>::APPENDS_DST,
-
-    // TODO: this is wrong:
-    // char_('A','Z') | *char_('a', 'z') should be stable
-    STABLE_APPENDS = all_pat_traits<RECUR_TAG, CHILD_PATS...>::STABLE_APPENDS,
-  };
-};
-
-template <typename CTX_T, typename... CHILD_PATS>
-struct pat_attr_t<Alt<CHILD_PATS...>, CTX_T> {
-  using attr_type = typename alt_::get_attr<CTX_T, CHILD_PATS...>::type;
-};
+template <typename LHS_T, typename RHS_T>
+std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
+                 typename detail::NaryPatternBuilder<Alt, pattern_t<LHS_T>,
+                                                     pattern_t<RHS_T>>::type>
+operator|(LHS_T&& lhs, RHS_T&& rhs) {
+  return detail::NaryPatternBuilder<Alt, pattern_t<LHS_T>, pattern_t<RHS_T>>::
+      build(make_pattern(forward<LHS_T>(lhs)),
+            make_pattern(forward<RHS_T>(rhs)));
+}
 
 }  // namespace ABULAFIA_NAMESPACE
 

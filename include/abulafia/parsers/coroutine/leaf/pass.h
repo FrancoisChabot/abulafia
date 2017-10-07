@@ -14,21 +14,35 @@
 #include "abulafia/patterns/leaf/pass.h"
 #include "abulafia/support/assert.h"
 
-#include <variant>
-
 namespace ABULAFIA_NAMESPACE {
-template <typename CTX_T>
-class Parser<CTX_T, Nil, Pass>
-    : public ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP> {
-  using PAT_T = Pass;
+template <typename CTX_T, typename REQ_T>
+class PassImpl {
+  static_assert(!REQ_T::CONSUMES_ON_SUCCESS);
+
+  using ctx_t = CTX_T;
+  using dst_t = Nil;
+  using pat_t = Pass;
 
  public:
-  Parser(CTX_T& ctx, Nil&, PAT_T const&)
-      : ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP>(ctx, nil) {}
+  PassImpl(CTX_T, Nil, Pass const&) {}
 
-  result consume(CTX_T&, Nil&, PAT_T const&) { return result::SUCCESS; }
+  Result consume(CTX_T, Nil, Pass const&) { return Result::SUCCESS; }
+  Result peek(CTX_T, Pass const&) { return Result::SUCCESS; }
+};
 
-  result peek(CTX_T&, PAT_T const&) { return result::SUCCESS; }
+template <>
+struct ParserFactory<Pass> {
+  using pat_t = Pass;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = PassImpl<CTX_T, REQ_T>;
 };
 
 }  // namespace ABULAFIA_NAMESPACE

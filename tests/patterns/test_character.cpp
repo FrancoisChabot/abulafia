@@ -7,61 +7,46 @@
 
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
 TEST(test_char, simple_test) {
   auto any = char_();
 
-  char dst = 0;
-  auto status = parse(any, "a", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(dst, 'a');
-
-  status = parse(any, std::string(""));
-  EXPECT_EQ(status, result::FAILURE);
+  testPatternSuccess("a", any, 'a');
+  testPatternFailure<char>("", any);
 }
 
 TEST(test_char, expect_specific_char) {
   auto plus = char_('+');
 
-  char dst = 0;
-  auto status = parse(plus, "+", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(dst, '+');
-
-  status = parse(plus, "+-", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ(dst, '+');
-
-  status = parse(plus, std::string(""));
-  EXPECT_EQ(status, result::FAILURE);
-
-  status = parse(plus, "a");
-  EXPECT_EQ(status, result::FAILURE);
+  testPatternSuccess("+", plus, '+');
+  testPatternSuccess("+-", plus, '+');
+  testPatternFailure<char>("", plus);
+  testPatternFailure<char>("a", plus);
 }
 
 TEST(test_char, char_range) {
   auto num = char_('0', '9');
 
-  EXPECT_EQ(parse(num, "0"), result::SUCCESS);
-  EXPECT_EQ(parse(num, "5"), result::SUCCESS);
-  EXPECT_EQ(parse(num, "9"), result::SUCCESS);
+  testPatternSuccess("0", num, '0');
+  testPatternSuccess("9", num, '9');
+  testPatternSuccess("5", num, '5');
 
-  EXPECT_EQ(parse(num, "a"), result::FAILURE);
-  EXPECT_EQ(parse(num, "A"), result::FAILURE);
-  EXPECT_EQ(parse(num, "\0"), result::FAILURE);
+  testPatternFailure<char>("a", num);
+  testPatternFailure<char>("A", num);
+  testPatternFailure<char>("\0", num);
 }
 
 TEST(test_char, implicit_char_set) {
   auto space = char_set::set(" \r\n\t");
 
-  EXPECT_EQ(parse(space, "a"), result::FAILURE);
-  EXPECT_EQ(parse(space, "l "), result::FAILURE);
-  EXPECT_EQ(parse(space, ""), result::FAILURE);
+  testPatternSuccess(" ", space, ' ');
+  testPatternSuccess("\n", space, '\n');
+  testPatternSuccess("\thh", space, '\t');
 
-  EXPECT_EQ(parse(space, " "), result::SUCCESS);
-  EXPECT_EQ(parse(space, "\n"), result::SUCCESS);
-  EXPECT_EQ(parse(space, "\thh"), result::SUCCESS);
-  //  EXPECT_EQ(parse(space >> 'b', "\nb"), result::SUCCESS);
+  testPatternFailure<char>("a", space);
+  testPatternFailure<char>("l ", space);
+  testPatternFailure<char>("", space);
 }

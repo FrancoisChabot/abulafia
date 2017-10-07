@@ -12,7 +12,7 @@ The `Container Sequence Context` is the prefered way of dealing with data chunks
 #include "abulafia/abulafia.h"
 
 int main() {
-  auto pattern = *abu::Uint<10,2,2>; 
+  auto pattern = *abu::UInt<10,2,2>; 
   std::vector<unsigned short> destination;
 
   // Our resumable context will be provided with vectors of char

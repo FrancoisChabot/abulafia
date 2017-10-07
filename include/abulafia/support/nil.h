@@ -17,11 +17,13 @@ namespace ABULAFIA_NAMESPACE {
 // its DST.
 struct Nil {
   using value_type = Nil;
-
+  using dst_type = Nil;
   Nil() = default;
 
   template <typename T>
-  Nil(T&) {}
+  Nil(T const&) {}
+
+  Nil& get() { return *this; }
   // Can be assigned anything.
   template <typename T>
   Nil& operator=(T&&) {
@@ -42,6 +44,7 @@ struct Nil {
     return *this;
   }
 
+  bool operator==(Nil const&) const { return true; }
   // Can pose as anything, as long as it can be default-constructed.
   template <typename T>
   operator T() const {

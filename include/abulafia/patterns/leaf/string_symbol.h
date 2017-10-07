@@ -10,31 +10,33 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/leaf/leaf_pattern.h"
 
 #include <map>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 
 namespace ABULAFIA_NAMESPACE {
 
 template <typename CHAR_T, typename VAL_T>
-class Symbol : public Pattern<Symbol<CHAR_T, VAL_T>> {
+class Symbol : public LeafPattern<Symbol<CHAR_T, VAL_T>> {
   // symbols->value map will be stored as a trie
   struct Node {
     std::map<CHAR_T, Node> child;
     std::optional<VAL_T> val;
   };
 
-  Node root_;
+  std::shared_ptr<Node> root_;
 
  public:
   using node_t = Node;
 
-  Symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals) {
+  Symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals)
+      : root_(std::make_shared<Node>()) {
     for (auto const& entry : vals) {
-      node_t* next = &root_;
+      node_t* next = root_.get();
+
       for (auto const& chr : entry.first) {
         next = &next->child[chr];
       }
@@ -47,30 +49,13 @@ class Symbol : public Pattern<Symbol<CHAR_T, VAL_T>> {
     }
   }
 
-  Node const* root() const { return &root_; }
+  Node const* root() const { return root_.get(); }
 };
 
 template <typename CHAR_T, typename VAL_T>
 auto symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals) {
   return Symbol<CHAR_T, VAL_T>(vals);
 }
-
-template <typename CHAR_T, typename VAL_T, typename RECUR_TAG>
-struct pattern_traits<Symbol<CHAR_T, VAL_T>, RECUR_TAG>
-    : public default_pattern_traits {
-  enum {
-    ATOMIC = true,
-    BACKTRACKS = true,
-    PEEKABLE = false,
-    FAILS_CLEANLY = false,
-    MAY_NOT_CONSUME = false,
-  };
-};
-
-template <typename CHAR_T, typename VAL_T, typename CTX_T>
-struct pat_attr_t<Symbol<CHAR_T, VAL_T>, CTX_T> {
-  using attr_type = VAL_T;
-};
 
 }  // namespace ABULAFIA_NAMESPACE
 

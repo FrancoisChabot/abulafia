@@ -7,17 +7,18 @@
 
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
 TEST(test_not, simple_test) {
-  EXPECT_EQ(parse(!pass, "hello"), result::FAILURE);
-  EXPECT_EQ(parse(!char_('a', 'z'), "c"), result::FAILURE);
-  EXPECT_EQ(parse(!char_('a', 'z'), "2"), result::SUCCESS);
+  testPatternFailure<Nil>("hello", !pass);
+  testPatternFailure<Nil>("c", !char_('a', 'z'));
+  testPatternSuccess("2", !char_('a', 'z'), nil);
 }
 
 TEST(test_not, double_not) {
-  EXPECT_EQ(parse(!!pass, "hello"), result::SUCCESS);
-  EXPECT_EQ(parse(!!char_('a', 'z'), "c"), result::SUCCESS);
-  EXPECT_EQ(parse(!!char_('a', 'z'), "2"), result::FAILURE);
+  testPatternSuccess("hello", !!pass, nil);
+  testPatternSuccess("c", !!char_('a', 'z'), nil);
+  testPatternFailure<Nil>("2", !!char_('a', 'z'));
 }

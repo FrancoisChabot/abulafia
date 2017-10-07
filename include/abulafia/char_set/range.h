@@ -20,9 +20,7 @@ template <typename CHAR_T>
 struct Range : public CharacterSet {
   using char_t = CHAR_T;
 
-  Range(CHAR_T b, CHAR_T e) : begin_(b), end_(e) { 
-    assert(b <= e); 
-  }
+  Range(CHAR_T b, CHAR_T e) : begin_(b), end_(e) { assert(b <= e); }
 
   bool is_valid(char_t const& token) const {
     return token >= begin_ && token <= end_;

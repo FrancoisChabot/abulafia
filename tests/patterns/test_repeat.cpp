@@ -7,78 +7,60 @@
 
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
 TEST(test_repeat, string_test) {
   auto pattern = *char_();
 
-  std::string dst;
-  auto status = parse(pattern, std::string("abc"), dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  EXPECT_EQ("abc", dst);
+  testPatternSuccess("abc", pattern, std::string("abc"));
 }
 
 TEST(test_repeat, simple_test) {
-  auto pattern = *Uint<10, 2, 2>();
+  auto pattern = *UInt<10, 2, 2>();
 
-  std::vector<unsigned int> dst;
-
-  auto status = parse(pattern, "2345", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  ASSERT_EQ(2U, dst.size());
-  EXPECT_EQ(23U, dst[0]);
-  EXPECT_EQ(45U, dst[1]);
-
-  status = parse(pattern, "abc");
-  EXPECT_EQ(status, result::SUCCESS);
-
-  status = parse(pattern, "");
-  EXPECT_EQ(status, result::SUCCESS);
+  testPatternSuccess("2345", pattern, std::vector<int>({23, 45}));
+  testPatternSuccess("abc", pattern, std::vector<int>());
+  testPatternSuccess("", pattern, std::vector<int>());
 }
 
 TEST(test_repeat, test_plus) {
-  auto pattern = +Uint<10, 2, 2>();
+  auto pattern = +UInt<10, 2, 2>();
 
-  std::vector<unsigned int> dst;
-
-  auto status = parse(pattern, "23", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  ASSERT_EQ(1U, dst.size());
-  EXPECT_EQ(23U, dst[0]);
-
-  status = parse(pattern, "abc");
-  EXPECT_EQ(status, result::FAILURE);
-
-  status = parse(pattern, "");
-  EXPECT_EQ(status, result::FAILURE);
+  testPatternSuccess("23", pattern, std::vector<int>({23}));
+  testPatternFailure<std::vector<int>>("abc", pattern);
+  testPatternFailure<std::vector<int>>("", pattern);
 }
 
 TEST(test_repeat, test_max_count) {
-  auto pattern = repeat<0, 3>(Uint<10, 1, 1>());
+  auto pattern = repeat<0, 3>(UInt<10, 1, 1>());
 
   std::vector<unsigned int> dst;
 
-  auto status = parse(pattern, "1234", dst);
-  EXPECT_EQ(status, result::SUCCESS);
-  ASSERT_EQ(3U, dst.size());
-  EXPECT_EQ(1U, dst[0]);
-  EXPECT_EQ(2U, dst[1]);
-  EXPECT_EQ(3U, dst[2]);
+  testPatternSuccess("1234", pattern, std::vector<int>({1, 2, 3}));
 }
 
+
+TEST(test_repeat, test_exact_count) {
+  auto pattern = repeat<2, 2>(lit('9'));
+
+  testPatternSuccess("99", pattern, nil);
+  testPatternFailure<Nil>("9", pattern);
+}
+/*
 TEST(test_repeat, test_chained_repeat_with_min) {
   auto pattern = *(repeat<2, 2>(char_('a', 'z')));
 
   std::string dst;
 
-  auto status = parse(pattern, "aabbcc", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  auto status = parse("aabbcc", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ("aabbcc", dst);
 
   // make sure that failures do not affect result
-  status = parse(pattern, "aabbccd", dst);
-  EXPECT_EQ(status, result::SUCCESS);
+  status = parse("aabbccd", pattern, dst);
+  EXPECT_EQ(status, Result::SUCCESS);
   EXPECT_EQ("aabbcc", dst);
 }
 
@@ -97,3 +79,4 @@ TEST(test_repeat, test_chained_repeat_with_min_double) {
   EXPECT_EQ(status, result::SUCCESS);
   EXPECT_EQ("aabbcc", dst);
 }
+*/

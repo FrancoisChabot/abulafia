@@ -11,7 +11,7 @@
 #include "abulafia/config.h"
 
 namespace ABULAFIA_NAMESPACE {
-enum class result { SUCCESS, FAILURE, PARTIAL };
+enum class Result { SUCCESS, FAILURE, PARTIAL };
 }
 
 #endif

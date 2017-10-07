@@ -11,24 +11,36 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/patterns/leaf/fail.h"
+#include "abulafia/patterns/leaf/pass.h"
 #include "abulafia/support/assert.h"
-
-#include <variant>
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T>
-class Parser<CTX_T, Nil, Fail>
-    : public ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP> {
-  using PAT_T = Fail;
+class FailImpl {
+  using ctx_t = CTX_T;
+  using dst_t = Nil;
+  using pat_t = Fail;
 
  public:
-  Parser(CTX_T& ctx, Nil&, PAT_T const&)
-      : ParserBase<CTX_T, Nil, PARSER_OPT_NO_SKIP>(ctx, nil) {}
+  FailImpl(CTX_T, Nil, Fail const&) {}
 
-  result consume(CTX_T&, Nil&, PAT_T const&) { return result::FAILURE; }
+  Result consume(CTX_T, Nil, Fail const&) { return Result::FAILURE; }
+  Result peek(CTX_T, Fail const&) { return Result::FAILURE; }
+};
 
-  result peek(CTX_T&, PAT_T const&) { return result::FAILURE; }
+template <>
+struct ParserFactory<Fail> {
+  using pat_t = Fail;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = FailImpl<CTX_T>;
 };
 
 }  // namespace ABULAFIA_NAMESPACE

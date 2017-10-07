@@ -11,7 +11,7 @@
 using namespace abu;
 
 TEST(test_set, create_from_vector) {
-  std::vector<char> v{ 'a', 'g', 'z' };
+  std::vector<char> v{'a', 'g', 'z'};
   auto set = char_set::set(v.begin(), v.end());
 
   static_assert(char_set::is_char_set<decltype(set)>::value,
@@ -70,11 +70,11 @@ TEST(test_set, string_literal_in_expression) {
   auto set = char_set::range('a', 'z') | "_!@";
 
   static_assert(char_set::is_char_set<decltype(set)>::value,
-    "must be a valid char set");
+                "must be a valid char set");
 
   using char_set_type = decltype(set);
   static_assert(is_same<char_set_type::char_t, char>::value,
-    "type inference failure");
+                "type inference failure");
 
   EXPECT_TRUE(set.is_valid('a'));
   EXPECT_TRUE(set.is_valid('g'));
@@ -84,4 +84,3 @@ TEST(test_set, string_literal_in_expression) {
   // tests for bug: the null terminatpr of the string is counted.
   EXPECT_FALSE(set.is_valid('\0'));
 }
-

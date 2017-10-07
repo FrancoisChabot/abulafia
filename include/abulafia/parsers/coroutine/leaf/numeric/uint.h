@@ -17,65 +17,39 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, int BASE, std::size_t DIGITS_MIN,
-          std::size_t DIGITS_MAX>
-class Parser<CTX_T, DST_T, Uint<BASE, DIGITS_MIN, DIGITS_MAX>>
-    : public ParserBase<CTX_T, DST_T> {
-  using digit_vals = DigitValues<BASE>;
-  using PAT_T = Uint<BASE, DIGITS_MIN, DIGITS_MAX>;
-
+template <typename CTX_T, typename DST_T, std::size_t BASE,
+          std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
+class UIntImpl {
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const&)
-      : ParserBase<CTX_T, DST_T>(ctx, dst) {
-    dst = 0;
-  }
+  using pat_t = UInt<BASE, DIGITS_MIN, DIGITS_MAX>;
 
-  result peek(CTX_T const& ctx, PAT_T const&) const {
-    static_assert(DIGITS_MIN == 1, "we should not be peeking here.");
+  using digit_vals = DigitValues<BASE>;
 
-    if (ctx.empty()) {
-      if (ctx.final_buffer()) {
-        return result::FAILURE;
-      } else {
-        return result::PARTIAL;
-      }
-    }
+  UIntImpl(CTX_T, DST_T dst, pat_t const&) { dst.get() = 0; }
 
-    auto next = ctx.next();
-    if (digit_vals::is_valid(next)) {
-      return result::SUCCESS;
-    } else {
-      return result::FAILURE;
-    }
-  }
-
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const&) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-
+  Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
     while (true) {
-      if (ctx.empty()) {
-        if (ctx.final_buffer()) {
-          return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+      if (ctx.data().empty()) {
+        if (ctx.data().final_buffer()) {
+          return digit_count_ >= DIGITS_MIN ? Result::SUCCESS : Result::FAILURE;
         } else {
-          return result::PARTIAL;
+          return Result::PARTIAL;
         }
       }
 
-      auto next = ctx.next();
+      auto next = ctx.data().next();
       if (digit_vals::is_valid(next)) {
-        dst *= BASE;
-        dst += digit_vals::value(next);
+        dst.get() *= typename DST_T::dst_type(BASE);
+        dst.get() += digit_vals::value(next);
 
         ++digit_count_;
-        ctx.advance();
+        ctx.data().advance();
 
         if (digit_count_ == DIGITS_MAX) {
-          return result::SUCCESS;
+          return Result::SUCCESS;
         }
       } else {
-        return digit_count_ >= DIGITS_MIN ? result::SUCCESS : result::FAILURE;
+        return digit_count_ >= DIGITS_MIN ? Result::SUCCESS : Result::FAILURE;
       }
     }
   }
@@ -83,6 +57,23 @@ class Parser<CTX_T, DST_T, Uint<BASE, DIGITS_MIN, DIGITS_MAX>>
  private:
   std::size_t digit_count_ = 0;
 };
+
+template <std::size_t BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
+struct ParserFactory<UInt<BASE, DIGITS_MIN, DIGITS_MAX>> {
+  using pat_t = UInt<BASE, DIGITS_MIN, DIGITS_MAX>;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
+
+  enum {
+    // TODO: We could provide ATOMIC in the DIGITS_MIN == DIGITS_MAX case
+    ATOMIC = false,
+    FAILS_CLEANLY = DIGITS_MAX == 1,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = UIntImpl<CTX_T, DST_T, BASE, DIGITS_MIN, DIGITS_MAX>;
+};
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

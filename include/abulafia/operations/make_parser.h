@@ -9,39 +9,50 @@
 #define ABULAFIA_OPERATIONS_MAKE_PARSER_H_
 
 #include "abulafia/config.h"
-
+#include "abulafia/context.h"
+#include "abulafia/data_source/container_sequence.h"
 #include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/parsers/coroutine/parser_factory.h"
+#include "abulafia/patterns/pattern.h"
 #include "abulafia/result.h"
 #include "abulafia/support/nil.h"
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename REAL_PAT_T, typename CTX_T, typename DST_T>
+template <typename REAL_PAT_T, typename REAL_DST_T, typename DATASOURCE_T>
 struct ParserInterface {
-  ParserInterface(REAL_PAT_T const& pat, CTX_T& ctx, DST_T& dst)
-      : pat_(pat), ctx_(ctx), dst_(dst), parser_(ctx, dst, pat) {}
+  ParserInterface(REAL_PAT_T const& pat, REAL_DST_T& dst)
+      : ctx_(data_source_, fail),
+        pat_(pat),
+        dst_(dst),
+        parser_(ctx_, dst, pat) {}
 
-  result consume() { return parser_.consume(ctx_, dst_, pat_); }
+  DATASOURCE_T& data() { return data_source_; }
+  Result consume() { return parser_.consume(ctx_, dst_, pat_); }
 
  private:
-  REAL_PAT_T const& pat_;
-  CTX_T& ctx_;
-  DST_T& dst_;
+  using CTX_T = Context<DATASOURCE_T, Fail>;
 
-  Parser<CTX_T, DST_T, REAL_PAT_T> parser_;
+  DATASOURCE_T data_source_;
+  CTX_T ctx_;
+  REAL_PAT_T pat_;
+  REAL_DST_T dst_;
+  Parser<CTX_T, REAL_DST_T, DefaultReqs, REAL_PAT_T> parser_;
 };
 
-template <typename PAT_T, typename DATASOURCE_T, typename DST_T>
-auto make_parser(PAT_T const& p, DATASOURCE_T& d, DST_T& s) {
+template <typename BUFFER_T, typename PAT_T, typename DST_T>
+auto make_parser(PAT_T const& p, DST_T& s) {
   auto real_pat = make_pattern(p);
+  auto real_dst = wrap_dst(s);
 
-  return ParserInterface<decltype(real_pat), DATASOURCE_T, DST_T>(p, d, s);
+  return ParserInterface<decltype(real_pat), decltype(real_dst),
+                         ContainerSequenceDataSource<BUFFER_T>>(real_pat,
+                                                                real_dst);
 }
 
-template <typename PAT_T, typename DATASOURCE_T>
-auto make_parser(PAT_T const& p, DATASOURCE_T& d) {
-  return make_parser(p, d, nil);
+template <typename BUFFER_T, typename PAT_T>
+auto make_parser(PAT_T const& p) {
+  return make_parser<BUFFER_T>(p, nil);
 }
 
 }  // namespace ABULAFIA_NAMESPACE

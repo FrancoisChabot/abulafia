@@ -15,42 +15,72 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, typename CHILD_PAT_T>
-class Parser<CTX_T, DST_T, Optional<CHILD_PAT_T>> : public ParserBase<CTX_T, DST_T> {
-  using PAT_T = Optional<CHILD_PAT_T>;
-  using child_parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T>
+class OptImpl {
+  using pat_t = Optional<CHILD_PAT_T>;
 
+  struct child_req_t {
+    enum {
+      // The aternative is to push_back on start, and pop_back on failure,
+      // which gets a little messy.
+      ATOMIC = true,
+
+      // This is extremely important, since we can succeed even if the child
+      // parser fails.
+      // The exception to this is if MIN_REP == MAX_REP (except for 0). In which
+      // case, failure
+      // of the child guarantees failure of the parent.
+      FAILS_CLEANLY = false,
+
+      // Propagate
+      CONSUMES_ON_SUCCESS = REQ_T::CONSUMES_ON_SUCCESS
+    };
+  };
+
+  using child_parser_t = Parser<CTX_T, DST_T, child_req_t, CHILD_PAT_T>;
   child_parser_t parser_;
 
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, DST_T>(ctx, dst), parser_(ctx, dst, pat.operand()) {
-    ctx.prepare_rollback();
+  OptImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
+      : parser_(ctx, dst, pat.operand()) {
+    ctx.data().prepare_rollback();
   }
 
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
-    }
-
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     auto status = parser_.consume(ctx, dst, pat.operand());
     switch (status) {
-      case result::SUCCESS:
-        return result::SUCCESS;
-      case result::FAILURE:
-        ctx.commit_rollback();
-        return result::SUCCESS;
+      case Result::SUCCESS:
+        return Result::SUCCESS;
+      case Result::FAILURE:
+        ctx.data().commit_rollback();
+        return Result::SUCCESS;
 
-      case result::PARTIAL:
-        return result::PARTIAL;
+      case Result::PARTIAL:
+        return Result::PARTIAL;
     }
     abu_unreachable();
   }
 
-  result peek(CTX_T& ctx, PAT_T const& pat) {
-    return result::SUCCESS;
-  }
+  Result peek(CTX_T& ctx, pat_t const& pat) { return Result::SUCCESS; }
 };
+
+template <typename CHILD_PAT_T>
+struct ParserFactory<Optional<CHILD_PAT_T>> {
+  using pat_t = Optional<CHILD_PAT_T>;
+
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<CHILD_PAT_T>::dst_behavior();
+  }
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = OptImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
+};
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

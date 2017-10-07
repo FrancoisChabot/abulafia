@@ -10,9 +10,8 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/pattern.h"
 #include "abulafia/patterns/leaf/character.h"
-#include "abulafia/patterns/unary/attr_cast.h"
+#include "abulafia/patterns/unary/discard.h"
 
 namespace ABULAFIA_NAMESPACE {
 
@@ -21,7 +20,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHAR_T>
 inline auto lit(CHAR_T chr) {
   auto res = char_(chr);
-  return cast<Nil>(res);
+  return discard(res);
 }
 
 template <typename T>

@@ -10,9 +10,8 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/contexts/skipper_adapter.h"
 #include "abulafia/parser.h"
-#include "abulafia/pattern.h"
+#include "abulafia/patterns/pattern.h"
 #include "abulafia/support/type_traits.h"
 
 #include <memory>
@@ -31,23 +30,6 @@ class WithSkipper : public Pattern<WithSkipper<CHILD_PAT_T, SKIP_T>> {
 
   WithSkipper(CHILD_PAT_T const& c, SKIP_T const& s)
       : child_pat_(c), skip_pat_(s) {}
-};
-
-template <typename CHILD_PAT_T, typename SKIP_T, typename CTX_T>
-struct pat_attr_t<WithSkipper<CHILD_PAT_T, SKIP_T>, CTX_T> {
-  using attr_type = attr_t<CHILD_PAT_T, CTX_T>;
-};
-
-template <typename CHILD_PAT_T, typename SKIP_T, typename RECUR_TAG>
-struct pattern_traits<WithSkipper<CHILD_PAT_T, SKIP_T>, RECUR_TAG>
-    : public default_pattern_traits {
-  enum {
-    ATOMIC = pattern_traits<CHILD_PAT_T, RECUR_TAG>::ATOMIC,
-    BACKTRACKS = true,  // Maybe not...
-    FAILS_CLEANLY = pattern_traits<CHILD_PAT_T, RECUR_TAG>::FAILS_CLEANLY,
-    PEEKABLE = false,
-    MAY_NOT_CONSUME = pattern_traits<CHILD_PAT_T, RECUR_TAG>::MAY_NOT_CONSUME,
-  };
 };
 
 template <typename PAT_T, typename SKIP_T>

@@ -15,69 +15,77 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename CHILD_PAT_T>
-class Parser<CTX_T, Nil, Not<CHILD_PAT_T>> : public ParserBase<CTX_T, Nil> {
-  using DST_T = Nil;
-  using PAT_T = Not<CHILD_PAT_T>;
-  using child_parser_t = Parser<CTX_T, DST_T, CHILD_PAT_T>;
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T>
+class NotImpl {
+  using pat_t = Not<CHILD_PAT_T>;
+  using child_parser_t = Parser<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
 
   child_parser_t parser_;
 
+  struct child_req_t : public REQ_T {
+    enum {
+      ATOMIC = true,
+      FAILS_CLEANLY = true,
+      CONSUMES_ON_SUCCESS = REQ_T::CONSUMES_ON_SUCCESS
+    };
+  };
+
  public:
-  Parser(CTX_T& ctx, DST_T& dst, PAT_T const& pat)
-      : ParserBase<CTX_T, Nil>(ctx, dst), parser_(ctx, dst, pat.operand()) {
-    constexpr bool backtrack = !pattern_traits<CHILD_PAT_T, void>::PEEKABLE;
-
-    if (backtrack) {
-      ctx.prepare_rollback();
-    }
+  NotImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
+      : parser_(ctx, dst, pat.operand()) {
+    ctx.data().prepare_rollback();
   }
 
-  result consume(CTX_T& ctx, DST_T& dst, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+    auto status = parser_.consume(ctx, dst, pat.operand());
+    switch (status) {
+      case Result::SUCCESS:
+        // just commit the rollback anyways, this allows us to promise
+        // FAILS_CLEANLY
+        ctx.data().commit_rollback();
+        return Result::FAILURE;
+
+      case Result::FAILURE:
+        ctx.data().commit_rollback();
+        return Result::SUCCESS;
+
+      case Result::PARTIAL:
+        return Result::PARTIAL;
     }
 
-    constexpr bool backtrack = !pattern_traits<CHILD_PAT_T, void>::PEEKABLE;
-
-    if (backtrack) {
-      auto status = parser_.consume(ctx, dst, pat.operand());
-      switch (status) {
-        case result::SUCCESS:
-          // just commit the rollback anyways, this allows us to promise
-          // FAILS_CLEANLY
-          ctx.commit_rollback();
-          return result::FAILURE;
-
-        case result::FAILURE:
-          ctx.commit_rollback();
-          return result::SUCCESS;
-
-        case result::PARTIAL:
-          return result::PARTIAL;
-      }
-
-      abu_unreachable();
-
-    } else {
-      return peek(ctx, pat);
-    }
+    abu_unreachable();
   }
 
-  result peek(CTX_T& ctx, PAT_T const& pat) {
+  Result peek(CTX_T& ctx, pat_t const& pat) {
     auto status = parser_.peek(ctx, pat.operand());
 
     switch (status) {
-      case result::SUCCESS:
-        return result::FAILURE;
-      case result::FAILURE:
-        return result::SUCCESS;
-      case result::PARTIAL:
-        return result::PARTIAL;
+      case Result::SUCCESS:
+        return Result::FAILURE;
+      case Result::FAILURE:
+        return Result::SUCCESS;
+      case Result::PARTIAL:
+        return Result::PARTIAL;
     }
     abu_unreachable();
   }
 };
+
+template <typename CHILD_PAT_T>
+struct ParserFactory<Not<CHILD_PAT_T>> {
+  using pat_t = Not<CHILD_PAT_T>;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = NotImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
+};
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

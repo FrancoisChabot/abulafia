@@ -12,7 +12,8 @@ using namespace abu;
 
 static_assert(char_set::is_char_set<char>::value == false);
 static_assert(char_set::is_char_set<char_set::Single<char>>::value == true);
-static_assert(char_set::is_char_set<decltype(char_set::to_char_set('a'))>::value == true);
+static_assert(
+    char_set::is_char_set<decltype(char_set::to_char_set('a'))>::value == true);
 
 TEST(test_single, simple_test) {
   auto c_set = char_set::single('a');

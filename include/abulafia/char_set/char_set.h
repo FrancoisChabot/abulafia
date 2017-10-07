@@ -20,18 +20,15 @@ struct CharacterSet {};
 template <typename T>
 struct is_char_set : public std::is_base_of<CharacterSet, T> {};
 
-
-template<typename T, typename Enable=void>
+template <typename T, typename Enable = void>
 struct to_char_set_impl;
 
-template<typename T>
+template <typename T>
 struct to_char_set_impl<T, std::enable_if_t<is_char_set<T>::value>> {
-  static T const& convert(T const& v) {
-    return v;
-  }
+  static T const& convert(T const& v) { return v; }
 };
 
-template<typename T>
+template <typename T>
 auto to_char_set(T v) {
   return to_char_set_impl<T>::convert(v);
 }

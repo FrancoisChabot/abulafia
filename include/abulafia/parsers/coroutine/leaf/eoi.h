@@ -14,32 +14,41 @@
 #include "abulafia/patterns/leaf/eoi.h"
 #include "abulafia/support/assert.h"
 
-#include <variant>
-
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T>
-class Parser<CTX_T, Nil, Eoi> : public ParserBase<CTX_T, Nil> {
-  using PAT_T = Eoi;
+class EoiImpl {
+  using ctx_t = CTX_T;
+  using dst_t = Nil;
+  using pat_t = Fail;
 
  public:
-  Parser(CTX_T& ctx, Nil& dst, PAT_T const&)
-      : ParserBase<CTX_T, Nil>(ctx, dst) {}
+  EoiImpl(CTX_T, Nil, Eoi const&) {}
 
-  result consume(CTX_T& ctx, Nil&, PAT_T const& pat) {
-    if (this->performSkip(ctx) == result::PARTIAL) {
-      return result::PARTIAL;
+  Result consume(CTX_T ctx, Nil, Eoi const& pat) { return peek(ctx, pat); }
+
+  Result peek(CTX_T ctx, Eoi const&) {
+    if (ctx.data().empty()) {
+      return ctx.data().final_buffer() ? Result::SUCCESS : Result::PARTIAL;
     }
-
-    return peek(ctx, pat);
-  }
-
-  result peek(CTX_T& ctx, PAT_T const&) {
-    if (ctx.empty()) {
-      return ctx.final_buffer() ? result::SUCCESS : result::PARTIAL;
-    }
-    return result::FAILURE;
+    return Result::FAILURE;
   }
 };
+
+template <>
+struct ParserFactory<Eoi> {
+  using pat_t = Eoi;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
+
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = EoiImpl<CTX_T>;
+};
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif
