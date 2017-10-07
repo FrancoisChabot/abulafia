@@ -10,7 +10,6 @@
 
 using namespace abu;
 
-/*
 TEST(test_readme, the_readme) {
   // opening bracket, followed by a comma-delimited list of integers, followed
   // by a closing bracket.
@@ -30,4 +29,3 @@ TEST(test_readme, the_readme) {
   EXPECT_EQ(dst[3], 4);
   EXPECT_EQ(dst[4], 5);
 }
-*/

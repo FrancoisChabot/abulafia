@@ -32,6 +32,7 @@ struct Context {
   };
 
   DATASOURCE_T& data() { return data_; }
+  SKIPPER_T const& skipper() { return skipper_; }
 
  private:
   DATASOURCE_T& data_;

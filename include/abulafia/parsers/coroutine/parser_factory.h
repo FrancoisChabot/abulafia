@@ -16,6 +16,7 @@
 
 #include "abulafia/parsers/coroutine/adapters/atomic.h"
 #include "abulafia/parsers/coroutine/adapters/clean_failure.h"
+#include "abulafia/parsers/coroutine/adapters/skip.h"
 
 namespace ABULAFIA_NAMESPACE {
 
@@ -79,20 +80,24 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 struct AdaptedParserFactory {
   static auto create(CTX_T ctx, DST_T dst, PAT_T const& pat) {
     using raw_factory = ParserFactory<PAT_T>;
+    using skip_t = typename CTX_T::skip_pattern_t;
 
     constexpr bool apply_atomic_adapter = REQ_T::ATOMIC && !raw_factory::ATOMIC;
     constexpr bool apply_clean_failure_adapter =
         REQ_T::FAILS_CLEANLY && !raw_factory::FAILS_CLEANLY;
+    constexpr bool apply_skipper_adapter = !std::is_same<skip_t, Fail>::value;
 
     using a = raw_factory;
     using b =
         ConditionalAdapter_t<a, AtomicFactoryAdapter, apply_atomic_adapter>;
     using c = ConditionalAdapter_t<b, CleanFailureFactoryAdapter,
                                    apply_clean_failure_adapter>;
+    using d =
+        ConditionalAdapter_t<c, SkipFactoryAdapter, apply_skipper_adapter>;
 
     // TODO: Apply skipper here.
 
-    using parser_type = typename c::template type<CTX_T, DST_T, REQ_T>;
+    using parser_type = typename d::template type<CTX_T, DST_T, REQ_T>;
     return parser_type(ctx, dst, pat);
   }
 };

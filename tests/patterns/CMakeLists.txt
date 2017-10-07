@@ -8,10 +8,13 @@ add_executable(pattern_tests
   test_except.cpp
   test_int.cpp
   test_list.cpp
+  test_not.cpp
+  test_optional.cpp
   test_pass_and_fail.cpp
   test_recur.cpp
   test_repeat.cpp
   test_sequence.cpp
+  test_skipper.cpp
   test_symbol.cpp
   test_uint.cpp
 )

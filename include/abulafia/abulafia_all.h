@@ -596,16 +596,13 @@ struct Context {
     HAS_SKIPPER = !std::is_same<Fail, skip_pattern_t>::value,
   };
   DATASOURCE_T& data() { return data_; }
+  SKIPPER_T const& skipper() { return skipper_; }
 
  private:
   DATASOURCE_T& data_;
   SKIPPER_T const& skipper_;
 };
 }  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-enum class Result { SUCCESS, FAILURE, PARTIAL };
-}
 
 namespace ABULAFIA_NAMESPACE {
 template <int BASE, typename Enabled = void>
@@ -652,32 +649,11 @@ static constexpr UInt<10, 1, 0> uint_;
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-template <typename T>
-class ValueWrapper {
- public:
-  using dst_type = T;
-  ValueWrapper(T& v) : v_(v) {}
-  ValueWrapper(ValueWrapper const&) = default;
-  template <typename U>
-  ValueWrapper& operator=(U&& v) {
-    v_ = std::forward<U>(v);
-    return *this;
-  }
-  // using this implies that we are NOT atomic in nature.
-  T& get() { return v_; }
-
- private:
-  T& v_;
-};
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
 namespace details {
 template <typename CONT_T, typename... ARGS>
 void append_to_container(CONT_T& container, ARGS&&... args) {
   container.emplace_back(std::forward<ARGS>(args)...);
 }
-// std::basic_string does not have an emplace_back, and is a commonly used type.
 template <class CharT, class Traits = std::char_traits<CharT>,
           class Allocator = std::allocator<CharT>, typename... ARGS>
 void append_to_container(std::basic_string<CharT, Traits, Allocator>& container,
@@ -696,6 +672,26 @@ class CollectionWrapper {
     details::append_to_container(v_, std::forward<U>(rhs));
     return *this;
   }
+
+ private:
+  T& v_;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename T>
+class ValueWrapper {
+ public:
+  using dst_type = T;
+  ValueWrapper(T& v) : v_(v) {}
+  ValueWrapper(ValueWrapper const&) = default;
+  template <typename U>
+  ValueWrapper& operator=(U&& v) {
+    v_ = std::forward<U>(v);
+    return *this;
+  }
+  // using this implies that we are NOT atomic in nature.
+  T& get() { return v_; }
 
  private:
   T& v_;
@@ -724,8 +720,10 @@ auto wrap_dst(T& dst) {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-// This is to be used to enforce ATOMIC on a parser
-// that does not naturally meet that requirement
+enum class Result { SUCCESS, FAILURE, PARTIAL };
+}
+
+namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename REQ_T,
           typename PARSER_FACTORY_T>
 class AtomicAdapter {
@@ -813,6 +811,62 @@ struct CleanFailureFactoryAdapter {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
+struct Parser_t;
+template <typename CTX_T, typename DST_T, typename REQ_T,
+          typename PARSER_FACTORY_T>
+class SkipAdapter {
+ public:
+  using pat_t = typename PARSER_FACTORY_T::pat_t;
+  using child_parser_t =
+      typename PARSER_FACTORY_T::template type<CTX_T, DST_T, REQ_T>;
+  using skip_context_t = typename CTX_T::template set_skipper_t<Fail>;
+  struct skip_req_t {
+    enum { ATOMIC = false, FAILS_CLEANLY = true, CONSUMES_ON_SUCCESS = true };
+  };
+  using skip_parser_t =
+      Parser_t<skip_context_t, Nil, skip_req_t, typename CTX_T::skip_pattern_t>;
+  SkipAdapter(CTX_T ctx, DST_T dst, pat_t const& pat)
+      : skip_parser_(skip_context_t(ctx.data(), fail), nil, ctx.skipper()),
+        adapted_parser_(ctx, dst, pat) {}
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+    while (!skipping_done_) {
+      auto status = skip_parser_.consume(skip_context_t(ctx.data(), fail), nil,
+                                         ctx.skipper());
+      switch (status) {
+        case Result::SUCCESS:
+          skip_parser_ = skip_parser_t(skip_context_t(ctx.data(), fail), nil,
+                                       ctx.skipper());
+          break;
+        case Result::FAILURE:
+          skipping_done_ = true;
+          break;
+        case Result::PARTIAL:
+          return Result::PARTIAL;
+          break;
+      }
+    }
+    return adapted_parser_.consume(ctx, dst, pat);
+  }
+
+ private:
+  bool skipping_done_ = false;
+  skip_parser_t skip_parser_;
+  child_parser_t adapted_parser_;
+};
+template <typename FACTORY_T>
+struct SkipFactoryAdapter {
+  using pat_t = typename FACTORY_T::pat_t;
+  enum {
+    ATOMIC = FACTORY_T::ATOMIC,
+    FAILS_CLEANLY = FACTORY_T::FAILS_CLEANLY,
+  };
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = SkipAdapter<CTX_T, DST_T, REQ_T, FACTORY_T>;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
 struct DefaultReqs {
   enum {
     ATOMIC = false,
@@ -862,16 +916,20 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 struct AdaptedParserFactory {
   static auto create(CTX_T ctx, DST_T dst, PAT_T const& pat) {
     using raw_factory = ParserFactory<PAT_T>;
+    using skip_t = typename CTX_T::skip_pattern_t;
     constexpr bool apply_atomic_adapter = REQ_T::ATOMIC && !raw_factory::ATOMIC;
     constexpr bool apply_clean_failure_adapter =
         REQ_T::FAILS_CLEANLY && !raw_factory::FAILS_CLEANLY;
+    constexpr bool apply_skipper_adapter = !std::is_same<skip_t, Fail>::value;
     using a = raw_factory;
     using b =
         ConditionalAdapter_t<a, AtomicFactoryAdapter, apply_atomic_adapter>;
     using c = ConditionalAdapter_t<b, CleanFailureFactoryAdapter,
                                    apply_clean_failure_adapter>;
+    using d =
+        ConditionalAdapter_t<c, SkipFactoryAdapter, apply_skipper_adapter>;
     // TODO: Apply skipper here.
-    using parser_type = typename c::template type<CTX_T, DST_T, REQ_T>;
+    using parser_type = typename d::template type<CTX_T, DST_T, REQ_T>;
     return parser_type(ctx, dst, pat);
   }
 };
@@ -882,6 +940,16 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 using Parser =
     decltype(AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(
         std::declval<CTX_T>(), std::declval<DST_T>(), std::declval<PAT_T>()));
+template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
+struct Parser_t
+    : decltype(AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(
+          std::declval<CTX_T>(), std::declval<DST_T>(),
+          std::declval<PAT_T>())) {
+  using real_parser_t =
+      decltype(AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(
+          std::declval<CTX_T>(), std::declval<DST_T>(), std::declval<PAT_T>()));
+  using real_parser_t::real_parser_t;
+};
 template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 auto make_parser_(CTX_T ctx, DST_T dst, REQ_T, PAT_T const& pat) {
   return AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(ctx, dst,
@@ -1636,11 +1704,10 @@ struct ParserFactory<CharSymbol<CHAR_T, VAL_T>> {
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename CHARSET_T>
 class CharImpl {
-  using PAT_T = Char<CHARSET_T>;
-
  public:
-  CharImpl(CTX_T, DST_T, PAT_T const&) {}
-  Result consume(CTX_T ctx, DST_T dst, PAT_T const& pat) {
+  using pat_t = Char<CHARSET_T>;
+  CharImpl(CTX_T, DST_T, pat_t const&) {}
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (ctx.data().empty()) {
       return ctx.data().final_buffer() ? Result::FAILURE : Result::PARTIAL;
     }
@@ -1983,6 +2050,7 @@ class ListImpl {
 template <typename OP_T, typename SEP_T>
 struct ParserFactory<List<OP_T, SEP_T>> {
   using pat_t = List<OP_T, SEP_T>;
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
   enum {
     ATOMIC = false,
     FAILS_CLEANLY = true,
@@ -2207,7 +2275,9 @@ class SeqImpl {
   SeqImpl(CTX_T& ctx, DST_T& dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(),
                        std::variant_alternative_t<0, child_parsers_t>(
-                           ctx, getDstFor<0>(dst), getChild<0>(pat))) {}
+                           ctx, getDstFor<0>(dst), getChild<0>(pat))) {
+    //    reset_if_collection<DST_T>::exec(dst);
+  }
   Result consume(CTX_T& ctx, DST_T& dst, pat_t const& pat) {
     if (CTX_T::IS_RESUMABLE) {
       return visit_val<sizeof...(CHILD_PATS_T)>(
@@ -2389,6 +2459,126 @@ struct ParserFactory<Discard<CHILD_PAT_T>> {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T>
+class NotImpl {
+  using pat_t = Not<CHILD_PAT_T>;
+  using child_parser_t = Parser<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
+  child_parser_t parser_;
+  struct child_req_t : public REQ_T {
+    enum {
+      ATOMIC = true,
+      FAILS_CLEANLY = true,
+      CONSUMES_ON_SUCCESS = REQ_T::CONSUMES_ON_SUCCESS
+    };
+  };
+
+ public:
+  NotImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
+      : parser_(ctx, dst, pat.operand()) {
+    ctx.data().prepare_rollback();
+  }
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+    auto status = parser_.consume(ctx, dst, pat.operand());
+    switch (status) {
+      case Result::SUCCESS:
+        // just commit the rollback anyways, this allows us to promise
+        // FAILS_CLEANLY
+        ctx.data().commit_rollback();
+        return Result::FAILURE;
+      case Result::FAILURE:
+        ctx.data().commit_rollback();
+        return Result::SUCCESS;
+      case Result::PARTIAL:
+        return Result::PARTIAL;
+    }
+    abu_unreachable();
+  }
+  Result peek(CTX_T& ctx, pat_t const& pat) {
+    auto status = parser_.peek(ctx, pat.operand());
+    switch (status) {
+      case Result::SUCCESS:
+        return Result::FAILURE;
+      case Result::FAILURE:
+        return Result::SUCCESS;
+      case Result::PARTIAL:
+        return Result::PARTIAL;
+    }
+    abu_unreachable();
+  }
+};
+template <typename CHILD_PAT_T>
+struct ParserFactory<Not<CHILD_PAT_T>> {
+  using pat_t = Not<CHILD_PAT_T>;
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<CHILD_PAT_T>::dst_behavior();
+  }
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = NotImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T>
+class OptImpl {
+  using pat_t = Optional<CHILD_PAT_T>;
+  struct child_req_t {
+    enum {
+      // The aternative is to push_back on start, and pop_back on failure,
+      // which gets a little messy.
+      ATOMIC = true,
+      // This is extremely important, since we can succeed even if the child
+      // parser fails.
+      // The exception to this is if MIN_REP == MAX_REP (except for 0). In which
+      // case, failure
+      // of the child guarantees failure of the parent.
+      FAILS_CLEANLY = false,
+      // Propagate
+      CONSUMES_ON_SUCCESS = REQ_T::CONSUMES_ON_SUCCESS
+    };
+  };
+  using child_parser_t = Parser<CTX_T, DST_T, child_req_t, CHILD_PAT_T>;
+  child_parser_t parser_;
+
+ public:
+  OptImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
+      : parser_(ctx, dst, pat.operand()) {
+    ctx.data().prepare_rollback();
+  }
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+    auto status = parser_.consume(ctx, dst, pat.operand());
+    switch (status) {
+      case Result::SUCCESS:
+        return Result::SUCCESS;
+      case Result::FAILURE:
+        ctx.data().commit_rollback();
+        return Result::SUCCESS;
+      case Result::PARTIAL:
+        return Result::PARTIAL;
+    }
+    abu_unreachable();
+  }
+  Result peek(CTX_T& ctx, pat_t const& pat) { return Result::SUCCESS; }
+};
+template <typename CHILD_PAT_T>
+struct ParserFactory<Optional<CHILD_PAT_T>> {
+  using pat_t = Optional<CHILD_PAT_T>;
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<CHILD_PAT_T>::dst_behavior();
+  }
+  enum {
+    ATOMIC = true,
+    FAILS_CLEANLY = true,
+  };
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = OptImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
           std::size_t MIN_REP, std::size_t MAX_REP>
 class RepeatImpl {
@@ -2545,6 +2735,40 @@ struct AdaptedParserFactory<CTX_T, DST_T, RecurChildReqs, PAT_T> {
     return RecurParserChildImpl<CTX_T, DST_T, RecurChildReqs, PAT_T>(ctx, dst,
                                                                      pat);
   }
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
+          typename SKIP_T>
+class WithSkipperImpl {
+  using ctx_t = CTX_T;
+  using dst_t = DST_T;
+  using pat_t = WithSkipper<CHILD_PAT_T, SKIP_T>;
+  using sub_ctx_t = typename ctx_t::template set_skipper_t<SKIP_T>;
+  Parser<sub_ctx_t, dst_t, REQ_T, CHILD_PAT_T> child_parser_;
+
+ public:
+  WithSkipperImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
+      : child_parser_(sub_ctx_t(ctx.data(), pat.getSkip()), dst,
+                      pat.getChild()) {}
+  Result consume(ctx_t ctx, dst_t dst, pat_t const& pat) {
+    return child_parser_.consume(sub_ctx_t(ctx.data(), pat.getSkip()), dst,
+                                 pat.getChild());
+  }
+};
+template <typename CHILD_PAT_T, typename SKIP_T>
+struct ParserFactory<WithSkipper<CHILD_PAT_T, SKIP_T>> {
+  using pat_t = WithSkipper<CHILD_PAT_T, SKIP_T>;
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<CHILD_PAT_T>::dst_behavior();
+  }
+  enum {
+    ATOMIC = ParserFactory<CHILD_PAT_T>::ATOMIC,
+    FAILS_CLEANLY = ParserFactory<CHILD_PAT_T>::FAILS_CLEANLY,
+  };
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = WithSkipperImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, SKIP_T>;
 };
 }  // namespace ABULAFIA_NAMESPACE
 

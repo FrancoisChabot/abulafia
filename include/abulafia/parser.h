@@ -23,6 +23,17 @@ using Parser =
         std::declval<CTX_T>(), std::declval<DST_T>(), std::declval<PAT_T>()));
 
 template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
+struct Parser_t
+    : decltype(AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(
+          std::declval<CTX_T>(), std::declval<DST_T>(),
+          std::declval<PAT_T>())) {
+  using real_parser_t =
+      decltype(AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(
+          std::declval<CTX_T>(), std::declval<DST_T>(), std::declval<PAT_T>()));
+  using real_parser_t::real_parser_t;
+};
+
+template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 auto make_parser_(CTX_T ctx, DST_T dst, REQ_T, PAT_T const& pat) {
   return AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(ctx, dst,
                                                                   pat);

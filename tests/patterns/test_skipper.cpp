@@ -11,10 +11,10 @@
 
 using namespace abu;
 
-TEST(test_optional, test_pass) {
-  auto pattern = -char_(char_set::any<char>) >> +char_('a', 'z');
+TEST(test_skipper, simple_test) {
+  auto pattern = apply_skipper(uint_ % ',', lit(' '));
 
-  testPatternSuccess("hello", pattern, nil);
-  testPatternSuccess("1ello", pattern, nil);
-  testPatternFailure<Nil>("12ello", pattern);
+  testPatternSuccess("1,2,3", pattern, std::vector<int>{1, 2, 3});
+  testPatternSuccess("4, 5, 6", pattern, std::vector<int>{4, 5, 6});
+  testPatternSuccess(" 7 , 8 , 9 ", pattern, std::vector<int>{7, 8, 9});
 }

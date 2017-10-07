@@ -19,12 +19,11 @@
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename CHARSET_T>
 class CharImpl {
-  using PAT_T = Char<CHARSET_T>;
-
  public:
-  CharImpl(CTX_T, DST_T, PAT_T const&) {}
+  using pat_t = Char<CHARSET_T>;
+  CharImpl(CTX_T, DST_T, pat_t const&) {}
 
-  Result consume(CTX_T ctx, DST_T dst, PAT_T const& pat) {
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (ctx.data().empty()) {
       return ctx.data().final_buffer() ? Result::FAILURE : Result::PARTIAL;
     }

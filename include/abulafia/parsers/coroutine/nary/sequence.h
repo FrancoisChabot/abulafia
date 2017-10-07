@@ -62,6 +62,7 @@ template <std::size_t PAT_ID, typename CTX_T, typename DST_T,
 constexpr DstAccessorCategory ChooseAccessorCategory() {
   using pattern_t = tuple_element_t<PAT_ID, CHILDS_TUPLE_T>;
   using pattern_factory_t = ParserFactory<pattern_t>;
+
   if (std::is_same<Nil, DST_T>::value ||
       pattern_factory_t::dst_behavior() == DstBehavior::IGNORE) {
     return DstAccessorCategory::USE_NIL;
