@@ -99,7 +99,7 @@ template <typename OP_T, typename SEP_T>
 struct ParserFactory<List<OP_T, SEP_T>> {
   using pat_t = List<OP_T, SEP_T>;
 
-  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
+  static constexpr DstBehavior dst_behavior() { return ParserFactory<OP_T>::dst_behavior(); }
 
   enum {
     ATOMIC = false,

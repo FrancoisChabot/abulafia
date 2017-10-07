@@ -10,6 +10,7 @@
 
 #include "abulafia/config.h"
 
+#include "abulafia/parsers/coroutine/dst_behavior.h"
 #include "abulafia/result.h"
 
 namespace ABULAFIA_NAMESPACE {
@@ -61,6 +62,8 @@ class CleanFailureAdapter {
 template <typename FACTORY_T>
 struct CleanFailureFactoryAdapter {
   static_assert(!FACTORY_T::FAILS_CLEANLY);
+
+  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
 
   using pat_t = typename FACTORY_T::pat_t;
 

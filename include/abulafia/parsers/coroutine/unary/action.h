@@ -123,6 +123,12 @@ template <typename CHILD_PAT_T, typename ACT_T>
 struct ParserFactory<Action<CHILD_PAT_T, ACT_T>> {
   using pat_t = Action<CHILD_PAT_T, ACT_T>;
 
+  using landing_type_t = typename act_::determine_landing_type<ACT_T>::type;
+  static constexpr DstBehavior dst_behavior() { 
+    return std::is_same<Nil, landing_type_t>::value ? DstBehavior::IGNORE : DstBehavior::VALUE; 
+  }
+
+
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,

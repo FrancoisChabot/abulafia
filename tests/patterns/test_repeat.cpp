@@ -40,6 +40,14 @@ TEST(test_repeat, test_max_count) {
 
   testPatternSuccess("1234", pattern, std::vector<int>({1, 2, 3}));
 }
+
+
+TEST(test_repeat, test_exact_count) {
+  auto pattern = repeat<2, 2>(lit('9'));
+
+  testPatternSuccess("99", pattern, nil);
+  testPatternFailure<Nil>("9", pattern);
+}
 /*
 TEST(test_repeat, test_chained_repeat_with_min) {
   auto pattern = *(repeat<2, 2>(char_('a', 'z')));

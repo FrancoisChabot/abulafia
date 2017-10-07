@@ -32,6 +32,8 @@ template <>
 struct ParserFactory<Fail> {
   using pat_t = Fail;
 
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
+
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,

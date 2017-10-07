@@ -640,6 +640,13 @@ static constexpr UInt<10, 1, 0> uint_;
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+enum class DstBehavior {
+  IGNORE,
+  VALUE,
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
 namespace details {
 template <typename CONT_T, typename... ARGS>
 void append_to_container(CONT_T& container, ARGS&&... args) {
@@ -742,6 +749,7 @@ class AtomicAdapter {
 template <typename FACTORY_T>
 struct AtomicFactoryAdapter {
   static_assert(!FACTORY_T::ATOMIC);
+  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
   using pat_t = typename FACTORY_T::pat_t;
   enum {
     ATOMIC = true,
@@ -787,6 +795,7 @@ class CleanFailureAdapter {
 template <typename FACTORY_T>
 struct CleanFailureFactoryAdapter {
   static_assert(!FACTORY_T::FAILS_CLEANLY);
+  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
   using pat_t = typename FACTORY_T::pat_t;
   enum {
     ATOMIC = FACTORY_T::ATOMIC,
@@ -843,6 +852,7 @@ class SkipAdapter {
 template <typename FACTORY_T>
 struct SkipFactoryAdapter {
   using pat_t = typename FACTORY_T::pat_t;
+  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
   enum {
     ATOMIC = FACTORY_T::ATOMIC,
     FAILS_CLEANLY = FACTORY_T::FAILS_CLEANLY,
@@ -859,10 +869,6 @@ struct DefaultReqs {
     FAILS_CLEANLY = false,
     CONSUMES_ON_SUCCESS = false,
   };
-};
-enum class DstBehavior {
-  IGNORE,
-  VALUE,
 };
 template <typename PAT_T>
 struct ParserFactory;
@@ -1659,6 +1665,7 @@ class CharSymbolImpl {
 template <typename CHAR_T, typename VAL_T>
 struct ParserFactory<CharSymbol<CHAR_T, VAL_T>> {
   using pat_t = CharSymbol<CHAR_T, VAL_T>;
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
@@ -1719,6 +1726,7 @@ class EoiImpl {
 template <>
 struct ParserFactory<Eoi> {
   using pat_t = Eoi;
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
@@ -1742,6 +1750,7 @@ class FailImpl {
 template <>
 struct ParserFactory<Fail> {
   using pat_t = Fail;
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
@@ -1766,6 +1775,7 @@ class PassImpl {
 template <>
 struct ParserFactory<Pass> {
   using pat_t = Pass;
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
@@ -1875,6 +1885,7 @@ class SymbolImpl {
 template <typename CHAR_T, typename VAL_T>
 struct ParserFactory<Symbol<CHAR_T, VAL_T>> {
   using pat_t = Symbol<CHAR_T, VAL_T>;
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = false,
@@ -1889,9 +1900,8 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename OP_T,
           typename NEG_T>
 class ExceptImpl {
   using pat_t = Except<OP_T, NEG_T>;
-  struct op_req_t {
+  struct op_req_t : public REQ_T {
     enum {
-      ATOMIC = REQ_T::ATOMIC,
       // We don't care
       FAILS_CLEANLY = false,
     };
@@ -1900,6 +1910,7 @@ class ExceptImpl {
     enum {
       ATOMIC = false,
       FAILS_CLEANLY = true,
+      CONSUMES_ON_SUCCESS = false,
     };
   };
   using op_parser_t = Parser<CTX_T, DST_T, op_req_t, OP_T>;
@@ -1929,6 +1940,7 @@ class ExceptImpl {
 template <typename OP_T, typename NEG_T>
 struct ParserFactory<Except<OP_T, NEG_T>> {
   using pat_t = Except<OP_T, NEG_T>;
+  static constexpr DstBehavior dst_behavior() { return ParserFactory<OP_T>::dst_behavior(); }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = false,
@@ -2010,7 +2022,7 @@ class ListImpl {
 template <typename OP_T, typename SEP_T>
 struct ParserFactory<List<OP_T, SEP_T>> {
   using pat_t = List<OP_T, SEP_T>;
-  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
+  static constexpr DstBehavior dst_behavior() { return ParserFactory<OP_T>::dst_behavior(); }
   enum {
     ATOMIC = false,
     FAILS_CLEANLY = true,
@@ -2376,6 +2388,10 @@ class ActionImpl {
 template <typename CHILD_PAT_T, typename ACT_T>
 struct ParserFactory<Action<CHILD_PAT_T, ACT_T>> {
   using pat_t = Action<CHILD_PAT_T, ACT_T>;
+  using landing_type_t = typename act_::determine_landing_type<ACT_T>::type;
+  static constexpr DstBehavior dst_behavior() {
+    return std::is_same<Nil, landing_type_t>::value ? DstBehavior::IGNORE : DstBehavior::VALUE;
+  }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
@@ -2464,9 +2480,7 @@ class NotImpl {
 template <typename CHILD_PAT_T>
 struct ParserFactory<Not<CHILD_PAT_T>> {
   using pat_t = Not<CHILD_PAT_T>;
-  static constexpr DstBehavior dst_behavior() {
-    return ParserFactory<CHILD_PAT_T>::dst_behavior();
-  }
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
@@ -2595,7 +2609,7 @@ struct ParserFactory<Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>> {
   }
   enum {
     ATOMIC = false,
-    FAILS_CLEANLY = MIN_REP == MAX_REP && MAX_REP != 0,
+    FAILS_CLEANLY = false,
   };
   template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = RepeatImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, MIN_REP, MAX_REP>;

@@ -14,6 +14,8 @@
 #include "abulafia/patterns/leaf/numeric/uint.h"
 #include "abulafia/support/assert.h"
 
+#include "abulafia/parsers/coroutine/dst_behavior.h"
+
 #include "abulafia/parsers/coroutine/adapters/atomic.h"
 #include "abulafia/parsers/coroutine/adapters/clean_failure.h"
 #include "abulafia/parsers/coroutine/adapters/skip.h"
@@ -26,11 +28,6 @@ struct DefaultReqs {
     FAILS_CLEANLY = false,
     CONSUMES_ON_SUCCESS = false,
   };
-};
-
-enum class DstBehavior {
-  IGNORE,
-  VALUE,
 };
 
 template <typename PAT_T>

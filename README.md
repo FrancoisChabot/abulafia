@@ -2,16 +2,13 @@
 A standalone C++ parsing framework
 
 [![build][badge.build]][build]
-[![build_win][badge.build_win]][build_win]
 [![on-godbolt][badge.on-godbolt]][on-godbolt]
 
 [badge.build]: https://travis-ci.org/FrancoisChabot/abulafia.svg?branch=master
-[badge.build_win]: https://ci.appveyor.com/api/projects/status/8013l0w05xgj76a0/branch/master?svg=true
 [badge.coverage]: https://coveralls.io/repos/github/FrancoisChabot/abulafia/badge.svg?branch=master
 [badge.on-godbolt]: https://img.shields.io/badge/on-godbolt-376666.svg
 
 [build]: https://travis-ci.org/FrancoisChabot/abulafia
-[build_win]: https://ci.appveyor.com/project/FrancoisChabot/abulafia/branch/master
 [coverage]: https://coveralls.io/github/FrancoisChabot/abulafia?branch=master
 [on-godbolt]: https://godbolt.org/g/Zq7Eb1
 
@@ -35,7 +32,7 @@ Parsing to dst still needs a lot of love. The sequence pattern in particular onl
 
 Abulafia currently requires a C++17 compiler. The level of C++17 compatibility required will be kept at the lowest bar set by the current release of the following compilers:
 
-- Microsoft VC++ (2017, update 3)
+- Microsoft VC++ (2017, update 3) **Currently broken due to an ICE that will be resolved in the next release.**
 - Clang (5.0.0)
 - GCC (7.2)
 

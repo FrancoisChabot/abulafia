@@ -91,7 +91,7 @@ struct ParserFactory<Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>> {
 
   enum {
     ATOMIC = false,
-    FAILS_CLEANLY = MIN_REP == MAX_REP && MAX_REP != 0,
+    FAILS_CLEANLY = false,
   };
 
   template <typename CTX_T, typename DST_T, typename REQ_T>

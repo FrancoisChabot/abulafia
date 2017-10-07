@@ -75,9 +75,7 @@ template <typename CHILD_PAT_T>
 struct ParserFactory<Not<CHILD_PAT_T>> {
   using pat_t = Not<CHILD_PAT_T>;
 
-  static constexpr DstBehavior dst_behavior() {
-    return ParserFactory<CHILD_PAT_T>::dst_behavior();
-  }
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
 
   enum {
     ATOMIC = true,

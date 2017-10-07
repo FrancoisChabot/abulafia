@@ -23,9 +23,8 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename OP_T,
 class ExceptImpl {
   using pat_t = Except<OP_T, NEG_T>;
 
-  struct op_req_t {
+  struct op_req_t : public REQ_T {
     enum {
-      ATOMIC = REQ_T::ATOMIC,
       // We don't care
       FAILS_CLEANLY = false,
     };
@@ -35,6 +34,7 @@ class ExceptImpl {
     enum {
       ATOMIC = false,
       FAILS_CLEANLY = true,
+      CONSUMES_ON_SUCCESS = false,
     };
   };
 
@@ -70,6 +70,8 @@ class ExceptImpl {
 template <typename OP_T, typename NEG_T>
 struct ParserFactory<Except<OP_T, NEG_T>> {
   using pat_t = Except<OP_T, NEG_T>;
+
+  static constexpr DstBehavior dst_behavior() { return ParserFactory<OP_T>::dst_behavior(); }
 
   enum {
     ATOMIC = true,

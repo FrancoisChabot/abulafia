@@ -10,6 +10,7 @@
 
 #include "abulafia/config.h"
 
+#include "abulafia/parsers/coroutine/dst_behavior.h"
 #include "abulafia/dst_wrapper/select_wrapper.h"
 #include "abulafia/patterns/leaf/fail.h"
 #include "abulafia/result.h"
@@ -72,6 +73,8 @@ class SkipAdapter {
 template <typename FACTORY_T>
 struct SkipFactoryAdapter {
   using pat_t = typename FACTORY_T::pat_t;
+
+  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
 
   enum {
     ATOMIC = FACTORY_T::ATOMIC,

@@ -10,6 +10,7 @@
 
 #include "abulafia/config.h"
 
+#include "abulafia/parsers/coroutine/dst_behavior.h"
 #include "abulafia/dst_wrapper/select_wrapper.h"
 #include "abulafia/result.h"
 
@@ -52,6 +53,8 @@ class AtomicAdapter {
 template <typename FACTORY_T>
 struct AtomicFactoryAdapter {
   static_assert(!FACTORY_T::ATOMIC);
+
+  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
 
   using pat_t = typename FACTORY_T::pat_t;
 

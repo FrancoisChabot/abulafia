@@ -38,6 +38,8 @@ template <>
 struct ParserFactory<Eoi> {
   using pat_t = Eoi;
 
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::IGNORE; }
+
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,

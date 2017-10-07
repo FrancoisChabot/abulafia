@@ -85,6 +85,8 @@ template <typename CHAR_T, typename VAL_T>
 struct ParserFactory<Symbol<CHAR_T, VAL_T>> {
   using pat_t = Symbol<CHAR_T, VAL_T>;
 
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
+
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = false,
