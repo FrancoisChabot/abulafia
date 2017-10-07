@@ -27,6 +27,7 @@
 
 #include "abulafia/parsers/coroutine/unary/action.h"
 #include "abulafia/parsers/coroutine/unary/discard.h"
+#include "abulafia/parsers/coroutine/unary/lexeme.h"
 #include "abulafia/parsers/coroutine/unary/not.h"
 #include "abulafia/parsers/coroutine/unary/optional.h"
 #include "abulafia/parsers/coroutine/unary/repeat.h"

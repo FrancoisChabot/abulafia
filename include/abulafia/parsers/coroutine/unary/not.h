@@ -18,17 +18,18 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T>
 class NotImpl {
   using pat_t = Not<CHILD_PAT_T>;
-  using child_parser_t = Parser<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
 
-  child_parser_t parser_;
 
   struct child_req_t : public REQ_T {
     enum {
-      ATOMIC = true,
-      FAILS_CLEANLY = true,
+      ATOMIC = false,
+      FAILS_CLEANLY = false,
       CONSUMES_ON_SUCCESS = REQ_T::CONSUMES_ON_SUCCESS
     };
   };
+
+  using child_parser_t = Parser<CTX_T, DST_T, child_req_t, CHILD_PAT_T>;
+  child_parser_t parser_;
 
  public:
   NotImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
@@ -56,7 +57,7 @@ class NotImpl {
     abu_unreachable();
   }
 
-  Result peek(CTX_T& ctx, pat_t const& pat) {
+  Result peek(CTX_T ctx, pat_t const& pat) {
     auto status = parser_.peek(ctx, pat.operand());
 
     switch (status) {

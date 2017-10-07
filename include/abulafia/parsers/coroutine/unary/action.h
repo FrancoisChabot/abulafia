@@ -40,7 +40,7 @@ struct Dispatch<ACT_T,
                 enable_if_t<function_traits<ACT_T>::arity == 0 &&
                             is_same<void, callable_result_t<ACT_T>>::value>> {
   template <typename LAND_T, typename DST_T>
-  static void dispatch(ACT_T const& act, LAND_T, DST_T&) {
+  static void dispatch(ACT_T const& act, LAND_T, DST_T) {
     act();
   }
 };
@@ -50,7 +50,7 @@ struct Dispatch<ACT_T,
                 enable_if_t<function_traits<ACT_T>::arity != 0 &&
                             is_same<void, callable_result_t<ACT_T>>::value>> {
   template <typename LAND_T, typename DST_T>
-  static void dispatch(ACT_T const& act, LAND_T land, DST_T&) {
+  static void dispatch(ACT_T const& act, LAND_T land, DST_T) {
     act(std::move(land));
   }
 };
@@ -60,8 +60,8 @@ struct Dispatch<ACT_T,
                 enable_if_t<function_traits<ACT_T>::arity == 0 &&
                             !is_same<void, callable_result_t<ACT_T>>::value>> {
   template <typename LAND_T, typename DST_T>
-  static void dispatch(ACT_T const& act, LAND_T, DST_T& dst) {
-    dst = act();
+  static void dispatch(ACT_T const& act, LAND_T, DST_T dst) {
+    *dst.get() = act();
   }
 };
 
@@ -70,8 +70,8 @@ struct Dispatch<ACT_T,
                 enable_if_t<function_traits<ACT_T>::arity != 0 &&
                             !is_same<void, callable_result_t<ACT_T>>::value>> {
   template <typename LAND_T, typename DST_T>
-  static void dispatch(ACT_T const& act, LAND_T land, DST_T& dst) {
-    dst = act(std::move(land));
+  static void dispatch(ACT_T const& act, LAND_T land, DST_T dst) {
+    *dst.get() = act(std::move(land));
   }
 };
 }  // namespace act_

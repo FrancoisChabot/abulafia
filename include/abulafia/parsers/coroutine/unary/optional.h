@@ -61,7 +61,7 @@ class OptImpl {
     abu_unreachable();
   }
 
-  Result peek(CTX_T& ctx, pat_t const& pat) { return Result::SUCCESS; }
+  Result peek(CTX_T ctx, pat_t const& pat) { return Result::SUCCESS; }
 };
 
 template <typename CHILD_PAT_T>

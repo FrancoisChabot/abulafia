@@ -151,7 +151,13 @@ template <typename CTX_T, typename DST_T, typename REQ_T,
 class SeqImpl {
   using pat_t = Seq<CHILD_PATS_T...>;
 
-  struct child_req_t : public REQ_T {};
+  struct child_req_t : public REQ_T {
+    enum {
+      CONSUMES_ON_SUCCESS = false,
+      ATOMIC = false,
+      FAILS_CLEANLY = false
+    };
+  };
 
   using childs_tuple_t = typename pat_t::child_tuple_t;
   using child_parsers_t = typename seq_::SeqSubParser<
@@ -161,21 +167,21 @@ class SeqImpl {
 
  public:
   template <std::size_t ID>
-  decltype(auto) getDstFor(DST_T& dst) {
+  decltype(auto) getDstFor(DST_T dst) {
     using accessor_t =
         seq_::choose_dst_accessor<ID, CTX_T, DST_T, childs_tuple_t>;
 
     return accessor_t::access(dst);
   }
 
-  SeqImpl(CTX_T& ctx, DST_T& dst, pat_t const& pat)
+  SeqImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(),
                        std::variant_alternative_t<0, child_parsers_t>(
                            ctx, getDstFor<0>(dst), getChild<0>(pat))) {
     //    reset_if_collection<DST_T>::exec(dst);
   }
 
-  Result consume(CTX_T& ctx, DST_T& dst, pat_t const& pat) {
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (CTX_T::IS_RESUMABLE) {
       return visit_val<sizeof...(CHILD_PATS_T)>(
           child_parsers_.index(),
@@ -187,7 +193,7 @@ class SeqImpl {
   }
 
   template <std::size_t ID>
-  Result consume_from(CTX_T& ctx, DST_T& dst, pat_t const& pat) {
+  Result consume_from(CTX_T ctx, DST_T dst, pat_t const& pat) {
     abu_assume(child_parsers_.index() == ID);
 
     auto& c_parser = std::get<ID>(child_parsers_);
@@ -222,6 +228,8 @@ class SeqImpl {
 template <typename... CHILD_PATS_T>
 struct ParserFactory<Seq<CHILD_PATS_T...>> {
   using pat_t = Seq<CHILD_PATS_T...>;
+
+static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
 
   enum {
     ATOMIC = false,

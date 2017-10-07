@@ -32,6 +32,7 @@
 
 #include "abulafia/patterns/unary/action.h"
 #include "abulafia/patterns/unary/discard.h"
+#include "abulafia/patterns/unary/lexeme.h"
 #include "abulafia/patterns/unary/not.h"
 #include "abulafia/patterns/unary/optional.h"
 #include "abulafia/patterns/unary/repeat.h"

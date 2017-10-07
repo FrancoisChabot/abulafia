@@ -40,7 +40,7 @@ class CharSymbolImpl {
     return Result::SUCCESS;
   }
 
-  Result peek(CTX_T& ctx, pat_t const& pat) {
+  Result peek(CTX_T ctx, pat_t const& pat) {
     if (ctx.data().empty()) {
       return ctx.data().final_buffer() ? Result::FAILURE : Result::PARTIAL;
     }

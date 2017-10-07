@@ -33,11 +33,11 @@ class AltImpl {
   child_parsers_t child_parsers_;
 
  public:
-  AltImpl(CTX_T& ctx, DST_T& dst, pat_t const& pat)
+  AltImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(), ctx, dst, getChild<0>(pat)) {
   }
 
-  Result consume(CTX_T& ctx, DST_T& dst, pat_t const& pat) {
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (ctx.data().isResumable()) {
       return visit_val<sizeof...(CHILD_PATS_T)>(
           child_parsers_.index(),
@@ -49,7 +49,7 @@ class AltImpl {
   }
 
   template <std::size_t ID>
-  Result consume_from(CTX_T& ctx, DST_T& dst, pat_t const& pat) {
+  Result consume_from(CTX_T ctx, DST_T dst, pat_t const& pat) {
     abu_assume(child_parsers_.index() == ID);
 
     auto& c_parser = std::get<ID>(child_parsers_);
@@ -80,6 +80,8 @@ class AltImpl {
 template <typename... CHILD_PATS_T>
 struct ParserFactory<Alt<CHILD_PATS_T...>> {
   using pat_t = Alt<CHILD_PATS_T...>;
+
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
 
   enum {
     ATOMIC = true,
