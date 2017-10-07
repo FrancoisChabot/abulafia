@@ -21,6 +21,12 @@ template <typename CRTP_T>
 class Pattern : public PatternBase {
  public:
   using pat_t = CRTP_T;
+
+
+  template<typename ACT_T>
+  auto operator[](ACT_T act) const {
+    return apply_action(*static_cast<pat_t const*>(this), std::move(act));
+  }
 };
 
 // Catch-all set of traits for every subclass of pattern.

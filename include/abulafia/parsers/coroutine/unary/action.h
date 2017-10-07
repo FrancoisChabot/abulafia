@@ -61,7 +61,7 @@ struct Dispatch<ACT_T,
                             !is_same<void, callable_result_t<ACT_T>>::value>> {
   template <typename LAND_T, typename DST_T>
   static void dispatch(ACT_T const& act, LAND_T, DST_T dst) {
-    *dst.get() = act();
+    dst = act();
   }
 };
 
@@ -71,7 +71,7 @@ struct Dispatch<ACT_T,
                             !is_same<void, callable_result_t<ACT_T>>::value>> {
   template <typename LAND_T, typename DST_T>
   static void dispatch(ACT_T const& act, LAND_T land, DST_T dst) {
-    *dst.get() = act(std::move(land));
+    dst = act(std::move(land));
   }
 };
 }  // namespace act_
