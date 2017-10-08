@@ -58,54 +58,13 @@ Abulafia provides a special type: `Nil`, with a matching constant: `nil`, that r
 #include <string>
 #include <vector>
 #include <cassert>
+
 #include "abulafia/abulafia.h"
 
 int main() {
+  std::vector<unsigned short> destination;
   std::string data = "123456";
-
-  // pattern
-  // A list of two-digits decimal-10 unsigned integers
-  auto pattern = *abu::UInt<10,2,2>();
-
-  // context
-  // Consume a pair of `std::string` iterators all at once
-  abu::SingleForwardContext<std::string::const_iterator> context(data.begin(), 
-                                                                 data.end());
- 
-  // destination
-  std::vector<unsigned short> destination;
- 
-
-  // Together, they make a parser
-  auto parser = abu::make_parser(pattern, context, destination);
-
-  auto status = parser.consume();
-
-  assert(status == abu::Result::SUCCESS);
-  assert(destination.size() == 3);
-  assert(destination[0] == 12);
-  assert(destination[1] == 34);
-  assert(destination[2] == 56);
-
-  return 0;
-}
-```
-
-## Making it cleaner
-This is all fairly verbose. Since parsing a container all at once is such a common pattern, Abulafia provides a shorthand method.
-Simple patterns can also be inlined directly into the parse call.
-
-```c++
-#include <string>
-#include <vector>
-#include <cassert>
-
-#include "abulafia/abulafia.h"
-
-int main() {
-  std::vector<unsigned short> destination;
-
-  auto status = abu::parse("123456",
+  auto status = abu::parse(data.begin(), data,
                            *abu::UInt<10, 2, 2>,
                            destination);
 

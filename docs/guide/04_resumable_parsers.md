@@ -4,7 +4,8 @@ Abulafia parsers have the option[^1] of running as coroutines. That is, they are
 
 ## ContainerSequenceContext
 
-The `Container Sequence Context` is the prefered way of dealing with data chunks. It's fast, flexible, and does as little memory management work as possible at the cost of possibly holding on to chunks of memory longer than absolutely necessary.[^2]
+The `Container Sequence Context` is the prefered way of dealing with data chunks. It's fast, flexible, and does as little memory management work as possible at the cost of possibly holding on to chunks of memory longer than absolutely necessary.[^2] make_parser() provides a simple interface around it:
+
 
 ```c++
 #include <vector>
@@ -16,24 +17,22 @@ int main() {
   std::vector<unsigned short> destination;
 
   // Our resumable context will be provided with vectors of char
-  abu::ContainerSequenceContext<std::string> context;
-
-  auto parser = abu::make_parser(pattern, context, destination);
+  auto parser = abu::make_parser<std::vector<char>>(pattern, destination);
 
   constexpr int CHUNK_SIZE = 256;
   std::ifstream file("data.txt");
 
   abu::Result final_result = abu::Result::PARTIAL;
   while(final_result == abu::Result::PARTIAL) {
-    auto buffer = std::make_unique<std::vector<char>>(CHUNK_SIZE);     
+    auto buffer = std::vector<char>(CHUNK_SIZE);
 
-    bool read_status = file.read(buffer->data(), CHUNK_SIZE);
+    bool read_status = file.read(buffer.data(), CHUNK_SIZE);
 
-    buffer->resize(file.gcount());
+    buffer.resize(file.gcount());
 
     // The context takes ownership of the data, and will let go of it as soon
     // as it can prove it won't need it again. No memory copies are involved.
-    context.addBuffer(std::move(data), read_status ? abu::IsFinal::NOT_FINAL : abu::IsFinal::FINAL);
+    context.data().addBuffer(std::move(data), read_status ? abu::IsFinal::NOT_FINAL : abu::IsFinal::FINAL);
   
     final_result = parser.consume();
   }
