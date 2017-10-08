@@ -16,7 +16,7 @@
     
     
       
-        <title>Installation - Abulafia Documentation</title>
+        <title>Working with user types - Abulafia Documentation</title>
       
     
     
@@ -82,7 +82,7 @@
                 </span>
               
             
-            Installation
+            Working with user types
           
         </span>
       </div>
@@ -282,61 +282,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="toc">
-        Installation
-      </label>
-    
-    <a href="./" title="Installation" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../01_installation/" title="Installation" class="md-nav__link">
       Installation
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" title="Requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation_1" title="Installation" class="md-nav__link">
-    Installation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" title="Configuration" class="md-nav__link">
-    Configuration
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -416,11 +366,20 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../08_working_with_structs/" title="Working with user types" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+    <a href="./" title="Working with user types" class="md-nav__link md-nav__link--active">
       Working with user types
     </a>
+    
   </li>
 
         
@@ -890,34 +849,6 @@
     
   
   
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" title="Requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation_1" title="Installation" class="md-nav__link">
-    Installation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" title="Configuration" class="md-nav__link">
-    Configuration
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -929,38 +860,29 @@
               
                 
                 
-                <h1 id="installation">Installation</h1>
-<h2 id="requirements">Requirements</h2>
-<p>In order to use Abulafia, all you need is a (partially) compliant C++17 compiler, and matching standard library. As of right now, the following environments should be supported:</p>
-<ul>
-<li>GCC (7.2)</li>
-<li>clang (5.0.0)</li>
-<li>Visual Studio 2017 (update 3)</li>
-</ul>
-<h2 id="installation_1">Installation</h2>
-<p>Since Abulafia is a header-only library, all you need to do is get the source code from <a href="https://github.com/FrancoisChabot/abulafia">github</a>, and make the contents of the <code>include</code> directory available to your compiler.</p>
-<p>This can be as simple as copying the include/abulafia directory to your own source tree.</p>
-<p>We also maintain a single-header version of the library. You can build it yourself, using the <code>generate_all_include</code> build target, or get it from the <a href="https://github.com/FrancoisChabot/abulafia/tree/single_header">github branch</a>, where it is kept in sync with the master branch.</p>
-<h2 id="configuration">Configuration</h2>
-<p>Since Abulafia is a template library, most configuration options are passed as template arguments, which allows multiple configurations of Abulafia to live side-by-side in the same application.</p>
-<p>However, some configuration options cannot be exposed this way. These can be found in the <code>abulafia/config.h</code> file, and can be manipulated by preprocessor macros (or outright editing of the config.h file).</p>
-<p>As of right now, here are the available configuration options:</p>
-<table>
-<thead>
-<tr>
-<th>Option name</th>
-<th>default value</th>
-<th>description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ABULAFIA_NAMESPACE</td>
-<td>abu</td>
-<td>The namespace under which all abulafia is defined</td>
-</tr>
-</tbody>
-</table>
+                <h1 id="working-with-user-types">Working with user types</h1>
+<p>Abulafia allows you to map patterns to arbitrary types as long as these types have the appropriate constructor as well as a default constructor.</p>
+<p>This is done by using the <code>Construct</code> patterm, which can be conveniently invoked by usage of the <code>as()</code> method on any parser. </p>
+<p><code>as&lt;T...&gt;()</code> will create a <code>std::tuple&lt;T...&gt;</code> into which the attached pattern will be parsed. Upon successfull completion of the child parse operation, <code>std::construct_from_tuple()</code> will be invoked on whatever type was passed as the DST.</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;abulafia/abulafia.h&quot;</span><span class="cp"></span>
+
+<span class="k">struct</span> <span class="n">Rectangle</span> <span class="p">{</span>
+  <span class="n">Rectangle</span><span class="p">()</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+  <span class="n">Rectangle</span><span class="p">(</span><span class="kt">float</span> <span class="n">in_w</span><span class="p">,</span> <span class="kt">float</span> <span class="n">in_h</span><span class="p">)</span> 
+    <span class="o">:</span> <span class="n">w</span><span class="p">(</span><span class="n">in_w</span><span class="p">),</span> <span class="n">h</span><span class="p">(</span><span class="n">in_h</span><span class="p">)</span> <span class="p">{}</span>
+
+  <span class="kt">float</span> <span class="n">w</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">h</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">rect_pattern</span> <span class="o">=</span> <span class="p">(</span><span class="n">abu</span><span class="o">::</span><span class="n">int_</span> <span class="o">&gt;&gt;</span> <span class="sc">&#39;,&#39;</span> <span class="o">&gt;&gt;</span> <span class="n">abu</span><span class="o">::</span><span class="n">int_</span><span class="p">).</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">();</span>
+
+  <span class="n">Rectangle</span> <span class="n">rect_a</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">decode</span><span class="o">&lt;</span><span class="n">Rectangle</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;1,45&quot;</span><span class="p">,</span> <span class="n">rect_pattern</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
                 
                   
                 
@@ -979,7 +901,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../00_introduction/" title="Introduction" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../06_recursivity/" title="Recursivity" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -988,19 +910,19 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Introduction
+                Recursivity
               </span>
             </div>
           </a>
         
         
-          <a href="../07_character_sets/" title="Character Sets" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../advanced/00_writing_parsers/" title="Writing Parsers" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Character Sets
+                Writing Parsers
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">

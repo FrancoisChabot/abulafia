@@ -294,6 +294,18 @@
           
           
 
+
+  <li class="md-nav__item">
+    <a href="../07_character_sets/" title="Character Sets" class="md-nav__link">
+      Character Sets
+    </a>
+  </li>
+
+        
+          
+          
+          
+
   
 
 
@@ -432,15 +444,27 @@
           
 
 
+  <li class="md-nav__item">
+    <a href="../08_working_with_structs/" title="Working with user types" class="md-nav__link">
+      Working with user types
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-8" type="checkbox" id="nav-2-8">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-10" type="checkbox" id="nav-2-10">
     
-    <label class="md-nav__link" for="nav-2-8">
+    <label class="md-nav__link" for="nav-2-10">
       Advanced
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
-      <label class="md-nav__title" for="nav-2-8">
+      <label class="md-nav__title" for="nav-2-10">
         Advanced
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -977,7 +1001,7 @@
 <div class="codehilite"><pre><span></span><span class="c1">// Parses hexadecimal numbers, expecting them to be prefixed by the standard 0x</span>
 <span class="k">template</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">MIN_DIGITS</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">MAX_DIGITS</span><span class="o">&gt;</span>
 <span class="k">auto</span> <span class="n">prefixed_hex</span><span class="p">()</span> <span class="p">{</span>
-  <span class="k">return</span> <span class="p">(</span><span class="n">lit</span><span class="p">(</span><span class="s">&quot;0x&quot;</span><span class="p">)</span> <span class="o">|</span> <span class="n">lit</span><span class="p">(</span><span class="s">&quot;0X&quot;</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">Uint</span><span class="o">&lt;</span><span class="mi">16</span><span class="p">,</span> <span class="n">MIN_DIGITS</span><span class="p">,</span> <span class="n">MAX_DIGITS</span><span class="o">&gt;</span><span class="p">();</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">lit</span><span class="p">(</span><span class="s">&quot;0x&quot;</span><span class="p">)</span> <span class="o">|</span> <span class="n">lit</span><span class="p">(</span><span class="s">&quot;0X&quot;</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">UInt</span><span class="o">&lt;</span><span class="mi">16</span><span class="p">,</span> <span class="n">MIN_DIGITS</span><span class="p">,</span> <span class="n">MAX_DIGITS</span><span class="o">&gt;</span><span class="p">();</span>
 <span class="p">}</span>
 </pre></div>
 
@@ -1011,7 +1035,7 @@
 
   <span class="c1">// pattern</span>
   <span class="c1">// A list of two-digits decimal-10 unsigned integers</span>
-  <span class="k">auto</span> <span class="n">pattern</span> <span class="o">=</span> <span class="o">*</span><span class="n">abu</span><span class="o">::</span><span class="n">Uint</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">;</span> 
+  <span class="k">auto</span> <span class="n">pattern</span> <span class="o">=</span> <span class="o">*</span><span class="n">abu</span><span class="o">::</span><span class="n">UInt</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">();</span>
 
   <span class="c1">// context</span>
   <span class="c1">// Consume a pair of `std::string` iterators all at once</span>
@@ -1050,8 +1074,8 @@ Simple patterns can also be inlined directly into the parse call.</p>
 <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
   <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">short</span><span class="o">&gt;</span> <span class="n">destination</span><span class="p">;</span>
 
-  <span class="k">auto</span> <span class="n">status</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">parse</span><span class="p">(</span><span class="o">*</span><span class="n">abu</span><span class="o">::</span><span class="n">Uint</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span>
-                           <span class="s">&quot;123456&quot;</span><span class="p">,</span>
+  <span class="k">auto</span> <span class="n">status</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">parse</span><span class="p">(</span><span class="s">&quot;123456&quot;</span><span class="p">,</span>
+                           <span class="o">*</span><span class="n">abu</span><span class="o">::</span><span class="n">UInt</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span>
                            <span class="n">destination</span><span class="p">);</span>
 
   <span class="n">assert</span><span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">abu</span><span class="o">::</span><span class="n">result</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">);</span>
@@ -1091,7 +1115,7 @@ away the entire assignment routine of the parsers.&#160;<a class="footnote-backr
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../01_installation/" title="Installation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../07_character_sets/" title="Character Sets" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -1100,7 +1124,7 @@ away the entire assignment routine of the parsers.&#160;<a class="footnote-backr
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Installation
+                Character Sets
               </span>
             </div>
           </a>

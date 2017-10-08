@@ -16,7 +16,7 @@
     
     
       
-        <title>Installation - Abulafia Documentation</title>
+        <title>Character Sets - Abulafia Documentation</title>
       
     
     
@@ -82,7 +82,7 @@
                 </span>
               
             
-            Installation
+            Character Sets
           
         </span>
       </div>
@@ -282,6 +282,18 @@
           
           
 
+
+  <li class="md-nav__item">
+    <a href="../01_installation/" title="Installation" class="md-nav__link">
+      Installation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
   
 
 
@@ -292,63 +304,10 @@
       
     
     
-      <label class="md-nav__link md-nav__link--active" for="toc">
-        Installation
-      </label>
-    
-    <a href="./" title="Installation" class="md-nav__link md-nav__link--active">
-      Installation
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" title="Requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation_1" title="Installation" class="md-nav__link">
-    Installation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" title="Configuration" class="md-nav__link">
-    Configuration
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
-    
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../07_character_sets/" title="Character Sets" class="md-nav__link">
+    <a href="./" title="Character Sets" class="md-nav__link md-nav__link--active">
       Character Sets
     </a>
+    
   </li>
 
         
@@ -890,34 +849,6 @@
     
   
   
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" title="Requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation_1" title="Installation" class="md-nav__link">
-    Installation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" title="Configuration" class="md-nav__link">
-    Configuration
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -929,38 +860,7 @@
               
                 
                 
-                <h1 id="installation">Installation</h1>
-<h2 id="requirements">Requirements</h2>
-<p>In order to use Abulafia, all you need is a (partially) compliant C++17 compiler, and matching standard library. As of right now, the following environments should be supported:</p>
-<ul>
-<li>GCC (7.2)</li>
-<li>clang (5.0.0)</li>
-<li>Visual Studio 2017 (update 3)</li>
-</ul>
-<h2 id="installation_1">Installation</h2>
-<p>Since Abulafia is a header-only library, all you need to do is get the source code from <a href="https://github.com/FrancoisChabot/abulafia">github</a>, and make the contents of the <code>include</code> directory available to your compiler.</p>
-<p>This can be as simple as copying the include/abulafia directory to your own source tree.</p>
-<p>We also maintain a single-header version of the library. You can build it yourself, using the <code>generate_all_include</code> build target, or get it from the <a href="https://github.com/FrancoisChabot/abulafia/tree/single_header">github branch</a>, where it is kept in sync with the master branch.</p>
-<h2 id="configuration">Configuration</h2>
-<p>Since Abulafia is a template library, most configuration options are passed as template arguments, which allows multiple configurations of Abulafia to live side-by-side in the same application.</p>
-<p>However, some configuration options cannot be exposed this way. These can be found in the <code>abulafia/config.h</code> file, and can be manipulated by preprocessor macros (or outright editing of the config.h file).</p>
-<p>As of right now, here are the available configuration options:</p>
-<table>
-<thead>
-<tr>
-<th>Option name</th>
-<th>default value</th>
-<th>description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ABULAFIA_NAMESPACE</td>
-<td>abu</td>
-<td>The namespace under which all abulafia is defined</td>
-</tr>
-</tbody>
-</table>
+                <h1 id="character-sets">Character Sets</h1>
                 
                   
                 
@@ -979,7 +879,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../00_introduction/" title="Introduction" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../01_installation/" title="Installation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -988,19 +888,19 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Introduction
+                Installation
               </span>
             </div>
           </a>
         
         
-          <a href="../07_character_sets/" title="Character Sets" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../02_parsers/" title="Parsers" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Character Sets
+                Parsers
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">
