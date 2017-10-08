@@ -105,8 +105,8 @@ Simple patterns can also be inlined directly into the parse call.
 int main() {
   std::vector<unsigned short> destination;
 
-  auto status = abu::parse(*abu::UInt<10, 2, 2>,
-                           "123456",
+  auto status = abu::parse("123456",
+                           *abu::UInt<10, 2, 2>,
                            destination);
 
   assert(status == abu::result::SUCCESS);

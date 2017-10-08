@@ -23,6 +23,7 @@ pages:
   - 'Resumable Parsers': 'guide/04_resumable_parsers.md'
   - 'Actions': 'guide/05_actions.md'
   - 'Recursivity': 'guide/06_recursivity.md'
+  - 'Working with user types': 'guide/08_working_with_structs.md'
   - 'Advanced' :
     - 'Writing Parsers' : 'guide/advanced/00_writing_parsers.md'
 - Reference:
