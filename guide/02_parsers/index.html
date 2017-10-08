@@ -375,13 +375,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#making-it-cleaner" title="Making it cleaner" class="md-nav__link">
-    Making it cleaner
-  </a>
-  
-</li>
-      
       
       
     </ul>
@@ -961,13 +954,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#making-it-cleaner" title="Making it cleaner" class="md-nav__link">
-    Making it cleaner
-  </a>
-  
-</li>
-      
       
       
     </ul>
@@ -1028,53 +1014,13 @@
 <div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;cassert&gt;</span><span class="cp"></span>
+
 <span class="cp">#include</span> <span class="cpf">&quot;abulafia/abulafia.h&quot;</span><span class="cp"></span>
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">short</span><span class="o">&gt;</span> <span class="n">destination</span><span class="p">;</span>
   <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">data</span> <span class="o">=</span> <span class="s">&quot;123456&quot;</span><span class="p">;</span>
-
-  <span class="c1">// pattern</span>
-  <span class="c1">// A list of two-digits decimal-10 unsigned integers</span>
-  <span class="k">auto</span> <span class="n">pattern</span> <span class="o">=</span> <span class="o">*</span><span class="n">abu</span><span class="o">::</span><span class="n">UInt</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">();</span>
-
-  <span class="c1">// context</span>
-  <span class="c1">// Consume a pair of `std::string` iterators all at once</span>
-  <span class="n">abu</span><span class="o">::</span><span class="n">SingleForwardContext</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">const_iterator</span><span class="o">&gt;</span> <span class="n">context</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> 
-                                                                 <span class="n">data</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
-
-  <span class="c1">// destination</span>
-  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">short</span><span class="o">&gt;</span> <span class="n">destination</span><span class="p">;</span>
-
-
-  <span class="c1">// Together, they make a parser</span>
-  <span class="k">auto</span> <span class="n">parser</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">make_parser</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">destination</span><span class="p">);</span>
-
-  <span class="k">auto</span> <span class="n">status</span> <span class="o">=</span> <span class="n">parser</span><span class="p">.</span><span class="n">consume</span><span class="p">();</span>
-
-  <span class="n">assert</span><span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">abu</span><span class="o">::</span><span class="n">Result</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">);</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">destination</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">);</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">destination</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">12</span><span class="p">);</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">destination</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">34</span><span class="p">);</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">destination</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">56</span><span class="p">);</span>
-
-  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<h2 id="making-it-cleaner">Making it cleaner</h2>
-<p>This is all fairly verbose. Since parsing a container all at once is such a common pattern, Abulafia provides a shorthand method.
-Simple patterns can also be inlined directly into the parse call.</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;cassert&gt;</span><span class="cp"></span>
-
-<span class="cp">#include</span> <span class="cpf">&quot;abulafia/abulafia.h&quot;</span><span class="cp"></span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">short</span><span class="o">&gt;</span> <span class="n">destination</span><span class="p">;</span>
-
-  <span class="k">auto</span> <span class="n">status</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">parse</span><span class="p">(</span><span class="s">&quot;123456&quot;</span><span class="p">,</span>
+  <span class="k">auto</span> <span class="n">status</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">parse</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">data</span><span class="p">,</span>
                            <span class="o">*</span><span class="n">abu</span><span class="o">::</span><span class="n">UInt</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span>
                            <span class="n">destination</span><span class="p">);</span>
 

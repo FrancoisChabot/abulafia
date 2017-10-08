@@ -904,7 +904,7 @@
                 <h1 id="resumable-parsers">Resumable Parsers</h1>
 <p>Abulafia parsers have the option<sup id="fnref:1"><a class="footnote-ref" href="#fn:1" rel="footnote">1</a></sup> of running as coroutines. That is, they are capable of pausing their execution when starved for data, and resume once data is available, all without the need for multithreading and synchronisation.</p>
 <h2 id="containersequencecontext">ContainerSequenceContext</h2>
-<p>The <code>Container Sequence Context</code> is the prefered way of dealing with data chunks. It's fast, flexible, and does as little memory management work as possible at the cost of possibly holding on to chunks of memory longer than absolutely necessary.<sup id="fnref:2"><a class="footnote-ref" href="#fn:2" rel="footnote">2</a></sup></p>
+<p>The <code>Container Sequence Context</code> is the prefered way of dealing with data chunks. It's fast, flexible, and does as little memory management work as possible at the cost of possibly holding on to chunks of memory longer than absolutely necessary.<sup id="fnref:2"><a class="footnote-ref" href="#fn:2" rel="footnote">2</a></sup> make_parser() provides a simple interface around it:</p>
 <div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
 
 <span class="cp">#include</span> <span class="cpf">&quot;abulafia/abulafia.h&quot;</span><span class="cp"></span>
@@ -914,24 +914,22 @@
   <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">short</span><span class="o">&gt;</span> <span class="n">destination</span><span class="p">;</span>
 
   <span class="c1">// Our resumable context will be provided with vectors of char</span>
-  <span class="n">abu</span><span class="o">::</span><span class="n">ContainerSequenceContext</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">context</span><span class="p">;</span>
-
-  <span class="k">auto</span> <span class="n">parser</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">make_parser</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">destination</span><span class="p">);</span>
+  <span class="k">auto</span> <span class="n">parser</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">make_parser</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">destination</span><span class="p">);</span>
 
   <span class="k">constexpr</span> <span class="kt">int</span> <span class="n">CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">256</span><span class="p">;</span>
   <span class="n">std</span><span class="o">::</span><span class="n">ifstream</span> <span class="n">file</span><span class="p">(</span><span class="s">&quot;data.txt&quot;</span><span class="p">);</span>
 
   <span class="n">abu</span><span class="o">::</span><span class="n">Result</span> <span class="n">final_result</span> <span class="o">=</span> <span class="n">abu</span><span class="o">::</span><span class="n">Result</span><span class="o">::</span><span class="n">PARTIAL</span><span class="p">;</span>
   <span class="k">while</span><span class="p">(</span><span class="n">final_result</span> <span class="o">==</span> <span class="n">abu</span><span class="o">::</span><span class="n">Result</span><span class="o">::</span><span class="n">PARTIAL</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">auto</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">CHUNK_SIZE</span><span class="p">);</span>     
+    <span class="k">auto</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">(</span><span class="n">CHUNK_SIZE</span><span class="p">);</span>
 
-    <span class="kt">bool</span> <span class="n">read_status</span> <span class="o">=</span> <span class="n">file</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">buffer</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">(),</span> <span class="n">CHUNK_SIZE</span><span class="p">);</span>
+    <span class="kt">bool</span> <span class="n">read_status</span> <span class="o">=</span> <span class="n">file</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">buffer</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">CHUNK_SIZE</span><span class="p">);</span>
 
-    <span class="n">buffer</span><span class="o">-&gt;</span><span class="n">resize</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">gcount</span><span class="p">());</span>
+    <span class="n">buffer</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">gcount</span><span class="p">());</span>
 
     <span class="c1">// The context takes ownership of the data, and will let go of it as soon</span>
     <span class="c1">// as it can prove it won&#39;t need it again. No memory copies are involved.</span>
-    <span class="n">context</span><span class="p">.</span><span class="n">addBuffer</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">read_status</span> <span class="o">?</span> <span class="n">abu</span><span class="o">::</span><span class="n">IsFinal</span><span class="o">::</span><span class="nl">NOT_FINAL</span> <span class="p">:</span> <span class="n">abu</span><span class="o">::</span><span class="n">IsFinal</span><span class="o">::</span><span class="n">FINAL</span><span class="p">);</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">data</span><span class="p">().</span><span class="n">addBuffer</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">read_status</span> <span class="o">?</span> <span class="n">abu</span><span class="o">::</span><span class="n">IsFinal</span><span class="o">::</span><span class="nl">NOT_FINAL</span> <span class="p">:</span> <span class="n">abu</span><span class="o">::</span><span class="n">IsFinal</span><span class="o">::</span><span class="n">FINAL</span><span class="p">);</span>
 
     <span class="n">final_result</span> <span class="o">=</span> <span class="n">parser</span><span class="p">.</span><span class="n">consume</span><span class="p">();</span>
   <span class="p">}</span>
