@@ -103,13 +103,14 @@ struct Rectangle {
 
 int main() {
   auto space = abu::char_(" \t\r\n");
-  auto rect = '[' >> 
-      (abu::float_ >> ',' >> abu::float_) |
-      (abu::float_ >> ',' >> abu::float_ >> ',' >> abu::float_ >> ',' >> abu::float_)
-      >> ']';
-  
-  Rectangle rect_a = abu::decode<Rectangle>("[1.0, 45.0]", abu::apply_skipper(rect, space));
-  Rectangle rect_b = abu::decode<Rectangle>("[1.0, 45.0, 1.0, 1.0]", abu::apply_skipper(rect, space));
+  auto rect = 
+      ('[' >> abu::int_ >> ',' >> abu::int_ >> ']').as<int, int>() |
+      ('[' >> abu::int_ >> ',' >> abu::int_ >> ',' >> abu::int_ >> ',' >> abu::int_ >> ']').as<int, int, int, int>();
+ 
+  auto pattern = abu::apply_skipper(rect, space);
+
+  Rectangle rect_a = abu::decode<Rectangle>("[1, 45]", pattern);
+  Rectangle rect_b = abu::decode<Rectangle>("[1, 45, 1, 1]", pattern);
   
   return 0;
 }

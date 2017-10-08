@@ -17,6 +17,9 @@ namespace ABULAFIA_NAMESPACE {
 
 class PatternBase {};
 
+template <typename CHILD_PAT_T, typename... ARGS_T>
+class Construct;
+
 template <typename CRTP_T>
 class Pattern : public PatternBase {
  public:
@@ -26,6 +29,11 @@ class Pattern : public PatternBase {
   template<typename ACT_T>
   auto operator[](ACT_T act) const {
     return apply_action(*static_cast<pat_t const*>(this), std::move(act));
+  }
+
+  template<typename... ARGS_T>
+  auto as() const {
+    return Construct<pat_t, ARGS_T...>(*static_cast<pat_t const*>(this));
   }
 };
 

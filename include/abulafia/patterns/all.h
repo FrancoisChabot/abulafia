@@ -31,6 +31,7 @@
 #include "abulafia/patterns/nary/sequence.h"
 
 #include "abulafia/patterns/unary/action.h"
+#include "abulafia/patterns/unary/construct.h"
 #include "abulafia/patterns/unary/discard.h"
 #include "abulafia/patterns/unary/lexeme.h"
 #include "abulafia/patterns/unary/not.h"
