@@ -27,6 +27,7 @@
 #include "abulafia/data_source/single_forward.h"
 
 // Operations
+#include "abulafia/operations/decode.h"
 #include "abulafia/operations/make_parser.h"
 #include "abulafia/operations/parse.h"
 

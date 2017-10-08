@@ -467,6 +467,35 @@ class SingleForwardDataSource {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+namespace details {
+template <typename CONT_T, typename... ARGS>
+void append_to_container(CONT_T& container, ARGS&&... args) {
+  container.emplace_back(std::forward<ARGS>(args)...);
+}
+template <class CharT, class Traits = std::char_traits<CharT>,
+          class Allocator = std::allocator<CharT>, typename... ARGS>
+void append_to_container(std::basic_string<CharT, Traits, Allocator>& container,
+                         ARGS&&... args) {
+  container.push_back(std::forward<ARGS>(args)...);
+}
+}  // namespace details
+template <typename T>
+class CollectionWrapper {
+ public:
+  using dst_type = typename T::value_type;
+  CollectionWrapper(T& v) : v_(v) {}
+  CollectionWrapper(CollectionWrapper const&) = default;
+  template <typename U>
+  CollectionWrapper& operator=(U&& rhs) {
+    details::append_to_container(v_, std::forward<U>(rhs));
+    return *this;
+  }
+ private:
+  T& v_;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
 struct Nil {
   using value_type = Nil;
   using dst_type = Nil;
@@ -507,6 +536,79 @@ struct Nil {
   Nil const& end() const { return *this; }
 };
 static Nil nil;
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename T>
+class ValueWrapper {
+ public:
+  using dst_type = T;
+  ValueWrapper(T& v) : v_(v) {}
+  ValueWrapper(ValueWrapper const&) = default;
+  template <typename U>
+  ValueWrapper& operator=(U&& v) {
+    v_ = std::forward<U>(v);
+    return *this;
+  }
+  // using this implies that we are NOT atomic in nature.
+  T& get() { return v_; }
+ private:
+  T& v_;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename T, typename Enable = void>
+struct SelectDstWrapper {
+  using type = ValueWrapper<T>;
+};
+template <>
+struct SelectDstWrapper<Nil> {
+  using type = Nil;
+};
+template <typename T>
+struct SelectDstWrapper<T, std::enable_if_t<is_collection<T>::value>> {
+  using type = CollectionWrapper<T>;
+};
+template <typename T>
+using wrapped_dst_t = typename SelectDstWrapper<T>::type;
+template <typename T>
+auto wrap_dst(T& dst) {
+  return typename SelectDstWrapper<T>::type(dst);
+}
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <int BASE, typename Enabled = void>
+struct DigitValues;
+template <int BASE>
+struct DigitValues<BASE, enable_if_t<(BASE <= 10U)>> {
+  static_assert(BASE >= 2, "");
+  static_assert(BASE <= 35, "");
+  static bool is_valid(char c) { return c >= '0' && c <= ('0' + BASE - 1); }
+  static int value(char c) { return c - '0'; }
+};
+template <int BASE>
+struct DigitValues<BASE, enable_if_t<(BASE > 10U) && (BASE <= 35U)>> {
+  static_assert(BASE >= 2, "");
+  static_assert(BASE <= 35, "");
+  static bool is_valid(char c) {
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= ('a' + BASE - 11)) ||
+           (c >= 'A' && c <= ('A' + BASE - 11));
+  }
+  static int value(char c) {
+    if (c >= '0' && c <= '9') {
+      return c - '0';
+    }
+    if (c >= 'a' && c <= 'z') {
+      return 10 + c - 'a';
+    }
+    if (c >= 'A' && c <= 'Z') {
+      return 10 + c - 'A';
+    }
+    return 0;
+  }
+};
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -570,65 +672,6 @@ T transform(T const& tgt, CB_T const&) {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-class Fail : public LeafPattern<Fail> {};
-static constexpr Fail fail;
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-template <typename DATASOURCE_T, typename SKIPPER_T>
-struct Context {
-  using datasource_t = DATASOURCE_T;
-  using skip_pattern_t = SKIPPER_T;
-  Context(datasource_t& ds, skip_pattern_t const& skip)
-      : data_(ds), skipper_(skip) {}
-  template <typename T>
-  using set_skipper_t = Context<datasource_t, T>;
-  enum {
-    IS_RESUMABLE = DATASOURCE_T::IS_RESUMABLE,
-    HAS_SKIPPER = !std::is_same<Fail, skip_pattern_t>::value,
-  };
-  DATASOURCE_T& data() { return data_; }
-  SKIPPER_T const& skipper() { return skipper_; }
- private:
-  DATASOURCE_T& data_;
-  SKIPPER_T const& skipper_;
-};
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-template <int BASE, typename Enabled = void>
-struct DigitValues;
-template <int BASE>
-struct DigitValues<BASE, enable_if_t<(BASE <= 10U)>> {
-  static_assert(BASE >= 2, "");
-  static_assert(BASE <= 35, "");
-  static bool is_valid(char c) { return c >= '0' && c <= ('0' + BASE - 1); }
-  static int value(char c) { return c - '0'; }
-};
-template <int BASE>
-struct DigitValues<BASE, enable_if_t<(BASE > 10U) && (BASE <= 35U)>> {
-  static_assert(BASE >= 2, "");
-  static_assert(BASE <= 35, "");
-  static bool is_valid(char c) {
-    return (c >= '0' && c <= '9') || (c >= 'a' && c <= ('a' + BASE - 11)) ||
-           (c >= 'A' && c <= ('A' + BASE - 11));
-  }
-  static int value(char c) {
-    if (c >= '0' && c <= '9') {
-      return c - '0';
-    }
-    if (c >= 'a' && c <= 'z') {
-      return 10 + c - 'a';
-    }
-    if (c >= 'A' && c <= 'Z') {
-      return 10 + c - 'A';
-    }
-    return 0;
-  }
-};
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
 template <std::size_t BASE, std::size_t DIGITS_MIN = 1,
           std::size_t DIGITS_MAX = 0>
 class UInt : public LeafPattern<UInt<BASE, DIGITS_MIN, DIGITS_MAX>> {
@@ -644,75 +687,6 @@ enum class DstBehavior {
   IGNORE,
   VALUE,
 };
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-namespace details {
-template <typename CONT_T, typename... ARGS>
-void append_to_container(CONT_T& container, ARGS&&... args) {
-  container.emplace_back(std::forward<ARGS>(args)...);
-}
-template <class CharT, class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>, typename... ARGS>
-void append_to_container(std::basic_string<CharT, Traits, Allocator>& container,
-                         ARGS&&... args) {
-  container.push_back(std::forward<ARGS>(args)...);
-}
-}  // namespace details
-template <typename T>
-class CollectionWrapper {
- public:
-  using dst_type = typename T::value_type;
-  CollectionWrapper(T& v) : v_(v) {}
-  CollectionWrapper(CollectionWrapper const&) = default;
-  template <typename U>
-  CollectionWrapper& operator=(U&& rhs) {
-    details::append_to_container(v_, std::forward<U>(rhs));
-    return *this;
-  }
- private:
-  T& v_;
-};
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-template <typename T>
-class ValueWrapper {
- public:
-  using dst_type = T;
-  ValueWrapper(T& v) : v_(v) {}
-  ValueWrapper(ValueWrapper const&) = default;
-  template <typename U>
-  ValueWrapper& operator=(U&& v) {
-    v_ = std::forward<U>(v);
-    return *this;
-  }
-  // using this implies that we are NOT atomic in nature.
-  T& get() { return v_; }
- private:
-  T& v_;
-};
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-template <typename T, typename Enable = void>
-struct SelectDstWrapper {
-  using type = ValueWrapper<T>;
-};
-template <>
-struct SelectDstWrapper<Nil> {
-  using type = Nil;
-};
-template <typename T>
-struct SelectDstWrapper<T, std::enable_if_t<is_collection<T>::value>> {
-  using type = CollectionWrapper<T>;
-};
-template <typename T>
-using wrapped_dst_t = typename SelectDstWrapper<T>::type;
-template <typename T>
-auto wrap_dst(T& dst) {
-  return typename SelectDstWrapper<T>::type(dst);
-}
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -804,6 +778,11 @@ struct CleanFailureFactoryAdapter {
   template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = CleanFailureAdapter<CTX_T, DST_T, REQ_T, FACTORY_T>;
 };
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+class Fail : public LeafPattern<Fail> {};
+static constexpr Fail fail;
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -928,6 +907,63 @@ struct AdaptedParserFactory {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+template <typename DATASOURCE_T, typename SKIPPER_T>
+struct Context {
+  using datasource_t = DATASOURCE_T;
+  using skip_pattern_t = SKIPPER_T;
+  Context(datasource_t& ds, skip_pattern_t const& skip)
+      : data_(ds), skipper_(skip) {}
+  template <typename T>
+  using set_skipper_t = Context<datasource_t, T>;
+  enum {
+    IS_RESUMABLE = DATASOURCE_T::IS_RESUMABLE,
+    HAS_SKIPPER = !std::is_same<Fail, skip_pattern_t>::value,
+  };
+  DATASOURCE_T& data() { return data_; }
+  SKIPPER_T const& skipper() { return skipper_; }
+ private:
+  DATASOURCE_T& data_;
+  SKIPPER_T const& skipper_;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename ITE_T, typename PAT_T, typename DST_T>
+Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
+  SingleForwardDataSource<ITE_T> data(b, e);
+  auto real_pat = make_pattern(pat);
+  auto real_dst = wrap_dst(dst);
+  Context<SingleForwardDataSource<ITE_T>, Fail> real_ctx(data, fail);
+  auto parser = make_parser_(real_ctx, real_dst, DefaultReqs(), real_pat);
+  return parser.consume(real_ctx, real_dst, real_pat);
+}
+template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
+Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
+  return parse(std::begin(data), std::end(data), pat, dst);
+}
+template <typename PAT_T, typename DATA_RANGE_T>
+Result parse(const DATA_RANGE_T& data, const PAT_T& pat) {
+  return parse(data, pat, nil);
+}
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename DST_T, typename ITE_T, typename PAT_T>
+DST_T decode(ITE_T b, ITE_T e, const PAT_T& pat) {
+  DST_T dst;
+  auto status = parse(b, e, pat, dst);
+  if(status != Result::SUCCESS) {
+    throw std::runtime_error("abulafia decode failure");
+  }
+  return dst;
+}
+template <typename DST_T, typename DATA_RANGE_T, typename PAT_T>
+DST_T decode(const DATA_RANGE_T& data, const PAT_T& pat) {
+  return decode<DST_T>(std::begin(data), std::end(data), pat);
+}
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 using Parser =
     decltype(AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(
@@ -978,26 +1014,6 @@ auto make_parser(PAT_T const& p, DST_T& s) {
 template <typename BUFFER_T, typename PAT_T>
 auto make_parser(PAT_T const& p) {
   return make_parser<BUFFER_T>(p, nil);
-}
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
-template <typename ITE_T, typename PAT_T, typename DST_T>
-Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
-  SingleForwardDataSource<ITE_T> data(b, e);
-  auto real_pat = make_pattern(pat);
-  auto real_dst = wrap_dst(dst);
-  Context<SingleForwardDataSource<ITE_T>, Fail> real_ctx(data, fail);
-  auto parser = make_parser_(real_ctx, real_dst, DefaultReqs(), real_pat);
-  return parser.consume(real_ctx, real_dst, real_pat);
-}
-template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
-Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
-  return parse(std::begin(data), std::end(data), pat, dst);
-}
-template <typename PAT_T, typename DATA_RANGE_T>
-Result parse(const DATA_RANGE_T& data, const PAT_T& pat) {
-  return parse(data, pat, nil);
 }
 }  // namespace ABULAFIA_NAMESPACE
 

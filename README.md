@@ -70,7 +70,7 @@ int main() {
   auto ignoring_whitespace = abu::apply_skipper(with_brackets, abu::char_(" \t\r\n"));
 
   std::vector<int> dst;
-  auto status = abu::parse(ignoring_whitespace, "[1, 2, 3, 4, 5]", dst);
+  auto status = abu::parse("[1, 2, 3, 4, 5]", ignoring_whitespace, dst);
 
   if(status == abu::result::SUCCESS) {
     for(auto v : dst) {
