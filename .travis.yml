@@ -30,7 +30,6 @@ script:
     - cmake -DCMAKE_VERBOSE_MAKEFILE=ON ..
     - cmake --build .
     - ctest
-    - cmp --silent ../include/abulafia/abulafia_all.h ./abulafia_all_ref.h
 
 notifications:
   email: false
