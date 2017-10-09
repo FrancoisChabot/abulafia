@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
-
+#include "test_utils.h"
 using namespace abu;
 
 TEST(test_action, simple_action) {
@@ -38,4 +38,16 @@ TEST(test_action, emmiting_action) {
   auto success = parse("123456", pattern, result);
   EXPECT_EQ(Result::SUCCESS, success);
   EXPECT_EQ(std::vector<int>({12 * 12, 34 * 34, 56 * 56}), result);
+}
+
+
+TEST(test_action, nil_action_in_sequence) {
+  auto action = [&](int) { };
+
+  auto pattern = apply_skipper(
+    int_ >> int_[action] >> int_, 
+    lit(' '));
+
+
+  testPatternSuccess("1 2 3", pattern, std::tuple<int, int>(1, 3));
 }
