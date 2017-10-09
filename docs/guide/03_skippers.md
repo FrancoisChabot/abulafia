@@ -31,7 +31,7 @@ auto player = ows >> name >> // first name
               ows >> name >> // last name
               ows >> uint_;  // score
 
-parse(player, "John Doe    123");
+parse("John Doe    123", player);
 ```
 ## Introducing Skippers
 
@@ -48,7 +48,7 @@ auto name = lexeme(*char_(alnum));
 auto whitespace = char_(" \r\n\t");
 auto player = name >> name >> uint_;  // first name, last name, score
 
-parse(apply_skipper(player, whitespace), "John Doe    123");
+parse("John Doe    123", apply_skipper(player, whitespace));
 ```
 
 `apply_skipper()` will tell abulafia that every parser underneath it will be prefixed with an ignored repetition of the skipper pattern (`whitespace` in our example).
