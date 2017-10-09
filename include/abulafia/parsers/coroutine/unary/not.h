@@ -19,12 +19,10 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T>
 class NotImpl {
   using pat_t = Not<CHILD_PAT_T>;
 
-
   struct child_req_t : public REQ_T {
     enum {
       ATOMIC = false,
       FAILS_CLEANLY = false,
-      CONSUMES_ON_SUCCESS = REQ_T::CONSUMES_ON_SUCCESS
     };
   };
 

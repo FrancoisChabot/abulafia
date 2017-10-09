@@ -12,13 +12,12 @@
 using namespace abu;
 
 TEST(test_skipper, simple_test) {
-
   auto any = char_();
   auto eol = char_("\r\n");
   auto space = char_(" \r\n\t");
 
   auto c_style_comment = lit("/*") >> *(any - "*/") >> "*/";
-  auto cpp_style_comment = lit("//") >> *(any - eol) >> (eol | eoi)  ;
+  auto cpp_style_comment = lit("//") >> *(any - eol) >> (eol | eoi);
 
   auto skipper = space | c_style_comment | cpp_style_comment;
 

@@ -30,12 +30,12 @@ TEST(test_sequence, sequence_into_vector) {
 }
 
 TEST(test_sequence, sequence_with_except) {
-  auto pattern = *char_('a') >> (char_() - repeat<2,2>('9')) >> *char_('b');
+  auto pattern = *char_('a') >> (char_() - repeat<2, 2>('9')) >> *char_('b');
 
-//  testPatternSuccess("aaa-bb", pattern, std::string("aaa-bb"));
- // testPatternSuccess("aaa1bb", pattern, std::string("aaa1bb"));
+  //  testPatternSuccess("aaa-bb", pattern, std::string("aaa-bb"));
+  // testPatternSuccess("aaa1bb", pattern, std::string("aaa1bb"));
   testPatternSuccess("aaa9bb", pattern, std::string("aaa9bb"));
- // testPatternFailure<std::string>("aaa99bb", pattern);
+  // testPatternFailure<std::string>("aaa99bb", pattern);
 }
 
 TEST(test_sequence, sequence_into_tuple) {

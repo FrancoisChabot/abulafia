@@ -40,14 +40,10 @@ TEST(test_action, emmiting_action) {
   EXPECT_EQ(std::vector<int>({12 * 12, 34 * 34, 56 * 56}), result);
 }
 
-
 TEST(test_action, nil_action_in_sequence) {
-  auto action = [&](int) { };
+  auto action = [&](int) {};
 
-  auto pattern = apply_skipper(
-    int_ >> int_[action] >> int_, 
-    lit(' '));
-
+  auto pattern = apply_skipper(int_ >> int_[action] >> int_, lit(' '));
 
   testPatternSuccess("1 2 3", pattern, std::tuple<int, int>(1, 3));
 }

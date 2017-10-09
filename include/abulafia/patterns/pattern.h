@@ -25,13 +25,12 @@ class Pattern : public PatternBase {
  public:
   using pat_t = CRTP_T;
 
-
-  template<typename ACT_T>
+  template <typename ACT_T>
   auto operator[](ACT_T act) const {
     return apply_action(*static_cast<pat_t const*>(this), std::move(act));
   }
 
-  template<typename... ARGS_T>
+  template <typename... ARGS_T>
   auto as() const {
     return Construct<pat_t, ARGS_T...>(*static_cast<pat_t const*>(this));
   }

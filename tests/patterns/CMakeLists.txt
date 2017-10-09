@@ -1,6 +1,7 @@
 add_executable(pattern_tests
   test_action.cpp
   test_alternative.cpp
+  test_bind_dst.cpp
   test_char_literal.cpp
   test_character.cpp
   test_digit_values.cpp

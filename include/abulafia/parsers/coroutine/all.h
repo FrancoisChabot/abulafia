@@ -26,6 +26,7 @@
 #include "abulafia/parsers/coroutine/nary/sequence.h"
 
 #include "abulafia/parsers/coroutine/unary/action.h"
+#include "abulafia/parsers/coroutine/unary/bind_dst.h"
 #include "abulafia/parsers/coroutine/unary/construct.h"
 #include "abulafia/parsers/coroutine/unary/discard.h"
 #include "abulafia/parsers/coroutine/unary/lexeme.h"

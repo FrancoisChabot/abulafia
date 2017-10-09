@@ -20,8 +20,7 @@ class Construct : public Pattern<Construct<CHILD_PAT_T, ARGS_T...>> {
   CHILD_PAT_T pat_;
 
  public:
-  Construct(CHILD_PAT_T pat)
-      : pat_(std::move(pat)) {}
+  Construct(CHILD_PAT_T pat) : pat_(std::move(pat)) {}
 
   CHILD_PAT_T const& child_pattern() const { return pat_; }
 };

@@ -55,7 +55,7 @@ namespace char_set {
 template <typename CHAR_T>
 struct Any : public CharacterSet {
   using char_t = CHAR_T;
-  bool is_valid(char_t const &) const { return true; }
+  bool is_valid(char_t const&) const { return true; }
 };
 template <typename CHAR_T>
 Any<CHAR_T> any;
@@ -66,8 +66,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename T>
 struct function_traits : public function_traits<decltype(&T::operator())> {};
 template <typename ClassType, typename ReturnType, typename... Args>
-struct function_traits<ReturnType (ClassType::*)(Args...) const>
-{
+struct function_traits<ReturnType (ClassType::*)(Args...) const> {
   enum { arity = sizeof...(Args) };
   typedef ReturnType result_type;
   template <size_t i>
@@ -100,6 +99,7 @@ struct DelegatedSet : public CharacterSet {
   using char_t = CHAR_T;
   explicit DelegatedSet(CB_T cb) : cb_(std::move(cb)) {}
   bool is_valid(char_t const& c) const { return cb_(c); }
+
  private:
   CB_T cb_;
 };
@@ -122,6 +122,7 @@ struct Not : public CharacterSet {
   using char_t = typename ARG_T::char_t;
   explicit Not(ARG_T arg) : arg_(std::move(arg)) {}
   bool is_valid(char_t const& c) const { return !arg_.is_valid(c); }
+
  private:
   ARG_T arg_;
   static_assert(is_char_set<ARG_T>::value);
@@ -188,6 +189,7 @@ struct Or : public CharacterSet {
   bool is_valid(char_t const& c) const {
     return lhs_.is_valid(c) || rhs_.is_valid(c);
   }
+
  private:
   LHS_T lhs_;
   RHS_T rhs_;
@@ -241,6 +243,7 @@ struct Range : public CharacterSet {
   bool is_valid(char_t const& token) const {
     return token >= begin_ && token <= end_;
   }
+
  private:
   CHAR_T begin_;
   CHAR_T end_;
@@ -275,6 +278,7 @@ struct IndexedSet : public CharacterSet {
     }
   }
   bool is_valid(const char_t& c) const { return characters_.test(as_index(c)); }
+
  private:
   using unsigned_t = std::make_unsigned_t<CHAR_T>;
   static constexpr std::size_t as_index(CHAR_T c) { return unsigned_t(c); }
@@ -306,6 +310,7 @@ struct Single : public CharacterSet {
   bool is_valid(T const& token) const {
     return token == character_;
   }
+
  private:
   CHAR_T character_;
 };
@@ -334,6 +339,7 @@ class ContainerSequenceDataSource {
   using rollback_entry_t = std::pair<iterator, buffer_iterator>;
   std::vector<rollback_entry_t> rollback_stack_;
   unsigned int empty_rollbacks_ = 0;
+
  public:
   using value_type = typename CONTAINER_T::value_type;
   enum { IS_RESUMABLE = true };
@@ -417,6 +423,7 @@ class ContainerSequenceDataSource {
     }
   }
   static constexpr bool isResumable() { return true; }
+
  private:
   void cleanup_rollback_() {
     // The only hold that matters is the front of the rollback stack.
@@ -437,6 +444,7 @@ class SingleForwardDataSource {
   std::stack<iterator> rollback_stack_;
   iterator current_;
   iterator end_;
+
  public:
   enum {
     HAS_SKIPPER = false,
@@ -482,7 +490,8 @@ void append_to_container(std::basic_string<CharT, Traits, Allocator>& container,
 template <typename T>
 class CollectionWrapper {
  public:
-  using dst_type = typename T::value_type;
+  using dst_type = T;
+  using dst_value_type = typename T::value_type;
   CollectionWrapper(T& v) : v_(v) {}
   CollectionWrapper(CollectionWrapper const&) = default;
   template <typename U>
@@ -490,6 +499,8 @@ class CollectionWrapper {
     details::append_to_container(v_, std::forward<U>(rhs));
     return *this;
   }
+  T& get() { return v_; }
+
  private:
   T& v_;
 };
@@ -499,6 +510,7 @@ namespace ABULAFIA_NAMESPACE {
 struct Nil {
   using value_type = Nil;
   using dst_type = Nil;
+  using dst_value_type = Nil;
   Nil() = default;
   template <typename T>
   Nil(T const&) {}
@@ -543,6 +555,7 @@ template <typename T>
 class ValueWrapper {
  public:
   using dst_type = T;
+  using dst_value_type = T;
   ValueWrapper(T& v) : v_(v) {}
   ValueWrapper(ValueWrapper const&) = default;
   template <typename U>
@@ -552,6 +565,7 @@ class ValueWrapper {
   }
   // using this implies that we are NOT atomic in nature.
   T& get() { return v_; }
+
  private:
   T& v_;
 };
@@ -654,11 +668,11 @@ template <typename CRTP_T>
 class Pattern : public PatternBase {
  public:
   using pat_t = CRTP_T;
-  template<typename ACT_T>
+  template <typename ACT_T>
   auto operator[](ACT_T act) const {
     return apply_action(*static_cast<pat_t const*>(this), std::move(act));
   }
-  template<typename... ARGS_T>
+  template <typename... ARGS_T>
   auto as() const {
     return Construct<pat_t, ARGS_T...>(*static_cast<pat_t const*>(this));
   }
@@ -709,7 +723,7 @@ template <typename CTX_T, typename DST_T, typename REQ_T,
 class AtomicAdapter {
  public:
   using pat_t = typename PARSER_FACTORY_T::pat_t;
-  using buffer_t = typename DST_T::dst_type;
+  using buffer_t = typename DST_T::dst_value_type;
   struct adapted_reqs_t : public REQ_T {
     enum { ATOMIC = false };
   };
@@ -726,6 +740,7 @@ class AtomicAdapter {
     }
     return status;
   }
+
  private:
   buffer_t buffer_;
   child_parser_t adapted_parser_;
@@ -733,7 +748,9 @@ class AtomicAdapter {
 template <typename FACTORY_T>
 struct AtomicFactoryAdapter {
   static_assert(!FACTORY_T::ATOMIC);
-  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
+  static constexpr DstBehavior dst_behavior() {
+    return FACTORY_T::dst_behavior();
+  }
   using pat_t = typename FACTORY_T::pat_t;
   enum {
     ATOMIC = true,
@@ -773,13 +790,16 @@ class CleanFailureAdapter {
     }
     return status;
   }
+
  private:
   child_parser_t adapted_parser_;
 };
 template <typename FACTORY_T>
 struct CleanFailureFactoryAdapter {
   static_assert(!FACTORY_T::FAILS_CLEANLY);
-  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
+  static constexpr DstBehavior dst_behavior() {
+    return FACTORY_T::dst_behavior();
+  }
   using pat_t = typename FACTORY_T::pat_t;
   enum {
     ATOMIC = FACTORY_T::ATOMIC,
@@ -833,6 +853,7 @@ class SkipAdapter {
     }
     return adapted_parser_.consume(ctx, dst, pat);
   }
+
  private:
   bool skipping_done_ = false;
   skip_parser_t skip_parser_;
@@ -841,7 +862,9 @@ class SkipAdapter {
 template <typename FACTORY_T>
 struct SkipFactoryAdapter {
   using pat_t = typename FACTORY_T::pat_t;
-  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
+  static constexpr DstBehavior dst_behavior() {
+    return FACTORY_T::dst_behavior();
+  }
   enum {
     ATOMIC = FACTORY_T::ATOMIC,
     FAILS_CLEANLY = FACTORY_T::FAILS_CLEANLY,
@@ -917,23 +940,31 @@ struct AdaptedParserFactory {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-template <typename DATASOURCE_T, typename SKIPPER_T>
+template <typename DATASOURCE_T, typename SKIPPER_T, typename BOUND_DST_T = Nil>
 struct Context {
   using datasource_t = DATASOURCE_T;
   using skip_pattern_t = SKIPPER_T;
+  using bound_dst_t = BOUND_DST_T;
+  Context(datasource_t& ds, skip_pattern_t const& skip, BOUND_DST_T bound_dst)
+      : data_(ds), skipper_(skip), bound_dst_(bound_dst) {}
   Context(datasource_t& ds, skip_pattern_t const& skip)
       : data_(ds), skipper_(skip) {}
   template <typename T>
-  using set_skipper_t = Context<datasource_t, T>;
+  using set_skipper_t = Context<datasource_t, T, bound_dst_t>;
+  template <typename DST_T>
+  using bind_dst = Context<datasource_t, skip_pattern_t, DST_T>;
   enum {
     IS_RESUMABLE = DATASOURCE_T::IS_RESUMABLE,
     HAS_SKIPPER = !std::is_same<Fail, skip_pattern_t>::value,
   };
   DATASOURCE_T& data() { return data_; }
   SKIPPER_T const& skipper() { return skipper_; }
+  BOUND_DST_T const& bound_dst() { return bound_dst_; }
+
  private:
   DATASOURCE_T& data_;
   SKIPPER_T const& skipper_;
+  BOUND_DST_T bound_dst_;
 };
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -962,7 +993,7 @@ template <typename DST_T, typename ITE_T, typename PAT_T>
 DST_T decode(ITE_T b, ITE_T e, const PAT_T& pat) {
   DST_T dst;
   auto status = parse(b, e, pat, dst);
-  if(status != Result::SUCCESS) {
+  if (status != Result::SUCCESS) {
     throw std::runtime_error("abulafia decode failure");
   }
   return dst;
@@ -1005,6 +1036,7 @@ struct ParserInterface {
         parser_(ctx_, dst, pat) {}
   DATASOURCE_T& data() { return data_source_; }
   Result consume() { return parser_.consume(ctx_, dst_, pat_); }
+
  private:
   using CTX_T = Context<DATASOURCE_T, Fail>;
   DATASOURCE_T data_source_;
@@ -1031,6 +1063,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHILD_PAT_T, typename ATTR_T = Nil>
 class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
   std::shared_ptr<std::unique_ptr<CHILD_PAT_T>> pat_;
+
  public:
   using operand_pat_t = CHILD_PAT_T;
   using attr_t = ATTR_T;
@@ -1042,6 +1075,7 @@ class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
     return *this;
   }
   CHILD_PAT_T const& operand() const { return **pat_; }
+
  private:
   template <typename T, typename U>
   friend class WeakRecur;
@@ -1049,6 +1083,7 @@ class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
 template <typename CHILD_PAT_T, typename ATTR_T = Nil>
 class WeakRecur : public Pattern<WeakRecur<CHILD_PAT_T, ATTR_T>> {
   std::unique_ptr<CHILD_PAT_T>* pat_;
+
  public:
   using operand_pat_t = CHILD_PAT_T;
   WeakRecur(Recur<CHILD_PAT_T, ATTR_T> const& r) : pat_(r.pat_.get()) {}
@@ -1092,6 +1127,7 @@ template <typename CHILD_PAT_T, typename SKIP_T>
 class WithSkipper : public Pattern<WithSkipper<CHILD_PAT_T, SKIP_T>> {
   CHILD_PAT_T child_pat_;
   SKIP_T skip_pat_;
+
  public:
   CHILD_PAT_T const& getChild() const { return child_pat_; }
   SKIP_T const& getSkip() const { return skip_pat_; }
@@ -1110,6 +1146,7 @@ template <typename OP_T, typename NEG_T>
 class Except : public Pattern<Except<OP_T, NEG_T>> {
   OP_T op_;
   NEG_T neg_;
+
  public:
   using op_t = OP_T;
   using neg_t = NEG_T;
@@ -1146,6 +1183,7 @@ class List : public Pattern<List<OP_T, SEP_PAT_T>> {
       : val_(std::move(val_pat)), sep_(std::move(sep)) {}
   OP_T const& op() const { return val_; }
   SEP_PAT_T const& sep() const { return sep_; }
+
  private:
   OP_T val_;
   SEP_PAT_T sep_;
@@ -1174,6 +1212,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHARSET_T>
 class Char : public LeafPattern<Char<CHARSET_T>> {
   CHARSET_T char_set_;
+
  public:
   Char(CHARSET_T chars) : char_set_(std::move(chars)) {}
   CHARSET_T const& char_set() const { return char_set_; }
@@ -1209,6 +1248,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class Discard : public Pattern<Discard<PAT_T>> {
   PAT_T operand_;
+
  public:
   Discard(PAT_T op) : operand_(std::move(op)) {}
   PAT_T const& operand() const { return operand_; }
@@ -1247,6 +1287,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHAR_T, typename VAL_T>
 class CharSymbol : public LeafPattern<CharSymbol<CHAR_T, VAL_T>> {
   std::map<CHAR_T, VAL_T> mapping_;
+
  public:
   CharSymbol(std::map<CHAR_T, VAL_T> vals) : mapping_(std::move(vals)) {}
   std::map<CHAR_T, VAL_T> const& mapping() const { return mapping_; }
@@ -1271,6 +1312,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHAR_T>
 class StringLiteral : public LeafPattern<StringLiteral<CHAR_T>> {
   std::shared_ptr<std::basic_string<CHAR_T>> str_;
+
  public:
   StringLiteral(std::basic_string<CHAR_T> str)
       : str_(std::make_shared<std::basic_string<CHAR_T>>(std::move(str))) {
@@ -1306,6 +1348,7 @@ class Symbol : public LeafPattern<Symbol<CHAR_T, VAL_T>> {
     std::optional<VAL_T> val;
   };
   std::shared_ptr<Node> root_;
+
  public:
   using node_t = Node;
   Symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals)
@@ -1396,6 +1439,7 @@ class Alt : public Pattern<Alt<CHILD_PATS_T...>> {
   using child_tuple_t = std::tuple<CHILD_PATS_T...>;
   Alt(child_tuple_t childs) : childs_(std::move(childs)) {}
   child_tuple_t const& childs() const { return childs_; }
+
  private:
   child_tuple_t childs_;
 };
@@ -1427,6 +1471,7 @@ class Seq : public Pattern<Seq<CHILD_PATS_T...>> {
   // The computed type for individual members of the sequence
   Seq(child_tuple_t const& childs) : childs_(childs) {}
   child_tuple_t const& childs() const { return childs_; }
+
  private:
   child_tuple_t childs_;
 };
@@ -1466,6 +1511,7 @@ template <typename CHILD_PAT_T, typename ACT_T>
 class Action : public Pattern<Action<CHILD_PAT_T, ACT_T>> {
   CHILD_PAT_T pat_;
   ACT_T act_;
+
  public:
   Action(CHILD_PAT_T pat, ACT_T act)
       : pat_(std::move(pat)), act_(std::move(act)) {}
@@ -1480,12 +1526,27 @@ auto apply_action(PAT_T&& pat, ACT_T&& act) {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+template <typename PAT_T>
+class BindDst : public Pattern<BindDst<PAT_T>> {
+  PAT_T child_;
+
+ public:
+  BindDst(PAT_T child) : child_(std::move(child)) {}
+  PAT_T const& operand() const { return child_; }
+};
+template <typename PAT_T>
+inline auto bind_dst(PAT_T pat) {
+  return BindDst<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
+}
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
 template <typename CHILD_PAT_T, typename... ARGS_T>
 class Construct : public Pattern<Construct<CHILD_PAT_T, ARGS_T...>> {
   CHILD_PAT_T pat_;
+
  public:
-  Construct(CHILD_PAT_T pat)
-      : pat_(std::move(pat)) {}
+  Construct(CHILD_PAT_T pat) : pat_(std::move(pat)) {}
   CHILD_PAT_T const& child_pattern() const { return pat_; }
 };
 template <typename... ARGS_T, typename CHILD_PAT_T>
@@ -1498,14 +1559,14 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class Lexeme : public Pattern<Lexeme<PAT_T>> {
   PAT_T child_;
+
  public:
   Lexeme(PAT_T child) : child_(std::move(child)) {}
   PAT_T const& operand() const { return child_; }
 };
 template <typename PAT_T>
 inline auto lexeme(PAT_T pat) {
-  return Lexeme<pattern_t<PAT_T>>(
-      make_pattern(std::move(pat)));
+  return Lexeme<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
 }
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1513,6 +1574,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class Not : public Pattern<Not<PAT_T>> {
   PAT_T child_;
+
  public:
   Not(const PAT_T& child) : child_(child) {}
   Not(PAT_T&& child) : child_(std::move(child)) {}
@@ -1530,6 +1592,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class Optional : public Pattern<Optional<PAT_T>> {
   PAT_T child_;
+
  public:
   Optional(PAT_T child) : child_(std::move(child)) {}
   PAT_T const& operand() const { return child_; }
@@ -1545,6 +1608,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
 class Repeat : public Pattern<Repeat<PAT_T, MIN_REP, MAX_REP>> {
   PAT_T operand_;
+
  public:
   Repeat(const PAT_T op) : operand_(std::move(op)) {}
   PAT_T const& operand() const { return operand_; }
@@ -1570,7 +1634,6 @@ auto operator+(PAT_T&& pat) {
   return repeat<1, 0>(forward<PAT_T>(pat));
 }
 }  // namespace ABULAFIA_NAMESPACE
-
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, std::size_t BASE,
@@ -1621,6 +1684,7 @@ class IntImpl {
       }
     }
   }
+
  private:
   std::size_t digit_count_ = 0;
   bool look_for_sign_ = true;
@@ -1659,7 +1723,7 @@ class UIntImpl {
       }
       auto next = ctx.data().next();
       if (digit_vals::is_valid(next)) {
-        dst.get() *= typename DST_T::dst_type(BASE);
+        dst.get() *= typename DST_T::dst_value_type(BASE);
         dst.get() += digit_vals::value(next);
         ++digit_count_;
         ctx.data().advance();
@@ -1671,6 +1735,7 @@ class UIntImpl {
       }
     }
   }
+
  private:
   std::size_t digit_count_ = 0;
 };
@@ -1769,6 +1834,7 @@ class EoiImpl {
   using ctx_t = CTX_T;
   using dst_t = Nil;
   using pat_t = Fail;
+
  public:
   EoiImpl(CTX_T, Nil, Eoi const&) {}
   Result consume(CTX_T ctx, Nil, Eoi const& pat) { return peek(ctx, pat); }
@@ -1798,6 +1864,7 @@ class FailImpl {
   using ctx_t = CTX_T;
   using dst_t = Nil;
   using pat_t = Fail;
+
  public:
   FailImpl(CTX_T, Nil, Fail const&) {}
   Result consume(CTX_T, Nil, Fail const&) { return Result::FAILURE; }
@@ -1823,6 +1890,7 @@ class PassImpl {
   using ctx_t = CTX_T;
   using dst_t = Nil;
   using pat_t = Pass;
+
  public:
   PassImpl(CTX_T, Nil, Pass const&) {}
   Result consume(CTX_T, Nil, Pass const&) { return Result::SUCCESS; }
@@ -1846,6 +1914,7 @@ template <typename CTX_T, typename DST_T, typename CHAR_T>
 class StringLiteralImpl {
   using PAT_T = StringLiteral<CHAR_T>;
   typename std::basic_string<CHAR_T>::const_iterator next_expected_;
+
  public:
   StringLiteralImpl(CTX_T, DST_T, PAT_T const& pat)
       : next_expected_(pat.begin()) {}
@@ -1887,6 +1956,7 @@ class SymbolImpl {
   using node_t = typename pat_t::node_t;
   node_t const* next_ = nullptr;
   node_t const* current_valid_ = nullptr;
+
  public:
   SymbolImpl(CTX_T, DST_T, pat_t const& pat) : next_(pat.root()) {}
   Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
@@ -1973,6 +2043,7 @@ class ExceptImpl {
   using neg_parser_t = Parser<CTX_T, Nil, neg_req_t, NEG_T>;
   using child_parsers_t = std::variant<neg_parser_t, op_parser_t>;
   child_parsers_t child_parsers_;
+
  public:
   ExceptImpl(CTX_T ctx, DST_T, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(), ctx, nil, pat.neg()) {}
@@ -1996,7 +2067,9 @@ class ExceptImpl {
 template <typename OP_T, typename NEG_T>
 struct ParserFactory<Except<OP_T, NEG_T>> {
   using pat_t = Except<OP_T, NEG_T>;
-  static constexpr DstBehavior dst_behavior() { return ParserFactory<OP_T>::dst_behavior(); }
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<OP_T>::dst_behavior();
+  }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = false,
@@ -2028,6 +2101,7 @@ class ListImpl {
   using sep_parser_t = Parser<CTX_T, Nil, sep_req_t, SEP_T>;
   using child_parsers_t = std::variant<op_parser_t, sep_parser_t>;
   child_parsers_t child_parsers_;
+
  public:
   ListImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(), ctx, dst, pat.op()) {
@@ -2078,7 +2152,9 @@ class ListImpl {
 template <typename OP_T, typename SEP_T>
 struct ParserFactory<List<OP_T, SEP_T>> {
   using pat_t = List<OP_T, SEP_T>;
-  static constexpr DstBehavior dst_behavior() { return ParserFactory<OP_T>::dst_behavior(); }
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<OP_T>::dst_behavior();
+  }
   enum {
     ATOMIC = false,
     FAILS_CLEANLY = true,
@@ -2125,6 +2201,7 @@ class AltImpl {
   using child_parsers_t =
       std::variant<Parser<CTX_T, DST_T, child_req_t, CHILD_PATS_T>...>;
   child_parsers_t child_parsers_;
+
  public:
   AltImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(), ctx, dst, getChild<0>(pat)) {
@@ -2287,17 +2364,14 @@ template <typename CTX_T, typename DST_T, typename REQ_T,
 class SeqImpl {
   using pat_t = Seq<CHILD_PATS_T...>;
   struct child_req_t : public REQ_T {
-    enum {
-      CONSUMES_ON_SUCCESS = false,
-      ATOMIC = false,
-      FAILS_CLEANLY = false
-    };
+    enum { CONSUMES_ON_SUCCESS = false, ATOMIC = false, FAILS_CLEANLY = false };
   };
   using childs_tuple_t = typename pat_t::child_tuple_t;
   using child_parsers_t = typename seq_::SeqSubParser<
       CTX_T, DST_T, child_req_t, childs_tuple_t,
       std::index_sequence_for<CHILD_PATS_T...>>::type;
   child_parsers_t child_parsers_;
+
  public:
   template <std::size_t ID>
   decltype(auto) getDstFor(DST_T dst) {
@@ -2351,7 +2425,7 @@ class SeqImpl {
 template <typename... CHILD_PATS_T>
 struct ParserFactory<Seq<CHILD_PATS_T...>> {
   using pat_t = Seq<CHILD_PATS_T...>;
-static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
   enum {
     ATOMIC = false,
     FAILS_CLEANLY = false,
@@ -2363,54 +2437,139 @@ static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
 
 namespace ABULAFIA_NAMESPACE {
 namespace act_ {
-template <typename ACT_T, typename Enable = void>
-struct determine_landing_type;
+struct arbitrary {
+  template <class T>
+  operator T();
+};
+template <typename BOUND_DST_T>
+struct ActionParam {
+  BOUND_DST_T bound_dst;
+};
 template <typename ACT_T>
-struct determine_landing_type<ACT_T,
-                              enable_if_t<function_traits<ACT_T>::arity == 0>> {
+constexpr bool has_incoming_val() {
+  return (std::is_invocable<ACT_T, arbitrary>::value &&
+          !std::is_invocable<ACT_T, ActionParam<Nil>>::value) ||
+         std::is_invocable<ACT_T, arbitrary, ActionParam<Nil>>::value;
+}
+template <typename ACT_T>
+constexpr bool has_incoming_param() {
+  return std::is_invocable<ACT_T, ActionParam<Nil>>::value ||
+         std::is_invocable<ACT_T, arbitrary, ActionParam<Nil>>::value;
+}
+/*Used primarily to determine if the return type is void or not*/
+template <typename ACT_T, typename Enable = void>
+struct determine_result_type {
+  using type = typename function_traits<ACT_T>::result_type;
+};
+template <typename ACT_T>
+struct determine_result_type<ACT_T,
+                             std::enable_if_t<has_incoming_param<ACT_T>() &&
+                                              has_incoming_val<ACT_T>()>> {
+  using type = decltype(std::declval<ACT_T>()(arbitrary{}, ActionParam<Nil>()));
+};
+template <typename ACT_T>
+struct determine_result_type<ACT_T,
+                             std::enable_if_t<has_incoming_param<ACT_T>() &&
+                                              !has_incoming_val<ACT_T>()>> {
+  using type = decltype(std::declval<ACT_T>()(ActionParam<Nil>()));
+};
+template <typename ACT_T>
+constexpr bool returns_void() {
+  return std::is_same<typename determine_result_type<ACT_T>::type, void>::value;
+}
+template <typename ACT_T, typename Enable = void>
+struct determine_landing_type {
   using type = Nil;
 };
 template <typename ACT_T>
 struct determine_landing_type<ACT_T,
-                              enable_if_t<function_traits<ACT_T>::arity != 0>> {
-  using type = std::decay_t<callable_argument_t<ACT_T, 0>>;
+                              std::enable_if_t<has_incoming_val<ACT_T>() &&
+                                               !has_incoming_param<ACT_T>()>> {
+  using type = typename function_traits<ACT_T>::template arg<0>::type;
+};
+template <typename ACT_T>
+struct determine_landing_type<ACT_T,
+                              std::enable_if_t<has_incoming_val<ACT_T>() &&
+                                               has_incoming_param<ACT_T>()>> {
+  using oper = decltype(&ACT_T::template operator()<ActionParam<Nil>>);
+  using type = typename function_traits<oper>::template arg<0>::type;
 };
 template <typename ACT_T, typename Enable = void>
 struct Dispatch;
 template <typename ACT_T>
-struct Dispatch<ACT_T,
-                enable_if_t<function_traits<ACT_T>::arity == 0 &&
-                            is_same<void, callable_result_t<ACT_T>>::value>> {
-  template <typename LAND_T, typename DST_T>
-  static void dispatch(ACT_T const& act, LAND_T, DST_T) {
-    act();
-  }
-};
-template <typename ACT_T>
-struct Dispatch<ACT_T,
-                enable_if_t<function_traits<ACT_T>::arity != 0 &&
-                            is_same<void, callable_result_t<ACT_T>>::value>> {
-  template <typename LAND_T, typename DST_T>
-  static void dispatch(ACT_T const& act, LAND_T land, DST_T) {
-    act(std::move(land));
-  }
-};
-template <typename ACT_T>
-struct Dispatch<ACT_T,
-                enable_if_t<function_traits<ACT_T>::arity == 0 &&
-                            !is_same<void, callable_result_t<ACT_T>>::value>> {
-  template <typename LAND_T, typename DST_T>
-  static void dispatch(ACT_T const& act, LAND_T, DST_T dst) {
+struct Dispatch<
+    ACT_T, enable_if_t<!returns_void<ACT_T>() && !has_incoming_val<ACT_T>() &&
+                       !has_incoming_param<ACT_T>()>> {
+  template <typename LAND_T, typename DST_T, typename CTX_T>
+  static void dispatch(ACT_T const& act, LAND_T, DST_T dst, CTX_T) {
     dst = act();
   }
 };
 template <typename ACT_T>
-struct Dispatch<ACT_T,
-                enable_if_t<function_traits<ACT_T>::arity != 0 &&
-                            !is_same<void, callable_result_t<ACT_T>>::value>> {
-  template <typename LAND_T, typename DST_T>
-  static void dispatch(ACT_T const& act, LAND_T land, DST_T dst) {
+struct Dispatch<
+    ACT_T, enable_if_t<returns_void<ACT_T>() && !has_incoming_val<ACT_T>() &&
+                       !has_incoming_param<ACT_T>()>> {
+  template <typename LAND_T, typename DST_T, typename CTX_T>
+  static void dispatch(ACT_T const& act, LAND_T, DST_T, CTX_T) {
+    act();
+  }
+};
+template <typename ACT_T>
+struct Dispatch<
+    ACT_T, enable_if_t<!returns_void<ACT_T>() && has_incoming_val<ACT_T>() &&
+                       !has_incoming_param<ACT_T>()>> {
+  template <typename LAND_T, typename DST_T, typename CTX_T>
+  static void dispatch(ACT_T const& act, LAND_T land, DST_T dst, CTX_T) {
     dst = act(std::move(land));
+  }
+};
+template <typename ACT_T>
+struct Dispatch<
+    ACT_T, enable_if_t<returns_void<ACT_T>() && has_incoming_val<ACT_T>() &&
+                       !has_incoming_param<ACT_T>()>> {
+  template <typename LAND_T, typename DST_T, typename CTX_T>
+  static void dispatch(ACT_T const& act, LAND_T land, DST_T, CTX_T) {
+    act(std::move(land));
+  }
+};
+template <typename ACT_T>
+struct Dispatch<
+    ACT_T, enable_if_t<!returns_void<ACT_T>() && !has_incoming_val<ACT_T>() &&
+                       has_incoming_param<ACT_T>()>> {
+  template <typename LAND_T, typename DST_T, typename CTX_T>
+  static void dispatch(ACT_T const& act, LAND_T, DST_T dst, CTX_T ctx) {
+    ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
+    dst = act(p);
+  }
+};
+template <typename ACT_T>
+struct Dispatch<
+    ACT_T, enable_if_t<returns_void<ACT_T>() && !has_incoming_val<ACT_T>() &&
+                       has_incoming_param<ACT_T>()>> {
+  template <typename LAND_T, typename DST_T, typename CTX_T>
+  static void dispatch(ACT_T const& act, LAND_T, DST_T dst, CTX_T ctx) {
+    ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
+    act(p);
+  }
+};
+template <typename ACT_T>
+struct Dispatch<
+    ACT_T, enable_if_t<!returns_void<ACT_T>() && has_incoming_val<ACT_T>() &&
+                       has_incoming_param<ACT_T>()>> {
+  template <typename LAND_T, typename DST_T, typename CTX_T>
+  static void dispatch(ACT_T const& act, LAND_T land, DST_T dst, CTX_T ctx) {
+    ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
+    dst = act(std::move(land), p);
+  }
+};
+template <typename ACT_T>
+struct Dispatch<
+    ACT_T, enable_if_t<returns_void<ACT_T>() && has_incoming_val<ACT_T>() &&
+                       has_incoming_param<ACT_T>()>> {
+  template <typename LAND_T, typename DST_T, typename CTX_T>
+  static void dispatch(ACT_T const& act, LAND_T land, DST_T, CTX_T ctx) {
+    ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
+    act(std::move(land), p);
   }
 };
 }  // namespace act_
@@ -2436,6 +2595,7 @@ class ActionImpl {
                                 child_req_t, CHILD_PAT_T>;
   landing_type_t landing;
   child_parser_t child_parser_;
+
  public:
   ActionImpl(CTX_T ctx, DST_T, PAT_T const& pat)
       : child_parser_(ctx, wrap_dst(landing), pat.child_pattern()) {}
@@ -2444,7 +2604,7 @@ class ActionImpl {
         child_parser_.consume(ctx, wrap_dst(landing), pat.child_pattern());
     if (status == Result::SUCCESS) {
       act_::Dispatch<ACT_T>::template dispatch(pat.action(), std::move(landing),
-                                               dst);
+                                               dst, ctx);
     }
     return status;
   }
@@ -2452,9 +2612,9 @@ class ActionImpl {
 template <typename CHILD_PAT_T, typename ACT_T>
 struct ParserFactory<Action<CHILD_PAT_T, ACT_T>> {
   using pat_t = Action<CHILD_PAT_T, ACT_T>;
-  using landing_type_t = typename act_::determine_landing_type<ACT_T>::type;
   static constexpr DstBehavior dst_behavior() {
-    return std::is_same<Nil, landing_type_t>::value ? DstBehavior::IGNORE : DstBehavior::VALUE;
+    return act_::returns_void<ACT_T>() ? DstBehavior::IGNORE
+                                       : DstBehavior::VALUE;
   }
   enum {
     ATOMIC = true,
@@ -2466,7 +2626,48 @@ struct ParserFactory<Action<CHILD_PAT_T, ACT_T>> {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T, typename... ARGS_T>
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T>
+class BindDstImpl {
+  using pat_t = BindDst<CHILD_PAT_T>;
+  using sub_ctx_t = typename CTX_T::template bind_dst<DST_T>;
+  struct child_req_t : public REQ_T {
+    enum {
+      ATOMIC = false,
+    };
+  };
+  using child_parser_t = Parser<sub_ctx_t, DST_T, child_req_t, CHILD_PAT_T>;
+  child_parser_t parser_;
+
+ public:
+  BindDstImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
+      : parser_(sub_ctx_t(ctx.data(), ctx.skipper(), dst), dst, pat.operand()) {
+  }
+  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+    return parser_.consume(sub_ctx_t(ctx.data(), ctx.skipper(), dst), dst,
+                           pat.operand());
+  }
+};
+template <typename CHILD_PAT_T>
+struct ParserFactory<BindDst<CHILD_PAT_T>> {
+  using pat_t = BindDst<CHILD_PAT_T>;
+  static constexpr DstBehavior dst_behavior() {
+    static_assert(ParserFactory<CHILD_PAT_T>::CHILD_PAT_T::dst_behavior() !=
+                      DstBehavior::IGNORE,
+                  "Why are we binding the dst for a Nil pattern?");
+    return ParserFactory<CHILD_PAT_T>::CHILD_PAT_T::dst_behavior();
+  }
+  enum {
+    ATOMIC = false,
+    FAILS_CLEANLY = true,
+  };
+  template <typename CTX_T, typename DST_T, typename REQ_T>
+  using type = BindDstImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T>;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
+          typename... ARGS_T>
 class ConstructImpl {
   using pat_t = Construct<CHILD_PAT_T, ARGS_T...>;
   using buffer_t = std::tuple<ARGS_T...>;
@@ -2477,13 +2678,14 @@ class ConstructImpl {
   using child_parser_t = Parser<CTX_T, child_dst_t, childs_reqs_t, CHILD_PAT_T>;
   buffer_t buffer_;
   child_parser_t parser_;
+
  public:
   ConstructImpl(CTX_T ctx, DST_T, pat_t const& pat)
-      : parser_(ctx, child_dst_t(buffer_), pat.child_pattern()) {
-  }
+      : parser_(ctx, child_dst_t(buffer_), pat.child_pattern()) {}
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
-    auto status = parser_.consume(ctx, child_dst_t(buffer_), pat.child_pattern());
-    if( status == Result::SUCCESS) {
+    auto status =
+        parser_.consume(ctx, child_dst_t(buffer_), pat.child_pattern());
+    if (status == Result::SUCCESS) {
       dst = std::make_from_tuple<typename DST_T::dst_type>(buffer_);
     }
     return status;
@@ -2511,6 +2713,7 @@ class DiscardImpl {
   using pat_t = Discard<CHILD_PAT_T>;
   using child_parser_t = Parser<ctx_t, Nil, req_t, CHILD_PAT_T>;
   child_parser_t child_parser_;
+
  public:
   DiscardImpl(ctx_t ctx, dst_t, pat_t const& pat)
       : child_parser_(ctx, nil, pat.operand()) {}
@@ -2538,10 +2741,10 @@ class LexemeImpl {
   using sub_ctx_t = typename CTX_T::template set_skipper_t<Fail>;
   using child_parser_t = Parser<sub_ctx_t, DST_T, REQ_T, CHILD_PAT_T>;
   child_parser_t parser_;
+
  public:
   LexemeImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
-      : parser_(sub_ctx_t(ctx.data(), fail), dst, pat.operand()) {
-  }
+      : parser_(sub_ctx_t(ctx.data(), fail), dst, pat.operand()) {}
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     return parser_.consume(sub_ctx_t(ctx.data(), fail), dst, pat.operand());
   }
@@ -2552,7 +2755,9 @@ class LexemeImpl {
 template <typename CHILD_PAT_T>
 struct ParserFactory<Lexeme<CHILD_PAT_T>> {
   using pat_t = Lexeme<CHILD_PAT_T>;
-  static constexpr DstBehavior dst_behavior() { return ParserFactory<CHILD_PAT_T>::CHILD_PAT_T; }
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<CHILD_PAT_T>::CHILD_PAT_T::dst_behavior();
+  }
   enum {
     ATOMIC = true,
     FAILS_CLEANLY = true,
@@ -2570,11 +2775,11 @@ class NotImpl {
     enum {
       ATOMIC = false,
       FAILS_CLEANLY = false,
-      CONSUMES_ON_SUCCESS = REQ_T::CONSUMES_ON_SUCCESS
     };
   };
   using child_parser_t = Parser<CTX_T, DST_T, child_req_t, CHILD_PAT_T>;
   child_parser_t parser_;
+
  public:
   NotImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : parser_(ctx, dst, pat.operand()) {
@@ -2643,6 +2848,7 @@ class OptImpl {
   };
   using child_parser_t = Parser<CTX_T, DST_T, child_req_t, CHILD_PAT_T>;
   child_parser_t parser_;
+
  public:
   OptImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : parser_(ctx, dst, pat.operand()) {
@@ -2706,6 +2912,7 @@ class RepeatImpl {
   using child_parser_t = Parser<ctx_t, child_dst_t, child_req_t, CHILD_PAT_T>;
   std::size_t count_ = 0;
   child_parser_t child_parser_;
+
  public:
   RepeatImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
       : child_parser_(ctx, child_dst_t(dst), pat.operand()) {}
@@ -2759,6 +2966,7 @@ class RecurImpl {
   using operand_pat_t = typename pat_t::operand_pat_t;
   using operand_parser_t = Parser<CTX_T, DST_T, RecurChildReqs, operand_pat_t>;
   std::unique_ptr<operand_parser_t> child_parser_;
+
  public:
   RecurImpl(CTX_T, DST_T, pat_t const&) {
     // We do not create the child parser here, since this is a recursive
@@ -2779,6 +2987,7 @@ class WeakRecurImpl {
   using operand_pat_t = typename pat_t::operand_pat_t;
   using operand_parser_t = Parser<CTX_T, DST_T, RecurChildReqs, operand_pat_t>;
   std::unique_ptr<operand_parser_t> child_parser_;
+
  public:
   WeakRecurImpl(CTX_T, DST_T, pat_t const&) {
     // We do not create the child parser here, since this is a recursive
@@ -2844,6 +3053,7 @@ class WithSkipperImpl {
   using pat_t = WithSkipper<CHILD_PAT_T, SKIP_T>;
   using sub_ctx_t = typename ctx_t::template set_skipper_t<SKIP_T>;
   Parser<sub_ctx_t, dst_t, REQ_T, CHILD_PAT_T> child_parser_;
+
  public:
   WithSkipperImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
       : child_parser_(sub_ctx_t(ctx.data(), pat.getSkip()), dst,
@@ -2867,7 +3077,5 @@ struct ParserFactory<WithSkipper<CHILD_PAT_T, SKIP_T>> {
   using type = WithSkipperImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, SKIP_T>;
 };
 }  // namespace ABULAFIA_NAMESPACE
-
-
 
 #endif

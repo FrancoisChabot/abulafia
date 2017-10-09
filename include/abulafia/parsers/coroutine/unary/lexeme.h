@@ -11,8 +11,8 @@
 #include "abulafia/config.h"
 
 #include "abulafia/parser.h"
-#include "abulafia/patterns/unary/lexeme.h"
 #include "abulafia/patterns/leaf/fail.h"
+#include "abulafia/patterns/unary/lexeme.h"
 
 namespace ABULAFIA_NAMESPACE {
 
@@ -27,8 +27,7 @@ class LexemeImpl {
 
  public:
   LexemeImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
-      : parser_(sub_ctx_t(ctx.data(), fail), dst, pat.operand()) {
-  }
+      : parser_(sub_ctx_t(ctx.data(), fail), dst, pat.operand()) {}
 
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     return parser_.consume(sub_ctx_t(ctx.data(), fail), dst, pat.operand());
@@ -43,7 +42,9 @@ template <typename CHILD_PAT_T>
 struct ParserFactory<Lexeme<CHILD_PAT_T>> {
   using pat_t = Lexeme<CHILD_PAT_T>;
 
-  static constexpr DstBehavior dst_behavior() { return ParserFactory<CHILD_PAT_T>::CHILD_PAT_T; }
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<CHILD_PAT_T>::CHILD_PAT_T::dst_behavior();
+  }
 
   enum {
     ATOMIC = true,

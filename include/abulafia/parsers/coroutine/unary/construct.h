@@ -15,7 +15,8 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T, typename... ARGS_T>
+template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
+          typename... ARGS_T>
 class ConstructImpl {
   using pat_t = Construct<CHILD_PAT_T, ARGS_T...>;
 
@@ -27,7 +28,6 @@ class ConstructImpl {
     enum { ATOMIC = false };
   };
 
-
   using child_parser_t = Parser<CTX_T, child_dst_t, childs_reqs_t, CHILD_PAT_T>;
 
   buffer_t buffer_;
@@ -35,18 +35,17 @@ class ConstructImpl {
 
  public:
   ConstructImpl(CTX_T ctx, DST_T, pat_t const& pat)
-      : parser_(ctx, child_dst_t(buffer_), pat.child_pattern()) {
-  }
+      : parser_(ctx, child_dst_t(buffer_), pat.child_pattern()) {}
 
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
-    auto status = parser_.consume(ctx, child_dst_t(buffer_), pat.child_pattern());
+    auto status =
+        parser_.consume(ctx, child_dst_t(buffer_), pat.child_pattern());
 
-    if( status == Result::SUCCESS) {
+    if (status == Result::SUCCESS) {
       dst = std::make_from_tuple<typename DST_T::dst_type>(buffer_);
     }
     return status;
   }
-
 };
 
 template <typename CHILD_PAT_T, typename... ARGS_T>

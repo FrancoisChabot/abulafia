@@ -18,6 +18,8 @@ namespace ABULAFIA_NAMESPACE {
 struct Nil {
   using value_type = Nil;
   using dst_type = Nil;
+  using dst_value_type = Nil;
+
   Nil() = default;
 
   template <typename T>
@@ -45,6 +47,7 @@ struct Nil {
   }
 
   bool operator==(Nil const&) const { return true; }
+
   // Can pose as anything, as long as it can be default-constructed.
   template <typename T>
   operator T() const {

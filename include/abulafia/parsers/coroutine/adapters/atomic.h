@@ -10,8 +10,8 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/parsers/coroutine/dst_behavior.h"
 #include "abulafia/dst_wrapper/select_wrapper.h"
+#include "abulafia/parsers/coroutine/dst_behavior.h"
 #include "abulafia/result.h"
 
 namespace ABULAFIA_NAMESPACE {
@@ -23,7 +23,7 @@ template <typename CTX_T, typename DST_T, typename REQ_T,
 class AtomicAdapter {
  public:
   using pat_t = typename PARSER_FACTORY_T::pat_t;
-  using buffer_t = typename DST_T::dst_type;
+  using buffer_t = typename DST_T::dst_value_type;
 
   struct adapted_reqs_t : public REQ_T {
     enum { ATOMIC = false };
@@ -54,7 +54,9 @@ template <typename FACTORY_T>
 struct AtomicFactoryAdapter {
   static_assert(!FACTORY_T::ATOMIC);
 
-  static constexpr DstBehavior dst_behavior() { return FACTORY_T::dst_behavior(); }
+  static constexpr DstBehavior dst_behavior() {
+    return FACTORY_T::dst_behavior();
+  }
 
   using pat_t = typename FACTORY_T::pat_t;
 

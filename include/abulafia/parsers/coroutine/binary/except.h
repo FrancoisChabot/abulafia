@@ -71,7 +71,9 @@ template <typename OP_T, typename NEG_T>
 struct ParserFactory<Except<OP_T, NEG_T>> {
   using pat_t = Except<OP_T, NEG_T>;
 
-  static constexpr DstBehavior dst_behavior() { return ParserFactory<OP_T>::dst_behavior(); }
+  static constexpr DstBehavior dst_behavior() {
+    return ParserFactory<OP_T>::dst_behavior();
+  }
 
   enum {
     ATOMIC = true,

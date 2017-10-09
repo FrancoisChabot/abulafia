@@ -25,7 +25,7 @@ DST_T decode(ITE_T b, ITE_T e, const PAT_T& pat) {
 
   auto status = parse(b, e, pat, dst);
 
-  if(status != Result::SUCCESS) {
+  if (status != Result::SUCCESS) {
     throw std::runtime_error("abulafia decode failure");
   }
 

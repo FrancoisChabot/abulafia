@@ -17,7 +17,7 @@ void testPatternSuccess(std::string const& data, PAT_T const& pat,
 
   // Test parsing into Value
   {
-    DST_T dst;
+    DST_T dst{};
     auto status = abu::parse(data, pat, dst);
     EXPECT_EQ(status, abu::Result::SUCCESS);
     EXPECT_EQ(dst, expected_value);

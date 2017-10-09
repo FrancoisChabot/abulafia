@@ -152,11 +152,7 @@ class SeqImpl {
   using pat_t = Seq<CHILD_PATS_T...>;
 
   struct child_req_t : public REQ_T {
-    enum {
-      CONSUMES_ON_SUCCESS = false,
-      ATOMIC = false,
-      FAILS_CLEANLY = false
-    };
+    enum { CONSUMES_ON_SUCCESS = false, ATOMIC = false, FAILS_CLEANLY = false };
   };
 
   using childs_tuple_t = typename pat_t::child_tuple_t;
@@ -229,7 +225,7 @@ template <typename... CHILD_PATS_T>
 struct ParserFactory<Seq<CHILD_PATS_T...>> {
   using pat_t = Seq<CHILD_PATS_T...>;
 
-static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
+  static constexpr DstBehavior dst_behavior() { return DstBehavior::VALUE; }
 
   enum {
     ATOMIC = false,

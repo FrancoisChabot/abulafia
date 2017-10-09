@@ -33,7 +33,8 @@ void append_to_container(std::basic_string<CharT, Traits, Allocator>& container,
 template <typename T>
 class CollectionWrapper {
  public:
-  using dst_type = typename T::value_type;
+  using dst_type = T;
+  using dst_value_type = typename T::value_type;
 
   CollectionWrapper(T& v) : v_(v) {}
   CollectionWrapper(CollectionWrapper const&) = default;
@@ -43,6 +44,8 @@ class CollectionWrapper {
     details::append_to_container(v_, std::forward<U>(rhs));
     return *this;
   }
+
+  T& get() { return v_; }
 
  private:
   T& v_;

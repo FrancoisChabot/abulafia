@@ -39,7 +39,7 @@ class UIntImpl {
 
       auto next = ctx.data().next();
       if (digit_vals::is_valid(next)) {
-        dst.get() *= typename DST_T::dst_type(BASE);
+        dst.get() *= typename DST_T::dst_value_type(BASE);
         dst.get() += digit_vals::value(next);
 
         ++digit_count_;

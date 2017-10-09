@@ -20,6 +20,7 @@ template <typename T>
 class ValueWrapper {
  public:
   using dst_type = T;
+  using dst_value_type = T;
 
   ValueWrapper(T& v) : v_(v) {}
   ValueWrapper(ValueWrapper const&) = default;
