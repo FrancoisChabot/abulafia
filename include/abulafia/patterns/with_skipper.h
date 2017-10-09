@@ -28,14 +28,23 @@ class WithSkipper : public Pattern<WithSkipper<CHILD_PAT_T, SKIP_T>> {
   CHILD_PAT_T const& getChild() const { return child_pat_; }
   SKIP_T const& getSkip() const { return skip_pat_; }
 
-  WithSkipper(CHILD_PAT_T const& c, SKIP_T const& s)
-      : child_pat_(c), skip_pat_(s) {}
+  WithSkipper(CHILD_PAT_T c, SKIP_T s)
+      : child_pat_(std::move(c)), skip_pat_(std::move(s)) {}
 };
 
 template <typename PAT_T, typename SKIP_T>
 auto apply_skipper(PAT_T&& pat, SKIP_T&& skip) {
   return WithSkipper<std::decay_t<PAT_T>, std::decay_t<SKIP_T>>(
       std::forward<PAT_T>(pat), std::forward<SKIP_T>(skip));
+}
+
+template <typename CHILD_PAT_T, typename SKIP_T, typename CB_T>
+auto transform(WithSkipper<CHILD_PAT_T, SKIP_T> const& tgt, CB_T const& cb) {
+  return tgt;
+  auto new_child = cb(tgt.getChild());
+
+  return WithSkipper<decltype(new_child), SKIP_T>(std::move(new_child),
+                                                  cb.getSkip);
 }
 
 }  // namespace ABULAFIA_NAMESPACE

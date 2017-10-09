@@ -47,7 +47,7 @@ auto seq(CHILD_PATS_T&&... childs) {
 template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
 auto transform_seq_impl(CHILD_TUP_T const& c, CB_T const& cb,
                         std::index_sequence<Is...>) {
-  return seq(transform(std::get<Is>(c), cb)...);
+  return seq(cb(std::get<Is>(c))...);
 }
 
 template <typename... CHILD_PATS_T, typename CB_T>

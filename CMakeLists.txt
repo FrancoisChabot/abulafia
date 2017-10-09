@@ -71,3 +71,4 @@ add_custom_command(
     --input=${CMAKE_CURRENT_SOURCE_DIR}/include/abulafia/abulafia.h)
 
 add_custom_target(generate_all_include ALL DEPENDS ${ALL_FILE})
+add_subdirectory(examples)

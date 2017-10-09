@@ -22,7 +22,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename REAL_PAT_T, typename REAL_DST_T, typename DATASOURCE_T>
 struct ParserInterface {
   ParserInterface(REAL_PAT_T const& pat, REAL_DST_T& dst)
-      : ctx_(data_source_, fail),
+      : ctx_(data_source_, fail, dst),
         pat_(pat),
         dst_(dst),
         parser_(ctx_, dst, pat) {}
@@ -31,7 +31,7 @@ struct ParserInterface {
   Result consume() { return parser_.consume(ctx_, dst_, pat_); }
 
  private:
-  using CTX_T = Context<DATASOURCE_T, Fail>;
+  using CTX_T = Context<DATASOURCE_T, Fail, REAL_DST_T>;
 
   DATASOURCE_T data_source_;
   CTX_T ctx_;

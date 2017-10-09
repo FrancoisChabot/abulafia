@@ -46,11 +46,11 @@ struct ParserFactory<BindDst<CHILD_PAT_T>> {
   using pat_t = BindDst<CHILD_PAT_T>;
 
   static constexpr DstBehavior dst_behavior() {
-    static_assert(ParserFactory<CHILD_PAT_T>::CHILD_PAT_T::dst_behavior() !=
-                      DstBehavior::IGNORE,
-                  "Why are we binding the dst for a Nil pattern?");
+    static_assert(
+        ParserFactory<CHILD_PAT_T>::dst_behavior() != DstBehavior::IGNORE,
+        "Why are we binding the dst for a Nil pattern?");
 
-    return ParserFactory<CHILD_PAT_T>::CHILD_PAT_T::dst_behavior();
+    return ParserFactory<CHILD_PAT_T>::dst_behavior();
   }
 
   enum {

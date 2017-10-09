@@ -32,25 +32,24 @@ TEST(test_readme, the_readme) {
 
 struct Rectangle {
   Rectangle() = default;
-  Rectangle(int in_w, int in_h) 
-    : x(0), y(0), w(in_w), h(in_h) {}
-  Rectangle(int in_x, int in_y, int in_w, int in_h) 
-    : x(in_x), y(in_y), w(in_w), h(in_h) {}
-  
+  Rectangle(int in_w, int in_h) : x(0), y(0), w(in_w), h(in_h) {}
+  Rectangle(int in_x, int in_y, int in_w, int in_h)
+      : x(in_x), y(in_y), w(in_w), h(in_h) {}
+
   int x;
   int y;
   int w;
   int h;
 };
 
-
 TEST(test_readme, rectangle) {
   auto space = abu::char_(" \t\r\n");
-  auto rect = 
-      ('[' >> abu::int_ >> ',' >> abu::int_ >> ']').as<int, int>() |
-      ('[' >> abu::int_ >> ',' >> abu::int_ >> ',' >> abu::int_ >> ',' >> abu::int_ >> ']').as<int, int, int, int>();
- 
-   auto pattern = abu::apply_skipper(rect, space);
+  auto rect = ('[' >> abu::int_ >> ',' >> abu::int_ >> ']').as<int, int>() |
+              ('[' >> abu::int_ >> ',' >> abu::int_ >> ',' >> abu::int_ >>
+               ',' >> abu::int_ >> ']')
+                  .as<int, int, int, int>();
+
+  auto pattern = abu::apply_skipper(rect, space);
 
   Rectangle rect_a = abu::decode<Rectangle>("[1, 45]", pattern);
   Rectangle rect_b = abu::decode<Rectangle>("[1, 45, 1, 1]", pattern);
@@ -64,5 +63,4 @@ TEST(test_readme, rectangle) {
   EXPECT_EQ(45, rect_b.y);
   EXPECT_EQ(1, rect_b.w);
   EXPECT_EQ(1, rect_b.h);
-  
 }

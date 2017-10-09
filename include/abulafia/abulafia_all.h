@@ -816,6 +816,33 @@ static constexpr Fail fail;
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+template <typename DATASOURCE_T, typename SKIPPER_T, typename BOUND_DST_T = Nil>
+struct Context {
+  using datasource_t = DATASOURCE_T;
+  using skip_pattern_t = SKIPPER_T;
+  using bound_dst_t = BOUND_DST_T;
+  Context(datasource_t& ds, skip_pattern_t const& skip, BOUND_DST_T bound_dst)
+      : data_(ds), skipper_(skip), bound_dst_(bound_dst) {}
+  template <typename T>
+  using set_skipper_t = Context<datasource_t, T, bound_dst_t>;
+  template <typename DST_T>
+  using bind_dst = Context<datasource_t, skip_pattern_t, DST_T>;
+  enum {
+    IS_RESUMABLE = DATASOURCE_T::IS_RESUMABLE,
+    HAS_SKIPPER = !std::is_same<Fail, skip_pattern_t>::value,
+  };
+  DATASOURCE_T& data() { return data_; }
+  SKIPPER_T const& skipper() { return skipper_; }
+  BOUND_DST_T const& bound_dst() { return bound_dst_; }
+
+ private:
+  DATASOURCE_T& data_;
+  SKIPPER_T const& skipper_;
+  BOUND_DST_T bound_dst_;
+};
+}  // namespace ABULAFIA_NAMESPACE
+
+namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 struct Parser_t;
 template <typename CTX_T, typename DST_T, typename REQ_T,
@@ -825,23 +852,23 @@ class SkipAdapter {
   using pat_t = typename PARSER_FACTORY_T::pat_t;
   using child_parser_t =
       typename PARSER_FACTORY_T::template type<CTX_T, DST_T, REQ_T>;
-  using skip_context_t = typename CTX_T::template set_skipper_t<Fail>;
+  using skip_context_t = Context<typename CTX_T::datasource_t, Fail, Nil>;
   struct skip_req_t {
     enum { ATOMIC = false, FAILS_CLEANLY = true, CONSUMES_ON_SUCCESS = true };
   };
   using skip_parser_t =
       Parser_t<skip_context_t, Nil, skip_req_t, typename CTX_T::skip_pattern_t>;
   SkipAdapter(CTX_T ctx, DST_T dst, pat_t const& pat)
-      : skip_parser_(skip_context_t(ctx.data(), fail), nil, ctx.skipper()),
+      : skip_parser_(skip_context_t(ctx.data(), fail, nil), nil, ctx.skipper()),
         adapted_parser_(ctx, dst, pat) {}
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     while (!skipping_done_) {
-      auto status = skip_parser_.consume(skip_context_t(ctx.data(), fail), nil,
-                                         ctx.skipper());
+      auto status = skip_parser_.consume(skip_context_t(ctx.data(), fail, nil),
+                                         nil, ctx.skipper());
       switch (status) {
         case Result::SUCCESS:
-          skip_parser_ = skip_parser_t(skip_context_t(ctx.data(), fail), nil,
-                                       ctx.skipper());
+          skip_parser_ = skip_parser_t(skip_context_t(ctx.data(), fail, nil),
+                                       nil, ctx.skipper());
           break;
         case Result::FAILURE:
           skipping_done_ = true;
@@ -940,41 +967,13 @@ struct AdaptedParserFactory {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-template <typename DATASOURCE_T, typename SKIPPER_T, typename BOUND_DST_T = Nil>
-struct Context {
-  using datasource_t = DATASOURCE_T;
-  using skip_pattern_t = SKIPPER_T;
-  using bound_dst_t = BOUND_DST_T;
-  Context(datasource_t& ds, skip_pattern_t const& skip, BOUND_DST_T bound_dst)
-      : data_(ds), skipper_(skip), bound_dst_(bound_dst) {}
-  Context(datasource_t& ds, skip_pattern_t const& skip)
-      : data_(ds), skipper_(skip) {}
-  template <typename T>
-  using set_skipper_t = Context<datasource_t, T, bound_dst_t>;
-  template <typename DST_T>
-  using bind_dst = Context<datasource_t, skip_pattern_t, DST_T>;
-  enum {
-    IS_RESUMABLE = DATASOURCE_T::IS_RESUMABLE,
-    HAS_SKIPPER = !std::is_same<Fail, skip_pattern_t>::value,
-  };
-  DATASOURCE_T& data() { return data_; }
-  SKIPPER_T const& skipper() { return skipper_; }
-  BOUND_DST_T const& bound_dst() { return bound_dst_; }
-
- private:
-  DATASOURCE_T& data_;
-  SKIPPER_T const& skipper_;
-  BOUND_DST_T bound_dst_;
-};
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
 template <typename ITE_T, typename PAT_T, typename DST_T>
 Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
   SingleForwardDataSource<ITE_T> data(b, e);
   auto real_pat = make_pattern(pat);
   auto real_dst = wrap_dst(dst);
-  Context<SingleForwardDataSource<ITE_T>, Fail> real_ctx(data, fail);
+  Context<SingleForwardDataSource<ITE_T>, Fail, decltype(real_dst)> real_ctx(
+      data, fail, real_dst);
   auto parser = make_parser_(real_ctx, real_dst, DefaultReqs(), real_pat);
   return parser.consume(real_ctx, real_dst, real_pat);
 }
@@ -1030,7 +1029,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename REAL_PAT_T, typename REAL_DST_T, typename DATASOURCE_T>
 struct ParserInterface {
   ParserInterface(REAL_PAT_T const& pat, REAL_DST_T& dst)
-      : ctx_(data_source_, fail),
+      : ctx_(data_source_, fail, dst),
         pat_(pat),
         dst_(dst),
         parser_(ctx_, dst, pat) {}
@@ -1038,7 +1037,7 @@ struct ParserInterface {
   Result consume() { return parser_.consume(ctx_, dst_, pat_); }
 
  private:
-  using CTX_T = Context<DATASOURCE_T, Fail>;
+  using CTX_T = Context<DATASOURCE_T, Fail, REAL_DST_T>;
   DATASOURCE_T data_source_;
   CTX_T ctx_;
   REAL_PAT_T pat_;
@@ -1131,13 +1130,20 @@ class WithSkipper : public Pattern<WithSkipper<CHILD_PAT_T, SKIP_T>> {
  public:
   CHILD_PAT_T const& getChild() const { return child_pat_; }
   SKIP_T const& getSkip() const { return skip_pat_; }
-  WithSkipper(CHILD_PAT_T const& c, SKIP_T const& s)
-      : child_pat_(c), skip_pat_(s) {}
+  WithSkipper(CHILD_PAT_T c, SKIP_T s)
+      : child_pat_(std::move(c)), skip_pat_(std::move(s)) {}
 };
 template <typename PAT_T, typename SKIP_T>
 auto apply_skipper(PAT_T&& pat, SKIP_T&& skip) {
   return WithSkipper<std::decay_t<PAT_T>, std::decay_t<SKIP_T>>(
       std::forward<PAT_T>(pat), std::forward<SKIP_T>(skip));
+}
+template <typename CHILD_PAT_T, typename SKIP_T, typename CB_T>
+auto transform(WithSkipper<CHILD_PAT_T, SKIP_T> const& tgt, CB_T const& cb) {
+  return tgt;
+  auto new_child = cb(tgt.getChild());
+  return WithSkipper<decltype(new_child), SKIP_T>(std::move(new_child),
+                                                  cb.getSkip);
 }
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1461,6 +1467,17 @@ operator|(LHS_T&& lhs, RHS_T&& rhs) {
       build(make_pattern(forward<LHS_T>(lhs)),
             make_pattern(forward<RHS_T>(rhs)));
 }
+template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
+auto transform_alt_impl(CHILD_TUP_T const& c, CB_T const& cb,
+                        std::index_sequence<Is...>) {
+  return alt(transform(std::get<Is>(c), cb)...);
+}
+template <typename... CHILD_PATS_T, typename CB_T>
+auto transform(Alt<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
+  using indices = std::make_index_sequence<sizeof...(CHILD_PATS_T)>;
+  auto const& childs_tuple = tgt.childs();
+  return transform_alt_impl(childs_tuple, cb, indices());
+}
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1487,7 +1504,7 @@ auto seq(CHILD_PATS_T&&... childs) {
 template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
 auto transform_seq_impl(CHILD_TUP_T const& c, CB_T const& cb,
                         std::index_sequence<Is...>) {
-  return seq(transform(std::get<Is>(c), cb)...);
+  return seq(cb(std::get<Is>(c))...);
 }
 template <typename... CHILD_PATS_T, typename CB_T>
 auto transform(Seq<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
@@ -1523,6 +1540,11 @@ auto apply_action(PAT_T&& pat, ACT_T&& act) {
   return Action<std::decay_t<PAT_T>, std::decay_t<ACT_T>>(
       std::forward<PAT_T>(pat), std::forward<ACT_T>(act));
 }
+template <typename CHILD_PAT_T, typename ACT_T, typename CB_T>
+auto transform(Action<CHILD_PAT_T, ACT_T> const& tgt, CB_T const& cb) {
+  auto new_op = cb(tgt.child_pattern());
+  return Action<decltype(new_op), ACT_T>(std::move(new_op), tgt.action());
+}
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1537,6 +1559,11 @@ class BindDst : public Pattern<BindDst<PAT_T>> {
 template <typename PAT_T>
 inline auto bind_dst(PAT_T pat) {
   return BindDst<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
+}
+template <typename PAT_T, typename CB_T>
+auto transform(BindDst<PAT_T> const& tgt, CB_T const& cb) {
+  auto new_op = cb(tgt.operand());
+  return BindDst<decltype(new_op)>(std::move(new_op));
 }
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -2445,16 +2472,16 @@ template <typename BOUND_DST_T>
 struct ActionParam {
   BOUND_DST_T bound_dst;
 };
-template <typename ACT_T>
+template <typename ACT_T, typename DST_T = Nil>
 constexpr bool has_incoming_val() {
   return (std::is_invocable<ACT_T, arbitrary>::value &&
-          !std::is_invocable<ACT_T, ActionParam<Nil>>::value) ||
-         std::is_invocable<ACT_T, arbitrary, ActionParam<Nil>>::value;
+          !std::is_invocable<ACT_T, ActionParam<DST_T>>::value) ||
+         std::is_invocable<ACT_T, arbitrary, ActionParam<DST_T>>::value;
 }
-template <typename ACT_T>
+template <typename ACT_T, typename DST_T = Nil>
 constexpr bool has_incoming_param() {
-  return std::is_invocable<ACT_T, ActionParam<Nil>>::value ||
-         std::is_invocable<ACT_T, arbitrary, ActionParam<Nil>>::value;
+  return std::is_invocable<ACT_T, ActionParam<DST_T>>::value ||
+         std::is_invocable<ACT_T, arbitrary, ActionParam<DST_T>>::value;
 }
 /*Used primarily to determine if the return type is void or not*/
 template <typename ACT_T, typename Enable = void>
@@ -2477,21 +2504,23 @@ template <typename ACT_T>
 constexpr bool returns_void() {
   return std::is_same<typename determine_result_type<ACT_T>::type, void>::value;
 }
-template <typename ACT_T, typename Enable = void>
+template <typename ACT_T, typename DST_T, typename Enable = void>
 struct determine_landing_type {
   using type = Nil;
 };
-template <typename ACT_T>
-struct determine_landing_type<ACT_T,
-                              std::enable_if_t<has_incoming_val<ACT_T>() &&
-                                               !has_incoming_param<ACT_T>()>> {
+template <typename ACT_T, typename DST_T>
+struct determine_landing_type<
+    ACT_T, DST_T,
+    std::enable_if_t<has_incoming_val<ACT_T, DST_T>() &&
+                     !has_incoming_param<ACT_T, DST_T>()>> {
   using type = typename function_traits<ACT_T>::template arg<0>::type;
 };
-template <typename ACT_T>
-struct determine_landing_type<ACT_T,
-                              std::enable_if_t<has_incoming_val<ACT_T>() &&
-                                               has_incoming_param<ACT_T>()>> {
-  using oper = decltype(&ACT_T::template operator()<ActionParam<Nil>>);
+template <typename ACT_T, typename DST_T>
+struct determine_landing_type<
+    ACT_T, DST_T,
+    std::enable_if_t<has_incoming_val<ACT_T, DST_T>() &&
+                     has_incoming_param<ACT_T, DST_T>()>> {
+  using oper = decltype(&ACT_T::template operator()<ActionParam<DST_T>>);
   using type = typename function_traits<oper>::template arg<0>::type;
 };
 template <typename ACT_T, typename Enable = void>
@@ -2590,7 +2619,9 @@ class ActionImpl {
     };
   };
   using child_ctx_t = CTX_T;
-  using landing_type_t = typename act_::determine_landing_type<ACT_T>::type;
+  using landing_type_t =
+      typename act_::determine_landing_type<ACT_T,
+                                            typename CTX_T::bound_dst_t>::type;
   using child_parser_t = Parser<child_ctx_t, wrapped_dst_t<landing_type_t>,
                                 child_req_t, CHILD_PAT_T>;
   landing_type_t landing;
@@ -2651,10 +2682,10 @@ template <typename CHILD_PAT_T>
 struct ParserFactory<BindDst<CHILD_PAT_T>> {
   using pat_t = BindDst<CHILD_PAT_T>;
   static constexpr DstBehavior dst_behavior() {
-    static_assert(ParserFactory<CHILD_PAT_T>::CHILD_PAT_T::dst_behavior() !=
-                      DstBehavior::IGNORE,
-                  "Why are we binding the dst for a Nil pattern?");
-    return ParserFactory<CHILD_PAT_T>::CHILD_PAT_T::dst_behavior();
+    static_assert(
+        ParserFactory<CHILD_PAT_T>::dst_behavior() != DstBehavior::IGNORE,
+        "Why are we binding the dst for a Nil pattern?");
+    return ParserFactory<CHILD_PAT_T>::dst_behavior();
   }
   enum {
     ATOMIC = false,
@@ -3056,11 +3087,12 @@ class WithSkipperImpl {
 
  public:
   WithSkipperImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
-      : child_parser_(sub_ctx_t(ctx.data(), pat.getSkip()), dst,
-                      pat.getChild()) {}
+      : child_parser_(sub_ctx_t(ctx.data(), pat.getSkip(), ctx.bound_dst()),
+                      dst, pat.getChild()) {}
   Result consume(ctx_t ctx, dst_t dst, pat_t const& pat) {
-    return child_parser_.consume(sub_ctx_t(ctx.data(), pat.getSkip()), dst,
-                                 pat.getChild());
+    return child_parser_.consume(
+        sub_ctx_t(ctx.data(), pat.getSkip(), ctx.bound_dst()), dst,
+        pat.getChild());
   }
 };
 template <typename CHILD_PAT_T, typename SKIP_T>

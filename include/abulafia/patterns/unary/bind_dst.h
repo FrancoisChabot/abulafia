@@ -30,6 +30,13 @@ inline auto bind_dst(PAT_T pat) {
   return BindDst<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
 }
 
+template <typename PAT_T, typename CB_T>
+auto transform(BindDst<PAT_T> const& tgt, CB_T const& cb) {
+  auto new_op = cb(tgt.operand());
+
+  return BindDst<decltype(new_op)>(std::move(new_op));
+}
+
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

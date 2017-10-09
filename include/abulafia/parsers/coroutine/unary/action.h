@@ -26,17 +26,17 @@ struct ActionParam {
   BOUND_DST_T bound_dst;
 };
 
-template <typename ACT_T>
+template <typename ACT_T, typename DST_T = Nil>
 constexpr bool has_incoming_val() {
   return (std::is_invocable<ACT_T, arbitrary>::value &&
-          !std::is_invocable<ACT_T, ActionParam<Nil>>::value) ||
-         std::is_invocable<ACT_T, arbitrary, ActionParam<Nil>>::value;
+          !std::is_invocable<ACT_T, ActionParam<DST_T>>::value) ||
+         std::is_invocable<ACT_T, arbitrary, ActionParam<DST_T>>::value;
 }
 
-template <typename ACT_T>
+template <typename ACT_T, typename DST_T = Nil>
 constexpr bool has_incoming_param() {
-  return std::is_invocable<ACT_T, ActionParam<Nil>>::value ||
-         std::is_invocable<ACT_T, arbitrary, ActionParam<Nil>>::value;
+  return std::is_invocable<ACT_T, ActionParam<DST_T>>::value ||
+         std::is_invocable<ACT_T, arbitrary, ActionParam<DST_T>>::value;
 }
 
 /*Used primarily to determine if the return type is void or not*/
@@ -65,25 +65,27 @@ constexpr bool returns_void() {
   return std::is_same<typename determine_result_type<ACT_T>::type, void>::value;
 }
 
-template <typename ACT_T, typename Enable = void>
+template <typename ACT_T, typename DST_T, typename Enable = void>
 struct determine_landing_type {
   using type = Nil;
 };
 
 // The first argument of the action, if present, determines the landing type.
-template <typename ACT_T>
-struct determine_landing_type<ACT_T,
-                              std::enable_if_t<has_incoming_val<ACT_T>() &&
-                                               !has_incoming_param<ACT_T>()>> {
+template <typename ACT_T, typename DST_T>
+struct determine_landing_type<
+    ACT_T, DST_T,
+    std::enable_if_t<has_incoming_val<ACT_T, DST_T>() &&
+                     !has_incoming_param<ACT_T, DST_T>()>> {
   using type = typename function_traits<ACT_T>::template arg<0>::type;
 };
 
 // The first argument of the action, if present, determines the landing type.
-template <typename ACT_T>
-struct determine_landing_type<ACT_T,
-                              std::enable_if_t<has_incoming_val<ACT_T>() &&
-                                               has_incoming_param<ACT_T>()>> {
-  using oper = decltype(&ACT_T::template operator()<ActionParam<Nil>>);
+template <typename ACT_T, typename DST_T>
+struct determine_landing_type<
+    ACT_T, DST_T,
+    std::enable_if_t<has_incoming_val<ACT_T, DST_T>() &&
+                     has_incoming_param<ACT_T, DST_T>()>> {
+  using oper = decltype(&ACT_T::template operator()<ActionParam<DST_T>>);
 
   using type = typename function_traits<oper>::template arg<0>::type;
 };
@@ -198,7 +200,9 @@ class ActionImpl {
   };
 
   using child_ctx_t = CTX_T;
-  using landing_type_t = typename act_::determine_landing_type<ACT_T>::type;
+  using landing_type_t =
+      typename act_::determine_landing_type<ACT_T,
+                                            typename CTX_T::bound_dst_t>::type;
   using child_parser_t = Parser<child_ctx_t, wrapped_dst_t<landing_type_t>,
                                 child_req_t, CHILD_PAT_T>;
 

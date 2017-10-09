@@ -24,9 +24,6 @@ struct Context {
   Context(datasource_t& ds, skip_pattern_t const& skip, BOUND_DST_T bound_dst)
       : data_(ds), skipper_(skip), bound_dst_(bound_dst) {}
 
-  Context(datasource_t& ds, skip_pattern_t const& skip)
-      : data_(ds), skipper_(skip) {}
-
   template <typename T>
   using set_skipper_t = Context<datasource_t, T, bound_dst_t>;
 

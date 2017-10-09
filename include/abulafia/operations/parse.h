@@ -33,7 +33,8 @@ Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
 
   auto real_pat = make_pattern(pat);
   auto real_dst = wrap_dst(dst);
-  Context<SingleForwardDataSource<ITE_T>, Fail> real_ctx(data, fail);
+  Context<SingleForwardDataSource<ITE_T>, Fail, decltype(real_dst)> real_ctx(
+      data, fail, real_dst);
 
   auto parser = make_parser_(real_ctx, real_dst, DefaultReqs(), real_pat);
 

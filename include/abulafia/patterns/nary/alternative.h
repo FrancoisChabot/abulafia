@@ -53,6 +53,19 @@ operator|(LHS_T&& lhs, RHS_T&& rhs) {
             make_pattern(forward<RHS_T>(rhs)));
 }
 
+template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
+auto transform_alt_impl(CHILD_TUP_T const& c, CB_T const& cb,
+                        std::index_sequence<Is...>) {
+  return alt(transform(std::get<Is>(c), cb)...);
+}
+
+template <typename... CHILD_PATS_T, typename CB_T>
+auto transform(Alt<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
+  using indices = std::make_index_sequence<sizeof...(CHILD_PATS_T)>;
+  auto const& childs_tuple = tgt.childs();
+
+  return transform_alt_impl(childs_tuple, cb, indices());
+}
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

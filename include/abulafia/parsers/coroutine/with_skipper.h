@@ -27,12 +27,13 @@ class WithSkipperImpl {
 
  public:
   WithSkipperImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
-      : child_parser_(sub_ctx_t(ctx.data(), pat.getSkip()), dst,
-                      pat.getChild()) {}
+      : child_parser_(sub_ctx_t(ctx.data(), pat.getSkip(), ctx.bound_dst()),
+                      dst, pat.getChild()) {}
 
   Result consume(ctx_t ctx, dst_t dst, pat_t const& pat) {
-    return child_parser_.consume(sub_ctx_t(ctx.data(), pat.getSkip()), dst,
-                                 pat.getChild());
+    return child_parser_.consume(
+        sub_ctx_t(ctx.data(), pat.getSkip(), ctx.bound_dst()), dst,
+        pat.getChild());
   }
 };
 

@@ -10,6 +10,7 @@
 
 #include "abulafia/config.h"
 
+#include "abulafia/context.h"
 #include "abulafia/dst_wrapper/select_wrapper.h"
 #include "abulafia/parsers/coroutine/dst_behavior.h"
 #include "abulafia/patterns/leaf/fail.h"
@@ -31,7 +32,7 @@ class SkipAdapter {
   using child_parser_t =
       typename PARSER_FACTORY_T::template type<CTX_T, DST_T, REQ_T>;
 
-  using skip_context_t = typename CTX_T::template set_skipper_t<Fail>;
+  using skip_context_t = Context<typename CTX_T::datasource_t, Fail, Nil>;
 
   struct skip_req_t {
     enum { ATOMIC = false, FAILS_CLEANLY = true, CONSUMES_ON_SUCCESS = true };
@@ -41,17 +42,17 @@ class SkipAdapter {
       Parser_t<skip_context_t, Nil, skip_req_t, typename CTX_T::skip_pattern_t>;
 
   SkipAdapter(CTX_T ctx, DST_T dst, pat_t const& pat)
-      : skip_parser_(skip_context_t(ctx.data(), fail), nil, ctx.skipper()),
+      : skip_parser_(skip_context_t(ctx.data(), fail, nil), nil, ctx.skipper()),
         adapted_parser_(ctx, dst, pat) {}
 
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     while (!skipping_done_) {
-      auto status = skip_parser_.consume(skip_context_t(ctx.data(), fail), nil,
-                                         ctx.skipper());
+      auto status = skip_parser_.consume(skip_context_t(ctx.data(), fail, nil),
+                                         nil, ctx.skipper());
       switch (status) {
         case Result::SUCCESS:
-          skip_parser_ = skip_parser_t(skip_context_t(ctx.data(), fail), nil,
-                                       ctx.skipper());
+          skip_parser_ = skip_parser_t(skip_context_t(ctx.data(), fail, nil),
+                                       nil, ctx.skipper());
           break;
         case Result::FAILURE:
           skipping_done_ = true;
