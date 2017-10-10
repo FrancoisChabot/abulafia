@@ -47,10 +47,10 @@ template <typename LHS_T, typename RHS_T>
 std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
                  typename detail::NaryPatternBuilder<Alt, pattern_t<LHS_T>,
                                                      pattern_t<RHS_T>>::type>
-operator|(LHS_T&& lhs, RHS_T&& rhs) {
+operator|(LHS_T lhs, RHS_T rhs) {
   return detail::NaryPatternBuilder<Alt, pattern_t<LHS_T>, pattern_t<RHS_T>>::
-      build(make_pattern(forward<LHS_T>(lhs)),
-            make_pattern(forward<RHS_T>(rhs)));
+      build(make_pattern(std::move(lhs)),
+            make_pattern(std::move(rhs)));
 }
 
 template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
