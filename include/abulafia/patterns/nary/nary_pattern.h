@@ -16,13 +16,15 @@
 
 namespace ABULAFIA_NAMESPACE {
 namespace detail {
+
+// Checks wether T is a PAT_T<...>
 template <typename T, template <typename...> typename PAT_T>
 struct is_nary_pattern : public std::false_type {};
 
 template <typename... T, template <typename...> typename PAT_T>
 struct is_nary_pattern<PAT_T<T...>, PAT_T> : public std::true_type {};
 
-
+// A op B, where neither A or B are the resulting nary pattern type
 template <template <typename...> typename PAT_T, typename LHS_T, typename RHS_T,
           typename Enable = void>
 struct NaryPatternBuilder {
@@ -33,6 +35,8 @@ struct NaryPatternBuilder {
   }
 };
 
+// A op B op C
+//        ^^
 template <template <typename...> typename PAT_T, typename RHS_T,
           typename... LHS_T>
 struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, RHS_T,
@@ -45,6 +49,8 @@ struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, RHS_T,
   }
 };
 
+// A op (B op C)
+//   ^^ 
 template <template <typename...> typename PAT_T, typename LHS_T,
           typename... RHS_T>
 struct NaryPatternBuilder<PAT_T, LHS_T, PAT_T<RHS_T...>,
@@ -57,6 +63,8 @@ struct NaryPatternBuilder<PAT_T, LHS_T, PAT_T<RHS_T...>,
   }
 };
 
+// (A op B) op (C op D)
+//          ^^
 template <template <typename...> typename PAT_T, typename... LHS_T,
           typename... RHS_T>
 struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, PAT_T<RHS_T...>, void> {
