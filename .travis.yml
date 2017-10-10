@@ -29,7 +29,7 @@ script:
     - rm ../include/abulafia/abulafia_all.h
     - cmake -DCMAKE_VERBOSE_MAKEFILE=ON ..
     - cmake --build .
-    - ctest
+    - ctest --output-on-failure
 
 notifications:
   email: false
