@@ -46,3 +46,17 @@ TEST(test_recur, recur_test) {
 
   testPatternSuccess("123456", recur, nil);
 }
+
+// Reproduces https://github.com/FrancoisChabot/abulafia/issues/17
+template <typename PAT_T>
+auto as_recur(PAT_T const& p) {
+  Recur<struct as_recur_t> as_recur;
+  ABU_Recur_define(as_recur, as_recur_t, p);
+  return as_recur;
+}
+
+TEST(test_recur, recur_delegate_to_template) {
+  auto pat = Int<10, 2, 2>();
+
+  testPatternSuccess("12", as_recur(pat), 12);
+}

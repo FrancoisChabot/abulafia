@@ -23,7 +23,7 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
           typename ATTR_T>
 class RecurImpl {
   using pat_t = Recur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename pat_t::operand_pat_t;
+  using operand_pat_t = typename pat_t::operand_pat_t::impl_t;
 
   using operand_parser_t = Parser<CTX_T, DST_T, RecurChildReqs, operand_pat_t>;
 
@@ -38,9 +38,9 @@ class RecurImpl {
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (!child_parser_) {
       child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
+          std::make_unique<operand_parser_t>(ctx, dst, pat.operand().impl);
     }
-    return child_parser_->consume(ctx, dst, pat.operand());
+    return child_parser_->consume(ctx, dst, pat.operand().impl);
   }
 };
 
@@ -48,7 +48,7 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
           typename ATTR_T>
 class WeakRecurImpl {
   using pat_t = WeakRecur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename pat_t::operand_pat_t;
+  using operand_pat_t = typename pat_t::operand_pat_t::impl_t;
 
   using operand_parser_t = Parser<CTX_T, DST_T, RecurChildReqs, operand_pat_t>;
 
@@ -63,14 +63,15 @@ class WeakRecurImpl {
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (!child_parser_) {
       child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
+          std::make_unique<operand_parser_t>(ctx, dst, pat.operand().impl);
     }
-    return child_parser_->consume(ctx, dst, pat.operand());
+    return child_parser_->consume(ctx, dst, pat.operand().impl);
   }
 };
 
 template <typename CHILD_PAT_T, typename ATTR_T>
 struct ParserFactory<Recur<CHILD_PAT_T, ATTR_T>> {
+  static_assert(is_pattern<typename CHILD_PAT_T::impl_t>());
   using pat_t = Recur<CHILD_PAT_T, ATTR_T>;
 
   static constexpr DstBehavior dst_behavior() {
@@ -92,7 +93,7 @@ struct ParserFactory<Recur<CHILD_PAT_T, ATTR_T>> {
 
 template <typename CHILD_PAT_T, typename ATTR_T>
 struct ParserFactory<WeakRecur<CHILD_PAT_T, ATTR_T>> {
-  static_assert(is_pattern<CHILD_PAT_T>());
+  static_assert(is_pattern<typename CHILD_PAT_T::impl_t>());
   using pat_t = WeakRecur<CHILD_PAT_T, ATTR_T>;
 
   static constexpr DstBehavior dst_behavior() {

@@ -55,7 +55,7 @@ namespace char_set {
 template <typename CHAR_T>
 struct Any : public CharacterSet {
   using char_t = CHAR_T;
-  bool is_valid(char_t const&) const { return true; }
+  bool is_valid(char_t const &) const { return true; }
 };
 template <typename CHAR_T>
 Any<CHAR_T> any;
@@ -66,7 +66,8 @@ namespace ABULAFIA_NAMESPACE {
 template <typename T>
 struct function_traits : public function_traits<decltype(&T::operator())> {};
 template <typename ClassType, typename ReturnType, typename... Args>
-struct function_traits<ReturnType (ClassType::*)(Args...) const> {
+struct function_traits<ReturnType (ClassType::*)(Args...) const>
+{
   enum { arity = sizeof...(Args) };
   typedef ReturnType result_type;
   template <size_t i>
@@ -99,7 +100,6 @@ struct DelegatedSet : public CharacterSet {
   using char_t = CHAR_T;
   explicit DelegatedSet(CB_T cb) : cb_(std::move(cb)) {}
   bool is_valid(char_t const& c) const { return cb_(c); }
-
  private:
   CB_T cb_;
 };
@@ -122,7 +122,6 @@ struct Not : public CharacterSet {
   using char_t = typename ARG_T::char_t;
   explicit Not(ARG_T arg) : arg_(std::move(arg)) {}
   bool is_valid(char_t const& c) const { return !arg_.is_valid(c); }
-
  private:
   ARG_T arg_;
   static_assert(is_char_set<ARG_T>::value);
@@ -189,7 +188,6 @@ struct Or : public CharacterSet {
   bool is_valid(char_t const& c) const {
     return lhs_.is_valid(c) || rhs_.is_valid(c);
   }
-
  private:
   LHS_T lhs_;
   RHS_T rhs_;
@@ -243,7 +241,6 @@ struct Range : public CharacterSet {
   bool is_valid(char_t const& token) const {
     return token >= begin_ && token <= end_;
   }
-
  private:
   CHAR_T begin_;
   CHAR_T end_;
@@ -278,7 +275,6 @@ struct IndexedSet : public CharacterSet {
     }
   }
   bool is_valid(const char_t& c) const { return characters_.test(as_index(c)); }
-
  private:
   using unsigned_t = std::make_unsigned_t<CHAR_T>;
   static constexpr std::size_t as_index(CHAR_T c) { return unsigned_t(c); }
@@ -310,7 +306,6 @@ struct Single : public CharacterSet {
   bool is_valid(T const& token) const {
     return token == character_;
   }
-
  private:
   CHAR_T character_;
 };
@@ -339,7 +334,6 @@ class ContainerSequenceDataSource {
   using rollback_entry_t = std::pair<iterator, buffer_iterator>;
   std::vector<rollback_entry_t> rollback_stack_;
   unsigned int empty_rollbacks_ = 0;
-
  public:
   using value_type = typename CONTAINER_T::value_type;
   enum { IS_RESUMABLE = true };
@@ -423,7 +417,6 @@ class ContainerSequenceDataSource {
     }
   }
   static constexpr bool isResumable() { return true; }
-
  private:
   void cleanup_rollback_() {
     // The only hold that matters is the front of the rollback stack.
@@ -444,7 +437,6 @@ class SingleForwardDataSource {
   std::stack<iterator> rollback_stack_;
   iterator current_;
   iterator end_;
-
  public:
   enum {
     HAS_SKIPPER = false,
@@ -500,7 +492,6 @@ class CollectionWrapper {
     return *this;
   }
   T& get() { return v_; }
-
  private:
   T& v_;
 };
@@ -565,7 +556,6 @@ class ValueWrapper {
   }
   // using this implies that we are NOT atomic in nature.
   T& get() { return v_; }
-
  private:
   T& v_;
 };
@@ -740,7 +730,6 @@ class AtomicAdapter {
     }
     return status;
   }
-
  private:
   buffer_t buffer_;
   child_parser_t adapted_parser_;
@@ -790,7 +779,6 @@ class CleanFailureAdapter {
     }
     return status;
   }
-
  private:
   child_parser_t adapted_parser_;
 };
@@ -834,7 +822,6 @@ struct Context {
   DATASOURCE_T& data() { return data_; }
   SKIPPER_T const& skipper() { return skipper_; }
   BOUND_DST_T const& bound_dst() { return bound_dst_; }
-
  private:
   DATASOURCE_T& data_;
   SKIPPER_T const& skipper_;
@@ -880,7 +867,6 @@ class SkipAdapter {
     }
     return adapted_parser_.consume(ctx, dst, pat);
   }
-
  private:
   bool skipping_done_ = false;
   skip_parser_t skip_parser_;
@@ -1035,7 +1021,6 @@ struct ParserInterface {
         parser_(ctx_, dst, pat) {}
   DATASOURCE_T& data() { return data_source_; }
   Result consume() { return parser_.consume(ctx_, dst_, pat_); }
-
  private:
   using CTX_T = Context<DATASOURCE_T, Fail, REAL_DST_T>;
   DATASOURCE_T data_source_;
@@ -1062,7 +1047,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHILD_PAT_T, typename ATTR_T = Nil>
 class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
   std::shared_ptr<std::unique_ptr<CHILD_PAT_T>> pat_;
-
  public:
   using operand_pat_t = CHILD_PAT_T;
   using attr_t = ATTR_T;
@@ -1074,7 +1058,6 @@ class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
     return *this;
   }
   CHILD_PAT_T const& operand() const { return **pat_; }
-
  private:
   template <typename T, typename U>
   friend class WeakRecur;
@@ -1082,7 +1065,6 @@ class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
 template <typename CHILD_PAT_T, typename ATTR_T = Nil>
 class WeakRecur : public Pattern<WeakRecur<CHILD_PAT_T, ATTR_T>> {
   std::unique_ptr<CHILD_PAT_T>* pat_;
-
  public:
   using operand_pat_t = CHILD_PAT_T;
   WeakRecur(Recur<CHILD_PAT_T, ATTR_T> const& r) : pat_(r.pat_.get()) {}
@@ -1090,35 +1072,35 @@ class WeakRecur : public Pattern<WeakRecur<CHILD_PAT_T, ATTR_T>> {
   WeakRecur(WeakRecur&& rhs) = default;
   CHILD_PAT_T const& operand() const { return **pat_; }
 };
-template <typename CHILD_PAT_T, typename ATTR_T>
+template <typename TGT_RECUR_T>
 struct RecurWeakener {
   template <typename T>
   auto operator()(T const& rhs) const {
     return transform(rhs, *this);
   }
-  auto operator()(Recur<CHILD_PAT_T, ATTR_T> const& tgt_recur) const {
+  auto operator()(TGT_RECUR_T const& tgt_recur) const {
+    using CHILD_PAT_T = typename TGT_RECUR_T::operand_pat_t;
+    using ATTR_T = typename TGT_RECUR_T::attr_t;
     return WeakRecur<CHILD_PAT_T, ATTR_T>(tgt_recur);
   }
 };
 template <typename RECUR_T, typename PAT_T>
 auto weaken_recur(PAT_T const& pat) {
-  using CHILD_PAT_T = typename RECUR_T::operand_pat_t;
-  using ATTR_T = typename RECUR_T::attr_t;
-  RecurWeakener<CHILD_PAT_T, ATTR_T> transformation;
+  RecurWeakener<RECUR_T> transformation;
   return transform(pat, transformation);
 }
 }  // namespace ABULAFIA_NAMESPACE
-#define ABU_Recur_define(var, RECUR_TAG, pattern)                             \
-  using abu_##RECUR_TAG##_recur_t = decltype(var);                            \
-  using abu_##RECUR_TAG##_weakened_t = decltype(                              \
-      ABULAFIA_NAMESPACE ::weaken_recur<abu_##RECUR_TAG##_recur_t>(pattern)); \
-  struct RECUR_TAG : public abu_##RECUR_TAG##_weakened_t {                    \
-    using pattern_t = abu_##RECUR_TAG##_weakened_t;                           \
-    RECUR_TAG(decltype(pattern) const & p)                                    \
-        : pattern_t(                                                          \
-              ABULAFIA_NAMESPACE ::weaken_recur<abu_##RECUR_TAG##_recur_t>(   \
-                  p)) {}                                                      \
-  };                                                                          \
+#define ABU_Recur_define(var, RECUR_TAG, pattern)                           \
+  struct RECUR_TAG {                                                        \
+    using pattern_t = decltype(pattern);                                    \
+    using abu_recur_t = decltype(var);                                      \
+    using impl_t = decltype(ABULAFIA_NAMESPACE ::weaken_recur<abu_recur_t>( \
+        std::declval<pattern_t>()));                                        \
+    impl_t impl;                                                            \
+                                                                            \
+    RECUR_TAG(pattern_t const& p)                                           \
+        : impl(ABULAFIA_NAMESPACE ::weaken_recur<abu_recur_t>(p)) {}        \
+  };                                                                        \
   var = RECUR_TAG(pattern);
 
 namespace ABULAFIA_NAMESPACE {
@@ -1126,7 +1108,6 @@ template <typename CHILD_PAT_T, typename SKIP_T>
 class WithSkipper : public Pattern<WithSkipper<CHILD_PAT_T, SKIP_T>> {
   CHILD_PAT_T child_pat_;
   SKIP_T skip_pat_;
-
  public:
   CHILD_PAT_T const& getChild() const { return child_pat_; }
   SKIP_T const& getSkip() const { return skip_pat_; }
@@ -1140,10 +1121,9 @@ auto apply_skipper(PAT_T&& pat, SKIP_T&& skip) {
 }
 template <typename CHILD_PAT_T, typename SKIP_T, typename CB_T>
 auto transform(WithSkipper<CHILD_PAT_T, SKIP_T> const& tgt, CB_T const& cb) {
-  return tgt;
   auto new_child = cb(tgt.getChild());
   return WithSkipper<decltype(new_child), SKIP_T>(std::move(new_child),
-                                                  cb.getSkip);
+                                                  tgt.getSkip());
 }
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1152,7 +1132,6 @@ template <typename OP_T, typename NEG_T>
 class Except : public Pattern<Except<OP_T, NEG_T>> {
   OP_T op_;
   NEG_T neg_;
-
  public:
   using op_t = OP_T;
   using neg_t = NEG_T;
@@ -1189,7 +1168,6 @@ class List : public Pattern<List<OP_T, SEP_PAT_T>> {
       : val_(std::move(val_pat)), sep_(std::move(sep)) {}
   OP_T const& op() const { return val_; }
   SEP_PAT_T const& sep() const { return sep_; }
-
  private:
   OP_T val_;
   SEP_PAT_T sep_;
@@ -1218,7 +1196,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHARSET_T>
 class Char : public LeafPattern<Char<CHARSET_T>> {
   CHARSET_T char_set_;
-
  public:
   Char(CHARSET_T chars) : char_set_(std::move(chars)) {}
   CHARSET_T const& char_set() const { return char_set_; }
@@ -1254,7 +1231,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class Discard : public Pattern<Discard<PAT_T>> {
   PAT_T operand_;
-
  public:
   Discard(PAT_T op) : operand_(std::move(op)) {}
   PAT_T const& operand() const { return operand_; }
@@ -1293,7 +1269,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHAR_T, typename VAL_T>
 class CharSymbol : public LeafPattern<CharSymbol<CHAR_T, VAL_T>> {
   std::map<CHAR_T, VAL_T> mapping_;
-
  public:
   CharSymbol(std::map<CHAR_T, VAL_T> vals) : mapping_(std::move(vals)) {}
   std::map<CHAR_T, VAL_T> const& mapping() const { return mapping_; }
@@ -1318,7 +1293,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHAR_T>
 class StringLiteral : public LeafPattern<StringLiteral<CHAR_T>> {
   std::shared_ptr<std::basic_string<CHAR_T>> str_;
-
  public:
   StringLiteral(std::basic_string<CHAR_T> str)
       : str_(std::make_shared<std::basic_string<CHAR_T>>(std::move(str))) {
@@ -1354,7 +1328,6 @@ class Symbol : public LeafPattern<Symbol<CHAR_T, VAL_T>> {
     std::optional<VAL_T> val;
   };
   std::shared_ptr<Node> root_;
-
  public:
   using node_t = Node;
   Symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals)
@@ -1445,7 +1418,6 @@ class Alt : public Pattern<Alt<CHILD_PATS_T...>> {
   using child_tuple_t = std::tuple<CHILD_PATS_T...>;
   Alt(child_tuple_t childs) : childs_(std::move(childs)) {}
   child_tuple_t const& childs() const { return childs_; }
-
  private:
   child_tuple_t childs_;
 };
@@ -1488,7 +1460,6 @@ class Seq : public Pattern<Seq<CHILD_PATS_T...>> {
   // The computed type for individual members of the sequence
   Seq(child_tuple_t const& childs) : childs_(childs) {}
   child_tuple_t const& childs() const { return childs_; }
-
  private:
   child_tuple_t childs_;
 };
@@ -1528,7 +1499,6 @@ template <typename CHILD_PAT_T, typename ACT_T>
 class Action : public Pattern<Action<CHILD_PAT_T, ACT_T>> {
   CHILD_PAT_T pat_;
   ACT_T act_;
-
  public:
   Action(CHILD_PAT_T pat, ACT_T act)
       : pat_(std::move(pat)), act_(std::move(act)) {}
@@ -1551,7 +1521,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class BindDst : public Pattern<BindDst<PAT_T>> {
   PAT_T child_;
-
  public:
   BindDst(PAT_T child) : child_(std::move(child)) {}
   PAT_T const& operand() const { return child_; }
@@ -1571,7 +1540,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename CHILD_PAT_T, typename... ARGS_T>
 class Construct : public Pattern<Construct<CHILD_PAT_T, ARGS_T...>> {
   CHILD_PAT_T pat_;
-
  public:
   Construct(CHILD_PAT_T pat) : pat_(std::move(pat)) {}
   CHILD_PAT_T const& child_pattern() const { return pat_; }
@@ -1586,7 +1554,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class Lexeme : public Pattern<Lexeme<PAT_T>> {
   PAT_T child_;
-
  public:
   Lexeme(PAT_T child) : child_(std::move(child)) {}
   PAT_T const& operand() const { return child_; }
@@ -1601,7 +1568,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class Not : public Pattern<Not<PAT_T>> {
   PAT_T child_;
-
  public:
   Not(const PAT_T& child) : child_(child) {}
   Not(PAT_T&& child) : child_(std::move(child)) {}
@@ -1619,7 +1585,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T>
 class Optional : public Pattern<Optional<PAT_T>> {
   PAT_T child_;
-
  public:
   Optional(PAT_T child) : child_(std::move(child)) {}
   PAT_T const& operand() const { return child_; }
@@ -1635,7 +1600,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
 class Repeat : public Pattern<Repeat<PAT_T, MIN_REP, MAX_REP>> {
   PAT_T operand_;
-
  public:
   Repeat(const PAT_T op) : operand_(std::move(op)) {}
   PAT_T const& operand() const { return operand_; }
@@ -1661,6 +1625,7 @@ auto operator+(PAT_T&& pat) {
   return repeat<1, 0>(forward<PAT_T>(pat));
 }
 }  // namespace ABULAFIA_NAMESPACE
+
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CTX_T, typename DST_T, std::size_t BASE,
@@ -1711,7 +1676,6 @@ class IntImpl {
       }
     }
   }
-
  private:
   std::size_t digit_count_ = 0;
   bool look_for_sign_ = true;
@@ -1762,7 +1726,6 @@ class UIntImpl {
       }
     }
   }
-
  private:
   std::size_t digit_count_ = 0;
 };
@@ -1861,7 +1824,6 @@ class EoiImpl {
   using ctx_t = CTX_T;
   using dst_t = Nil;
   using pat_t = Fail;
-
  public:
   EoiImpl(CTX_T, Nil, Eoi const&) {}
   Result consume(CTX_T ctx, Nil, Eoi const& pat) { return peek(ctx, pat); }
@@ -1891,7 +1853,6 @@ class FailImpl {
   using ctx_t = CTX_T;
   using dst_t = Nil;
   using pat_t = Fail;
-
  public:
   FailImpl(CTX_T, Nil, Fail const&) {}
   Result consume(CTX_T, Nil, Fail const&) { return Result::FAILURE; }
@@ -1917,7 +1878,6 @@ class PassImpl {
   using ctx_t = CTX_T;
   using dst_t = Nil;
   using pat_t = Pass;
-
  public:
   PassImpl(CTX_T, Nil, Pass const&) {}
   Result consume(CTX_T, Nil, Pass const&) { return Result::SUCCESS; }
@@ -1941,7 +1901,6 @@ template <typename CTX_T, typename DST_T, typename CHAR_T>
 class StringLiteralImpl {
   using PAT_T = StringLiteral<CHAR_T>;
   typename std::basic_string<CHAR_T>::const_iterator next_expected_;
-
  public:
   StringLiteralImpl(CTX_T, DST_T, PAT_T const& pat)
       : next_expected_(pat.begin()) {}
@@ -1983,7 +1942,6 @@ class SymbolImpl {
   using node_t = typename pat_t::node_t;
   node_t const* next_ = nullptr;
   node_t const* current_valid_ = nullptr;
-
  public:
   SymbolImpl(CTX_T, DST_T, pat_t const& pat) : next_(pat.root()) {}
   Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
@@ -2070,7 +2028,6 @@ class ExceptImpl {
   using neg_parser_t = Parser<CTX_T, Nil, neg_req_t, NEG_T>;
   using child_parsers_t = std::variant<neg_parser_t, op_parser_t>;
   child_parsers_t child_parsers_;
-
  public:
   ExceptImpl(CTX_T ctx, DST_T, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(), ctx, nil, pat.neg()) {}
@@ -2128,7 +2085,6 @@ class ListImpl {
   using sep_parser_t = Parser<CTX_T, Nil, sep_req_t, SEP_T>;
   using child_parsers_t = std::variant<op_parser_t, sep_parser_t>;
   child_parsers_t child_parsers_;
-
  public:
   ListImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(), ctx, dst, pat.op()) {
@@ -2228,7 +2184,6 @@ class AltImpl {
   using child_parsers_t =
       std::variant<Parser<CTX_T, DST_T, child_req_t, CHILD_PATS_T>...>;
   child_parsers_t child_parsers_;
-
  public:
   AltImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(), ctx, dst, getChild<0>(pat)) {
@@ -2398,7 +2353,6 @@ class SeqImpl {
       CTX_T, DST_T, child_req_t, childs_tuple_t,
       std::index_sequence_for<CHILD_PATS_T...>>::type;
   child_parsers_t child_parsers_;
-
  public:
   template <std::size_t ID>
   decltype(auto) getDstFor(DST_T dst) {
@@ -2626,7 +2580,6 @@ class ActionImpl {
                                 child_req_t, CHILD_PAT_T>;
   landing_type_t landing;
   child_parser_t child_parser_;
-
  public:
   ActionImpl(CTX_T ctx, DST_T, PAT_T const& pat)
       : child_parser_(ctx, wrap_dst(landing), pat.child_pattern()) {}
@@ -2668,7 +2621,6 @@ class BindDstImpl {
   };
   using child_parser_t = Parser<sub_ctx_t, DST_T, child_req_t, CHILD_PAT_T>;
   child_parser_t parser_;
-
  public:
   BindDstImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : parser_(sub_ctx_t(ctx.data(), ctx.skipper(), dst), dst, pat.operand()) {
@@ -2709,7 +2661,6 @@ class ConstructImpl {
   using child_parser_t = Parser<CTX_T, child_dst_t, childs_reqs_t, CHILD_PAT_T>;
   buffer_t buffer_;
   child_parser_t parser_;
-
  public:
   ConstructImpl(CTX_T ctx, DST_T, pat_t const& pat)
       : parser_(ctx, child_dst_t(buffer_), pat.child_pattern()) {}
@@ -2744,7 +2695,6 @@ class DiscardImpl {
   using pat_t = Discard<CHILD_PAT_T>;
   using child_parser_t = Parser<ctx_t, Nil, req_t, CHILD_PAT_T>;
   child_parser_t child_parser_;
-
  public:
   DiscardImpl(ctx_t ctx, dst_t, pat_t const& pat)
       : child_parser_(ctx, nil, pat.operand()) {}
@@ -2772,7 +2722,6 @@ class LexemeImpl {
   using sub_ctx_t = typename CTX_T::template set_skipper_t<Fail>;
   using child_parser_t = Parser<sub_ctx_t, DST_T, REQ_T, CHILD_PAT_T>;
   child_parser_t parser_;
-
  public:
   LexemeImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : parser_(sub_ctx_t(ctx.data(), fail), dst, pat.operand()) {}
@@ -2810,7 +2759,6 @@ class NotImpl {
   };
   using child_parser_t = Parser<CTX_T, DST_T, child_req_t, CHILD_PAT_T>;
   child_parser_t parser_;
-
  public:
   NotImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : parser_(ctx, dst, pat.operand()) {
@@ -2879,7 +2827,6 @@ class OptImpl {
   };
   using child_parser_t = Parser<CTX_T, DST_T, child_req_t, CHILD_PAT_T>;
   child_parser_t parser_;
-
  public:
   OptImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : parser_(ctx, dst, pat.operand()) {
@@ -2943,7 +2890,6 @@ class RepeatImpl {
   using child_parser_t = Parser<ctx_t, child_dst_t, child_req_t, CHILD_PAT_T>;
   std::size_t count_ = 0;
   child_parser_t child_parser_;
-
  public:
   RepeatImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
       : child_parser_(ctx, child_dst_t(dst), pat.operand()) {}
@@ -2994,10 +2940,9 @@ template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
           typename ATTR_T>
 class RecurImpl {
   using pat_t = Recur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename pat_t::operand_pat_t;
+  using operand_pat_t = typename pat_t::operand_pat_t::impl_t;
   using operand_parser_t = Parser<CTX_T, DST_T, RecurChildReqs, operand_pat_t>;
   std::unique_ptr<operand_parser_t> child_parser_;
-
  public:
   RecurImpl(CTX_T, DST_T, pat_t const&) {
     // We do not create the child parser here, since this is a recursive
@@ -3006,19 +2951,18 @@ class RecurImpl {
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (!child_parser_) {
       child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
+          std::make_unique<operand_parser_t>(ctx, dst, pat.operand().impl);
     }
-    return child_parser_->consume(ctx, dst, pat.operand());
+    return child_parser_->consume(ctx, dst, pat.operand().impl);
   }
 };
 template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
           typename ATTR_T>
 class WeakRecurImpl {
   using pat_t = WeakRecur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename pat_t::operand_pat_t;
+  using operand_pat_t = typename pat_t::operand_pat_t::impl_t;
   using operand_parser_t = Parser<CTX_T, DST_T, RecurChildReqs, operand_pat_t>;
   std::unique_ptr<operand_parser_t> child_parser_;
-
  public:
   WeakRecurImpl(CTX_T, DST_T, pat_t const&) {
     // We do not create the child parser here, since this is a recursive
@@ -3027,13 +2971,14 @@ class WeakRecurImpl {
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (!child_parser_) {
       child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand());
+          std::make_unique<operand_parser_t>(ctx, dst, pat.operand().impl);
     }
-    return child_parser_->consume(ctx, dst, pat.operand());
+    return child_parser_->consume(ctx, dst, pat.operand().impl);
   }
 };
 template <typename CHILD_PAT_T, typename ATTR_T>
 struct ParserFactory<Recur<CHILD_PAT_T, ATTR_T>> {
+  static_assert(is_pattern<typename CHILD_PAT_T::impl_t>());
   using pat_t = Recur<CHILD_PAT_T, ATTR_T>;
   static constexpr DstBehavior dst_behavior() {
     if (std::is_same<Nil, ATTR_T>::value) {
@@ -3050,7 +2995,7 @@ struct ParserFactory<Recur<CHILD_PAT_T, ATTR_T>> {
 };
 template <typename CHILD_PAT_T, typename ATTR_T>
 struct ParserFactory<WeakRecur<CHILD_PAT_T, ATTR_T>> {
-  static_assert(is_pattern<CHILD_PAT_T>());
+  static_assert(is_pattern<typename CHILD_PAT_T::impl_t>());
   using pat_t = WeakRecur<CHILD_PAT_T, ATTR_T>;
   static constexpr DstBehavior dst_behavior() {
     if (std::is_same<Nil, ATTR_T>::value) {
@@ -3084,7 +3029,6 @@ class WithSkipperImpl {
   using pat_t = WithSkipper<CHILD_PAT_T, SKIP_T>;
   using sub_ctx_t = typename ctx_t::template set_skipper_t<SKIP_T>;
   Parser<sub_ctx_t, dst_t, REQ_T, CHILD_PAT_T> child_parser_;
-
  public:
   WithSkipperImpl(ctx_t ctx, dst_t dst, pat_t const& pat)
       : child_parser_(sub_ctx_t(ctx.data(), pat.getSkip(), ctx.bound_dst()),
@@ -3109,5 +3053,7 @@ struct ParserFactory<WithSkipper<CHILD_PAT_T, SKIP_T>> {
   using type = WithSkipperImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, SKIP_T>;
 };
 }  // namespace ABULAFIA_NAMESPACE
+
+
 
 #endif

@@ -58,40 +58,39 @@ class WeakRecur : public Pattern<WeakRecur<CHILD_PAT_T, ATTR_T>> {
   CHILD_PAT_T const& operand() const { return **pat_; }
 };
 
-template <typename CHILD_PAT_T, typename ATTR_T>
+template <typename TGT_RECUR_T>
 struct RecurWeakener {
   template <typename T>
   auto operator()(T const& rhs) const {
     return transform(rhs, *this);
   }
 
-  auto operator()(Recur<CHILD_PAT_T, ATTR_T> const& tgt_recur) const {
+  auto operator()(TGT_RECUR_T const& tgt_recur) const {
+    using CHILD_PAT_T = typename TGT_RECUR_T::operand_pat_t;
+    using ATTR_T = typename TGT_RECUR_T::attr_t;
     return WeakRecur<CHILD_PAT_T, ATTR_T>(tgt_recur);
   }
 };
 
 template <typename RECUR_T, typename PAT_T>
 auto weaken_recur(PAT_T const& pat) {
-  using CHILD_PAT_T = typename RECUR_T::operand_pat_t;
-  using ATTR_T = typename RECUR_T::attr_t;
-  RecurWeakener<CHILD_PAT_T, ATTR_T> transformation;
-
+  RecurWeakener<RECUR_T> transformation;
   return transform(pat, transformation);
 }
 
 }  // namespace ABULAFIA_NAMESPACE
 
-#define ABU_Recur_define(var, RECUR_TAG, pattern)                             \
-  using abu_##RECUR_TAG##_recur_t = decltype(var);                            \
-  using abu_##RECUR_TAG##_weakened_t = decltype(                              \
-      ABULAFIA_NAMESPACE ::weaken_recur<abu_##RECUR_TAG##_recur_t>(pattern)); \
-  struct RECUR_TAG : public abu_##RECUR_TAG##_weakened_t {                    \
-    using pattern_t = abu_##RECUR_TAG##_weakened_t;                           \
-    RECUR_TAG(decltype(pattern) const & p)                                    \
-        : pattern_t(                                                          \
-              ABULAFIA_NAMESPACE ::weaken_recur<abu_##RECUR_TAG##_recur_t>(   \
-                  p)) {}                                                      \
-  };                                                                          \
+#define ABU_Recur_define(var, RECUR_TAG, pattern)                           \
+  struct RECUR_TAG {                                                        \
+    using pattern_t = decltype(pattern);                                    \
+    using abu_recur_t = decltype(var);                                      \
+    using impl_t = decltype(ABULAFIA_NAMESPACE ::weaken_recur<abu_recur_t>( \
+        std::declval<pattern_t>()));                                        \
+    impl_t impl;                                                            \
+                                                                            \
+    RECUR_TAG(pattern_t const& p)                                           \
+        : impl(ABULAFIA_NAMESPACE ::weaken_recur<abu_recur_t>(p)) {}        \
+  };                                                                        \
   var = RECUR_TAG(pattern);
 
 #endif
