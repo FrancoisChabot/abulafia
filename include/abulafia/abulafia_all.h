@@ -484,16 +484,16 @@ class CollectionWrapper {
  public:
   using dst_type = T;
   using dst_value_type = typename T::value_type;
-  CollectionWrapper(T& v) : v_(v) {}
-  CollectionWrapper(CollectionWrapper const&) = default;
+  CollectionWrapper(T& v) : v_(&v) {}
+  CollectionWrapper(CollectionWrapper const& rhs) : v_(rhs.v_) {}
   template <typename U>
   CollectionWrapper& operator=(U&& rhs) {
-    details::append_to_container(v_, std::forward<U>(rhs));
+    details::append_to_container(*v_, std::forward<U>(rhs));
     return *this;
   }
-  T& get() { return v_; }
+  T& get() { return *v_; }
  private:
-  T& v_;
+  T* v_;
 };
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -547,17 +547,17 @@ class ValueWrapper {
  public:
   using dst_type = T;
   using dst_value_type = T;
-  ValueWrapper(T& v) : v_(v) {}
-  ValueWrapper(ValueWrapper const&) = default;
+  ValueWrapper(T& v) : v_(&v) {}
+  ValueWrapper(ValueWrapper const& rhs) : v_(rhs.v_) {}
   template <typename U>
   ValueWrapper& operator=(U&& v) {
-    v_ = std::forward<U>(v);
+    *v_ = std::forward<U>(v);
     return *this;
   }
   // using this implies that we are NOT atomic in nature.
-  T& get() { return v_; }
+  T& get() { return *v_; }
  private:
-  T& v_;
+  T* v_;
 };
 }  // namespace ABULAFIA_NAMESPACE
 
