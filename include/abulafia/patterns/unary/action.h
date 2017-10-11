@@ -35,13 +35,6 @@ auto apply_action(PAT_T&& pat, ACT_T&& act) {
       std::forward<PAT_T>(pat), std::forward<ACT_T>(act));
 }
 
-template <typename CHILD_PAT_T, typename ACT_T, typename CB_T>
-auto transform(Action<CHILD_PAT_T, ACT_T> const& tgt, CB_T const& cb) {
-  auto new_op = cb(tgt.child_pattern());
-
-  return Action<decltype(new_op), ACT_T>(std::move(new_op), tgt.action());
-}
-
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

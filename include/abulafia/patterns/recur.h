@@ -17,17 +17,31 @@
 
 namespace ABULAFIA_NAMESPACE {
 
+struct RecurPayload {
+  virtual ~RecurPayload() {}
+};
+
+struct RecurMemoryPool {
+  std::unique_ptr<RecurPayload>* alloc() {
+    handles_.emplace_back();
+    return &handles_.back();
+  }
+
+ private:
+  std::deque<std::unique_ptr<RecurPayload>> handles_;
+};
+
 // Recur is broken up in two separate types: Recur and RecurUsage, in order
 // to break ref-count loops.
 template <typename CHILD_PAT_T, typename ATTR_T = Nil>
 class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
-  std::shared_ptr<std::unique_ptr<CHILD_PAT_T>> pat_;
+  std::unique_ptr<RecurPayload>* pat_;
 
  public:
   using operand_pat_t = CHILD_PAT_T;
   using attr_t = ATTR_T;
 
-  Recur() : pat_(std::make_shared<std::unique_ptr<CHILD_PAT_T>>()) {}
+  Recur(RecurMemoryPool& pool) : pat_(pool.alloc()) {}
   Recur(Recur const& rhs) = default;
   Recur(Recur&& rhs) = default;
 
@@ -36,61 +50,25 @@ class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
     return *this;
   }
 
-  CHILD_PAT_T const& operand() const { return **pat_; }
+  CHILD_PAT_T const& operand() const {
+    return static_cast<CHILD_PAT_T&>(**pat_);
+  }
 
  private:
   template <typename T, typename U>
   friend class WeakRecur;
 };
 
-template <typename CHILD_PAT_T, typename ATTR_T = Nil>
-class WeakRecur : public Pattern<WeakRecur<CHILD_PAT_T, ATTR_T>> {
-  std::unique_ptr<CHILD_PAT_T>* pat_;
-
- public:
-  using operand_pat_t = CHILD_PAT_T;
-
-  WeakRecur(Recur<CHILD_PAT_T, ATTR_T> const& r) : pat_(r.pat_.get()) {}
-
-  WeakRecur(WeakRecur const& rhs) = default;
-  WeakRecur(WeakRecur&& rhs) = default;
-
-  CHILD_PAT_T const& operand() const { return **pat_; }
-};
-
-template <typename TGT_RECUR_T>
-struct RecurWeakener {
-  template <typename T>
-  auto operator()(T const& rhs) const {
-    return transform(rhs, *this);
-  }
-
-  auto operator()(TGT_RECUR_T const& tgt_recur) const {
-    using CHILD_PAT_T = typename TGT_RECUR_T::operand_pat_t;
-    using ATTR_T = typename TGT_RECUR_T::attr_t;
-    return WeakRecur<CHILD_PAT_T, ATTR_T>(tgt_recur);
-  }
-};
-
-template <typename RECUR_T, typename PAT_T>
-auto weaken_recur(PAT_T const& pat) {
-  RecurWeakener<RECUR_T> transformation;
-  return transform(pat, transformation);
-}
-
 }  // namespace ABULAFIA_NAMESPACE
 
-#define ABU_Recur_define(var, RECUR_TAG, pattern)                           \
-  struct RECUR_TAG {                                                        \
-    using pattern_t = decltype(pattern);                                    \
-    using abu_recur_t = decltype(var);                                      \
-    using impl_t = decltype(ABULAFIA_NAMESPACE ::weaken_recur<abu_recur_t>( \
-        std::declval<pattern_t>()));                                        \
-    impl_t impl;                                                            \
-                                                                            \
-    RECUR_TAG(pattern_t const& p)                                           \
-        : impl(ABULAFIA_NAMESPACE ::weaken_recur<abu_recur_t>(p)) {}        \
-  };                                                                        \
+#define ABU_Recur_define(var, RECUR_TAG, pattern)               \
+  struct RECUR_TAG : public ABULAFIA_NAMESPACE ::RecurPayload { \
+    using pattern_t = std::decay_t<decltype(pattern)>;          \
+    using impl_t = pattern_t;                                   \
+    impl_t impl;                                                \
+                                                                \
+    RECUR_TAG(pattern_t const& p) : impl(p) {}                  \
+  };                                                            \
   var = RECUR_TAG(pattern);
 
 #endif

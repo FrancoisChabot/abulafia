@@ -10,7 +10,7 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/patterns/leaf/leaf_pattern.h"
+#include "abulafia/patterns/pattern.h"
 
 #include <cassert>
 #include <memory>
@@ -21,7 +21,7 @@ namespace ABULAFIA_NAMESPACE {
 // The string literal matches agaisnt a sequence of tokens without
 // emmiting anything.
 template <typename CHAR_T>
-class StringLiteral : public LeafPattern<StringLiteral<CHAR_T>> {
+class StringLiteral : public Pattern<StringLiteral<CHAR_T>> {
   std::shared_ptr<std::basic_string<CHAR_T>> str_;
 
  public:

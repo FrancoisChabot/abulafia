@@ -31,15 +31,6 @@ class List : public Pattern<List<OP_T, SEP_PAT_T>> {
   SEP_PAT_T sep_;
 };
 
-template <typename LHS_T, typename RHS_T, typename CB_T>
-auto transform(List<LHS_T, RHS_T> const& tgt, CB_T const& cb) {
-  auto new_op = cb(tgt.operand());
-  auto new_sep = cb(tgt.sep());
-
-  return List<decltype(new_op), decltype(new_sep)>(std::move(new_op),
-                                                   std::move(new_sep));
-}
-
 template <typename LHS_T, typename RHS_T>
 auto list(LHS_T lhs, RHS_T rhs) {
   return List<pattern_t<LHS_T>, pattern_t<RHS_T>>(make_pattern(std::move(lhs)),

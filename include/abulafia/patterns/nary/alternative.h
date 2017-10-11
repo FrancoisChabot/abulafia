@@ -49,23 +49,9 @@ std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
                                                      pattern_t<RHS_T>>::type>
 operator|(LHS_T lhs, RHS_T rhs) {
   return detail::NaryPatternBuilder<Alt, pattern_t<LHS_T>, pattern_t<RHS_T>>::
-      build(make_pattern(std::move(lhs)),
-            make_pattern(std::move(rhs)));
+      build(make_pattern(std::move(lhs)), make_pattern(std::move(rhs)));
 }
 
-template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
-auto transform_alt_impl(CHILD_TUP_T const& c, CB_T const& cb,
-                        std::index_sequence<Is...>) {
-  return alt(transform(std::get<Is>(c), cb)...);
-}
-
-template <typename... CHILD_PATS_T, typename CB_T>
-auto transform(Alt<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
-  using indices = std::make_index_sequence<sizeof...(CHILD_PATS_T)>;
-  auto const& childs_tuple = tgt.childs();
-
-  return transform_alt_impl(childs_tuple, cb, indices());
-}
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

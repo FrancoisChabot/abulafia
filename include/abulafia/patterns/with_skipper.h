@@ -38,14 +38,6 @@ auto apply_skipper(PAT_T&& pat, SKIP_T&& skip) {
       std::forward<PAT_T>(pat), std::forward<SKIP_T>(skip));
 }
 
-template <typename CHILD_PAT_T, typename SKIP_T, typename CB_T>
-auto transform(WithSkipper<CHILD_PAT_T, SKIP_T> const& tgt, CB_T const& cb) {
-  auto new_child = cb(tgt.getChild());
-
-  return WithSkipper<decltype(new_child), SKIP_T>(std::move(new_child),
-                                                  tgt.getSkip());
-}
-
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

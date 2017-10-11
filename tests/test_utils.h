@@ -23,6 +23,18 @@ void testPatternSuccess(std::string const& data, PAT_T const& pat,
     EXPECT_EQ(dst, expected_value);
   }
 
+  // Test parsing into Value, wrapped in recur
+  {
+    abu::RecurMemoryPool pool;
+    abu::Recur<struct as_recur_t> as_recur(pool);
+    ABU_Recur_define(as_recur, as_recur_t, abu::make_pattern(pat));
+
+    DST_T dst{};
+    auto status = abu::parse(data, as_recur, dst);
+    EXPECT_EQ(status, abu::Result::SUCCESS);
+    EXPECT_EQ(dst, expected_value);
+  }
+
   // Test drip-feeding one character at a time
   // First into Nil
   {

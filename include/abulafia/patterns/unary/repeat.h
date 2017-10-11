@@ -28,12 +28,6 @@ class Repeat : public Pattern<Repeat<PAT_T, MIN_REP, MAX_REP>> {
   PAT_T const& operand() const { return operand_; }
 };
 
-template <std::size_t MIN_REP, std::size_t MAX_REP, typename PAT_T,
-          typename CB_T>
-auto transform(Repeat<PAT_T, MIN_REP, MAX_REP> const& tgt, CB_T const& cb) {
-  return repeat(cb(tgt.operand()));
-}
-
 template <std::size_t MIN_REP = 0, std::size_t MAX_REP = 0, typename PAT_T>
 inline auto repeat(PAT_T pat) {
   return Repeat<pattern_t<PAT_T>, MIN_REP, MAX_REP>(

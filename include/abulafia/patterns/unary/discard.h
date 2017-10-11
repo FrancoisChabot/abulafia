@@ -30,11 +30,6 @@ auto discard(PAT_T pat) {
   return Discard<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
 }
 
-template <typename PAT_T, typename CB_T>
-auto transform(Discard<PAT_T> const& tgt, CB_T const& cb) {
-  return discard(cb(tgt.operand()));
-}
-
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

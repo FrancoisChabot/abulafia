@@ -10,14 +10,14 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/patterns/leaf/leaf_pattern.h"
+#include "abulafia/patterns/pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
 
 // Pattern for a signed integer
 template <std::size_t BASE, std::size_t DIGITS_MIN = 1,
           std::size_t DIGITS_MAX = 0>
-class Int : public LeafPattern<Int<BASE, DIGITS_MIN, DIGITS_MAX>> {
+class Int : public Pattern<Int<BASE, DIGITS_MIN, DIGITS_MAX>> {
  public:
   static_assert(DIGITS_MIN >= 1);
   static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0);

@@ -44,31 +44,6 @@ class RecurImpl {
   }
 };
 
-template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
-          typename ATTR_T>
-class WeakRecurImpl {
-  using pat_t = WeakRecur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename pat_t::operand_pat_t::impl_t;
-
-  using operand_parser_t = Parser<CTX_T, DST_T, RecurChildReqs, operand_pat_t>;
-
-  std::unique_ptr<operand_parser_t> child_parser_;
-
- public:
-  WeakRecurImpl(CTX_T, DST_T, pat_t const&) {
-    // We do not create the child parser here, since this is a recursive
-    // process.
-  }
-
-  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
-    if (!child_parser_) {
-      child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand().impl);
-    }
-    return child_parser_->consume(ctx, dst, pat.operand().impl);
-  }
-};
-
 template <typename CHILD_PAT_T, typename ATTR_T>
 struct ParserFactory<Recur<CHILD_PAT_T, ATTR_T>> {
   static_assert(is_pattern<typename CHILD_PAT_T::impl_t>());
@@ -89,28 +64,6 @@ struct ParserFactory<Recur<CHILD_PAT_T, ATTR_T>> {
 
   template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = RecurImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, ATTR_T>;
-};
-
-template <typename CHILD_PAT_T, typename ATTR_T>
-struct ParserFactory<WeakRecur<CHILD_PAT_T, ATTR_T>> {
-  static_assert(is_pattern<typename CHILD_PAT_T::impl_t>());
-  using pat_t = WeakRecur<CHILD_PAT_T, ATTR_T>;
-
-  static constexpr DstBehavior dst_behavior() {
-    if (std::is_same<Nil, ATTR_T>::value) {
-      return DstBehavior::IGNORE;
-    }
-
-    return DstBehavior::VALUE;
-  }
-
-  enum {
-    ATOMIC = false,
-    FAILS_CLEANLY = false,
-  };
-
-  template <typename CTX_T, typename DST_T, typename REQ_T>
-  using type = WeakRecurImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, ATTR_T>;
 };
 
 // Very special case to break up the recursive cycle. Any requirement will be

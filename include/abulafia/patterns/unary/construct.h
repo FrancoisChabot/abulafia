@@ -25,6 +25,7 @@ class Construct : public Pattern<Construct<CHILD_PAT_T, ARGS_T...>> {
   CHILD_PAT_T const& child_pattern() const { return pat_; }
 };
 
+// !pattern
 template <typename... ARGS_T, typename CHILD_PAT_T>
 auto construct(CHILD_PAT_T pat) {
   return Construct<CHILD_PAT_T, ARGS_T...>(std::move(pat));

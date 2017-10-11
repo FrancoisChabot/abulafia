@@ -32,15 +32,6 @@ class Except : public Pattern<Except<OP_T, NEG_T>> {
   neg_t const& neg() const { return neg_; }
 };
 
-template <typename OP_T, typename NEG_T, typename CB_T>
-auto transform(Except<OP_T, NEG_T> const& tgt, CB_T const& cb) {
-  auto new_op = cb(tgt.op());
-  auto new_neg = cb(tgt.neg());
-
-  return Except<decltype(new_op), decltype(new_neg)>(std::move(new_op),
-                                                     std::move(new_neg));
-}
-
 template <typename OP_T, typename NEG_T>
 auto except(OP_T lhs, NEG_T rhs) {
   return Except<pattern_t<OP_T>, pattern_t<NEG_T>>(

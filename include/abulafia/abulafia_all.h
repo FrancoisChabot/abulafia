@@ -675,20 +675,9 @@ struct expr_traits<T, enable_if_t<std::is_base_of<PatternBase, T>::value>> {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-template <typename CRTP>
-struct LeafPattern : public Pattern<CRTP> {};
-template <
-    typename T, typename CB_T,
-    typename = std::enable_if_t<is_base_of_template<T, LeafPattern>::value>>
-T transform(T const& tgt, CB_T const&) {
-  return tgt;
-}
-}  // namespace ABULAFIA_NAMESPACE
-
-namespace ABULAFIA_NAMESPACE {
 template <std::size_t BASE, std::size_t DIGITS_MIN = 1,
           std::size_t DIGITS_MAX = 0>
-class UInt : public LeafPattern<UInt<BASE, DIGITS_MIN, DIGITS_MAX>> {
+class UInt : public Pattern<UInt<BASE, DIGITS_MIN, DIGITS_MAX>> {
  public:
   static_assert(DIGITS_MIN >= 1);
   static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0);
@@ -799,7 +788,7 @@ struct CleanFailureFactoryAdapter {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-class Fail : public LeafPattern<Fail> {};
+class Fail : public Pattern<Fail> {};
 static constexpr Fail fail;
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1044,63 +1033,46 @@ auto make_parser(PAT_T const& p) {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
+struct RecurPayload {
+  virtual ~RecurPayload() {}
+};
+struct RecurMemoryPool {
+  std::unique_ptr<RecurPayload>* alloc() {
+    handles_.emplace_back();
+    return &handles_.back();
+  }
+ private:
+  std::deque<std::unique_ptr<RecurPayload>> handles_;
+};
 template <typename CHILD_PAT_T, typename ATTR_T = Nil>
 class Recur : public Pattern<Recur<CHILD_PAT_T, ATTR_T>> {
-  std::shared_ptr<std::unique_ptr<CHILD_PAT_T>> pat_;
+  std::unique_ptr<RecurPayload>* pat_;
  public:
   using operand_pat_t = CHILD_PAT_T;
   using attr_t = ATTR_T;
-  Recur() : pat_(std::make_shared<std::unique_ptr<CHILD_PAT_T>>()) {}
+  Recur(RecurMemoryPool& pool) : pat_(pool.alloc()) {}
   Recur(Recur const& rhs) = default;
   Recur(Recur&& rhs) = default;
   Recur& operator=(CHILD_PAT_T rhs) {
     *pat_ = std::make_unique<CHILD_PAT_T>(std::move(rhs));
     return *this;
   }
-  CHILD_PAT_T const& operand() const { return **pat_; }
+  CHILD_PAT_T const& operand() const {
+    return static_cast<CHILD_PAT_T&>(**pat_);
+  }
  private:
   template <typename T, typename U>
   friend class WeakRecur;
 };
-template <typename CHILD_PAT_T, typename ATTR_T = Nil>
-class WeakRecur : public Pattern<WeakRecur<CHILD_PAT_T, ATTR_T>> {
-  std::unique_ptr<CHILD_PAT_T>* pat_;
- public:
-  using operand_pat_t = CHILD_PAT_T;
-  WeakRecur(Recur<CHILD_PAT_T, ATTR_T> const& r) : pat_(r.pat_.get()) {}
-  WeakRecur(WeakRecur const& rhs) = default;
-  WeakRecur(WeakRecur&& rhs) = default;
-  CHILD_PAT_T const& operand() const { return **pat_; }
-};
-template <typename TGT_RECUR_T>
-struct RecurWeakener {
-  template <typename T>
-  auto operator()(T const& rhs) const {
-    return transform(rhs, *this);
-  }
-  auto operator()(TGT_RECUR_T const& tgt_recur) const {
-    using CHILD_PAT_T = typename TGT_RECUR_T::operand_pat_t;
-    using ATTR_T = typename TGT_RECUR_T::attr_t;
-    return WeakRecur<CHILD_PAT_T, ATTR_T>(tgt_recur);
-  }
-};
-template <typename RECUR_T, typename PAT_T>
-auto weaken_recur(PAT_T const& pat) {
-  RecurWeakener<RECUR_T> transformation;
-  return transform(pat, transformation);
-}
 }  // namespace ABULAFIA_NAMESPACE
-#define ABU_Recur_define(var, RECUR_TAG, pattern)                           \
-  struct RECUR_TAG {                                                        \
-    using pattern_t = decltype(pattern);                                    \
-    using abu_recur_t = decltype(var);                                      \
-    using impl_t = decltype(ABULAFIA_NAMESPACE ::weaken_recur<abu_recur_t>( \
-        std::declval<pattern_t>()));                                        \
-    impl_t impl;                                                            \
-                                                                            \
-    RECUR_TAG(pattern_t const& p)                                           \
-        : impl(ABULAFIA_NAMESPACE ::weaken_recur<abu_recur_t>(p)) {}        \
-  };                                                                        \
+#define ABU_Recur_define(var, RECUR_TAG, pattern)               \
+  struct RECUR_TAG : public ABULAFIA_NAMESPACE ::RecurPayload { \
+    using pattern_t = std::decay_t<decltype(pattern)>;          \
+    using impl_t = pattern_t;                                   \
+    impl_t impl;                                                \
+                                                                \
+    RECUR_TAG(pattern_t const& p) : impl(p) {}                  \
+  };                                                            \
   var = RECUR_TAG(pattern);
 
 namespace ABULAFIA_NAMESPACE {
@@ -1119,12 +1091,6 @@ auto apply_skipper(PAT_T&& pat, SKIP_T&& skip) {
   return WithSkipper<std::decay_t<PAT_T>, std::decay_t<SKIP_T>>(
       std::forward<PAT_T>(pat), std::forward<SKIP_T>(skip));
 }
-template <typename CHILD_PAT_T, typename SKIP_T, typename CB_T>
-auto transform(WithSkipper<CHILD_PAT_T, SKIP_T> const& tgt, CB_T const& cb) {
-  auto new_child = cb(tgt.getChild());
-  return WithSkipper<decltype(new_child), SKIP_T>(std::move(new_child),
-                                                  tgt.getSkip());
-}
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1140,13 +1106,6 @@ class Except : public Pattern<Except<OP_T, NEG_T>> {
   op_t const& op() const { return op_; }
   neg_t const& neg() const { return neg_; }
 };
-template <typename OP_T, typename NEG_T, typename CB_T>
-auto transform(Except<OP_T, NEG_T> const& tgt, CB_T const& cb) {
-  auto new_op = cb(tgt.op());
-  auto new_neg = cb(tgt.neg());
-  return Except<decltype(new_op), decltype(new_neg)>(std::move(new_op),
-                                                     std::move(new_neg));
-}
 template <typename OP_T, typename NEG_T>
 auto except(OP_T lhs, NEG_T rhs) {
   return Except<pattern_t<OP_T>, pattern_t<NEG_T>>(
@@ -1172,13 +1131,6 @@ class List : public Pattern<List<OP_T, SEP_PAT_T>> {
   OP_T val_;
   SEP_PAT_T sep_;
 };
-template <typename LHS_T, typename RHS_T, typename CB_T>
-auto transform(List<LHS_T, RHS_T> const& tgt, CB_T const& cb) {
-  auto new_op = cb(tgt.operand());
-  auto new_sep = cb(tgt.sep());
-  return List<decltype(new_op), decltype(new_sep)>(std::move(new_op),
-                                                   std::move(new_sep));
-}
 template <typename LHS_T, typename RHS_T>
 auto list(LHS_T lhs, RHS_T rhs) {
   return List<pattern_t<LHS_T>, pattern_t<RHS_T>>(make_pattern(std::move(lhs)),
@@ -1194,7 +1146,7 @@ auto operator%(LHS_T&& lhs, RHS_T&& rhs) {
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CHARSET_T>
-class Char : public LeafPattern<Char<CHARSET_T>> {
+class Char : public Pattern<Char<CHARSET_T>> {
   CHARSET_T char_set_;
  public:
   Char(CHARSET_T chars) : char_set_(std::move(chars)) {}
@@ -1239,10 +1191,6 @@ template <typename PAT_T>
 auto discard(PAT_T pat) {
   return Discard<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
 }
-template <typename PAT_T, typename CB_T>
-auto transform(Discard<PAT_T> const& tgt, CB_T const& cb) {
-  return discard(cb(tgt.operand()));
-}
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1267,7 +1215,7 @@ struct expr_traits<char32_t> {
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CHAR_T, typename VAL_T>
-class CharSymbol : public LeafPattern<CharSymbol<CHAR_T, VAL_T>> {
+class CharSymbol : public Pattern<CharSymbol<CHAR_T, VAL_T>> {
   std::map<CHAR_T, VAL_T> mapping_;
  public:
   CharSymbol(std::map<CHAR_T, VAL_T> vals) : mapping_(std::move(vals)) {}
@@ -1280,18 +1228,18 @@ auto symbol(std::map<CHAR_T, VAL_T> const& vals) {
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-class Eoi : public LeafPattern<Eoi> {};
+class Eoi : public Pattern<Eoi> {};
 static constexpr Eoi eoi;
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
-class Pass : public LeafPattern<Pass> {};
+class Pass : public Pattern<Pass> {};
 static constexpr Pass pass;
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CHAR_T>
-class StringLiteral : public LeafPattern<StringLiteral<CHAR_T>> {
+class StringLiteral : public Pattern<StringLiteral<CHAR_T>> {
   std::shared_ptr<std::basic_string<CHAR_T>> str_;
  public:
   StringLiteral(std::basic_string<CHAR_T> str)
@@ -1321,7 +1269,7 @@ struct expr_traits<char32_t const*> {
 
 namespace ABULAFIA_NAMESPACE {
 template <typename CHAR_T, typename VAL_T>
-class Symbol : public LeafPattern<Symbol<CHAR_T, VAL_T>> {
+class Symbol : public Pattern<Symbol<CHAR_T, VAL_T>> {
   // symbols->value map will be stored as a trie
   struct Node {
     std::map<CHAR_T, Node> child;
@@ -1354,7 +1302,7 @@ auto symbol(std::map<std::basic_string<CHAR_T>, VAL_T> const& vals) {
 namespace ABULAFIA_NAMESPACE {
 template <std::size_t BASE, std::size_t DIGITS_MIN = 1,
           std::size_t DIGITS_MAX = 0>
-class Int : public LeafPattern<Int<BASE, DIGITS_MIN, DIGITS_MAX>> {
+class Int : public Pattern<Int<BASE, DIGITS_MIN, DIGITS_MAX>> {
  public:
   static_assert(DIGITS_MIN >= 1);
   static_assert(DIGITS_MAX >= DIGITS_MIN || DIGITS_MAX == 0);
@@ -1372,39 +1320,33 @@ template <template <typename...> typename PAT_T, typename LHS_T, typename RHS_T,
           typename Enable = void>
 struct NaryPatternBuilder {
   using type = PAT_T<decay_t<LHS_T>, decay_t<RHS_T>>;
-  template <typename LHS_P_T, typename RHS_P_T>
-  static auto build(LHS_P_T&& lhs, RHS_P_T&& rhs) {
-    return type(std::make_tuple(forward<LHS_P_T>(lhs), forward<RHS_P_T>(rhs)));
+  static auto build(LHS_T lhs, RHS_T rhs) {
+    return type(std::make_tuple(std::move(lhs), std::move(rhs)));
   }
 };
 template <template <typename...> typename PAT_T, typename RHS_T,
           typename... LHS_T>
 struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, RHS_T,
                           enable_if_t<!is_nary_pattern<RHS_T, PAT_T>()>> {
-  using type = PAT_T<LHS_T..., decay_t<RHS_T>>;
-  template <typename LHS_P_T, typename RHS_P_T>
-  static auto build(LHS_P_T&& lhs, RHS_P_T&& rhs) {
-    return type(
-        std::tuple_cat(lhs.childs(), std::make_tuple(forward<RHS_P_T>(rhs))));
+  using type = PAT_T<LHS_T..., RHS_T>;
+  static auto build(PAT_T<LHS_T...> const& lhs, RHS_T rhs) {
+    return type(std::tuple_cat(lhs.childs(), std::make_tuple(std::move(rhs))));
   }
 };
 template <template <typename...> typename PAT_T, typename LHS_T,
           typename... RHS_T>
 struct NaryPatternBuilder<PAT_T, LHS_T, PAT_T<RHS_T...>,
                           enable_if_t<!is_nary_pattern<LHS_T, PAT_T>()>> {
-  using type = PAT_T<decay_t<LHS_T>, RHS_T...>;
-  template <typename LHS_P_T, typename RHS_P_T>
-  static auto build(LHS_P_T&& lhs, RHS_P_T&& rhs) {
-    return type(
-        std::tuple_cat(std::make_tuple(forward<LHS_P_T>(lhs)), rhs.childs()));
+  using type = PAT_T<LHS_T, RHS_T...>;
+  static auto build(LHS_T lhs, PAT_T<RHS_T...> const& rhs) {
+    return type(std::tuple_cat(std::make_tuple(std::move(lhs)), rhs.childs()));
   }
 };
 template <template <typename...> typename PAT_T, typename... LHS_T,
           typename... RHS_T>
 struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, PAT_T<RHS_T...>, void> {
   using type = PAT_T<LHS_T..., RHS_T...>;
-  template <typename LHS_P_T, typename RHS_P_T>
-  static auto build(LHS_P_T&& lhs, RHS_P_T&& rhs) {
+  static auto build(PAT_T<LHS_T...> const& lhs, PAT_T<RHS_T...> const& rhs) {
     return type(std::tuple_cat(lhs.childs(), rhs.childs()));
   }
 };
@@ -1434,21 +1376,9 @@ template <typename LHS_T, typename RHS_T>
 std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
                  typename detail::NaryPatternBuilder<Alt, pattern_t<LHS_T>,
                                                      pattern_t<RHS_T>>::type>
-operator|(LHS_T&& lhs, RHS_T&& rhs) {
+operator|(LHS_T lhs, RHS_T rhs) {
   return detail::NaryPatternBuilder<Alt, pattern_t<LHS_T>, pattern_t<RHS_T>>::
-      build(make_pattern(forward<LHS_T>(lhs)),
-            make_pattern(forward<RHS_T>(rhs)));
-}
-template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
-auto transform_alt_impl(CHILD_TUP_T const& c, CB_T const& cb,
-                        std::index_sequence<Is...>) {
-  return alt(transform(std::get<Is>(c), cb)...);
-}
-template <typename... CHILD_PATS_T, typename CB_T>
-auto transform(Alt<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
-  using indices = std::make_index_sequence<sizeof...(CHILD_PATS_T)>;
-  auto const& childs_tuple = tgt.childs();
-  return transform_alt_impl(childs_tuple, cb, indices());
+      build(make_pattern(std::move(lhs)), make_pattern(std::move(rhs)));
 }
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1472,25 +1402,13 @@ auto seq(CHILD_PATS_T&&... childs) {
   return Seq<CHILD_PATS_T...>(
       std::make_tuple(std::forward<CHILD_PATS_T>(childs)...));
 }
-template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
-auto transform_seq_impl(CHILD_TUP_T const& c, CB_T const& cb,
-                        std::index_sequence<Is...>) {
-  return seq(cb(std::get<Is>(c))...);
-}
-template <typename... CHILD_PATS_T, typename CB_T>
-auto transform(Seq<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
-  using indices = std::make_index_sequence<sizeof...(CHILD_PATS_T)>;
-  auto const& childs_tuple = tgt.childs();
-  return transform_seq_impl(childs_tuple, cb, indices());
-}
 template <typename LHS_T, typename RHS_T>
 std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
                  typename detail::NaryPatternBuilder<Seq, pattern_t<LHS_T>,
                                                      pattern_t<RHS_T>>::type>
-operator>>(LHS_T&& lhs, RHS_T&& rhs) {
+operator>>(LHS_T lhs, RHS_T rhs) {
   return detail::NaryPatternBuilder<Seq, pattern_t<LHS_T>, pattern_t<RHS_T>>::
-      build(make_pattern(forward<LHS_T>(lhs)),
-            make_pattern(forward<RHS_T>(rhs)));
+      build(make_pattern(std::move(lhs)), make_pattern(std::move(rhs)));
 }
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1510,11 +1428,6 @@ auto apply_action(PAT_T&& pat, ACT_T&& act) {
   return Action<std::decay_t<PAT_T>, std::decay_t<ACT_T>>(
       std::forward<PAT_T>(pat), std::forward<ACT_T>(act));
 }
-template <typename CHILD_PAT_T, typename ACT_T, typename CB_T>
-auto transform(Action<CHILD_PAT_T, ACT_T> const& tgt, CB_T const& cb) {
-  auto new_op = cb(tgt.child_pattern());
-  return Action<decltype(new_op), ACT_T>(std::move(new_op), tgt.action());
-}
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1528,11 +1441,6 @@ class BindDst : public Pattern<BindDst<PAT_T>> {
 template <typename PAT_T>
 inline auto bind_dst(PAT_T pat) {
   return BindDst<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
-}
-template <typename PAT_T, typename CB_T>
-auto transform(BindDst<PAT_T> const& tgt, CB_T const& cb) {
-  auto new_op = cb(tgt.operand());
-  return BindDst<decltype(new_op)>(std::move(new_op));
 }
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -1604,11 +1512,6 @@ class Repeat : public Pattern<Repeat<PAT_T, MIN_REP, MAX_REP>> {
   Repeat(const PAT_T op) : operand_(std::move(op)) {}
   PAT_T const& operand() const { return operand_; }
 };
-template <std::size_t MIN_REP, std::size_t MAX_REP, typename PAT_T,
-          typename CB_T>
-auto transform(Repeat<PAT_T, MIN_REP, MAX_REP> const& tgt, CB_T const& cb) {
-  return repeat(cb(tgt.operand()));
-}
 template <std::size_t MIN_REP = 0, std::size_t MAX_REP = 0, typename PAT_T>
 inline auto repeat(PAT_T pat) {
   return Repeat<pattern_t<PAT_T>, MIN_REP, MAX_REP>(
@@ -2956,26 +2859,6 @@ class RecurImpl {
     return child_parser_->consume(ctx, dst, pat.operand().impl);
   }
 };
-template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
-          typename ATTR_T>
-class WeakRecurImpl {
-  using pat_t = WeakRecur<CHILD_PAT_T, ATTR_T>;
-  using operand_pat_t = typename pat_t::operand_pat_t::impl_t;
-  using operand_parser_t = Parser<CTX_T, DST_T, RecurChildReqs, operand_pat_t>;
-  std::unique_ptr<operand_parser_t> child_parser_;
- public:
-  WeakRecurImpl(CTX_T, DST_T, pat_t const&) {
-    // We do not create the child parser here, since this is a recursive
-    // process.
-  }
-  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
-    if (!child_parser_) {
-      child_parser_ =
-          std::make_unique<operand_parser_t>(ctx, dst, pat.operand().impl);
-    }
-    return child_parser_->consume(ctx, dst, pat.operand().impl);
-  }
-};
 template <typename CHILD_PAT_T, typename ATTR_T>
 struct ParserFactory<Recur<CHILD_PAT_T, ATTR_T>> {
   static_assert(is_pattern<typename CHILD_PAT_T::impl_t>());
@@ -2992,23 +2875,6 @@ struct ParserFactory<Recur<CHILD_PAT_T, ATTR_T>> {
   };
   template <typename CTX_T, typename DST_T, typename REQ_T>
   using type = RecurImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, ATTR_T>;
-};
-template <typename CHILD_PAT_T, typename ATTR_T>
-struct ParserFactory<WeakRecur<CHILD_PAT_T, ATTR_T>> {
-  static_assert(is_pattern<typename CHILD_PAT_T::impl_t>());
-  using pat_t = WeakRecur<CHILD_PAT_T, ATTR_T>;
-  static constexpr DstBehavior dst_behavior() {
-    if (std::is_same<Nil, ATTR_T>::value) {
-      return DstBehavior::IGNORE;
-    }
-    return DstBehavior::VALUE;
-  }
-  enum {
-    ATOMIC = false,
-    FAILS_CLEANLY = false,
-  };
-  template <typename CTX_T, typename DST_T, typename REQ_T>
-  using type = WeakRecurImpl<CTX_T, DST_T, REQ_T, CHILD_PAT_T, ATTR_T>;
 };
 template <typename CTX_T, typename DST_T, typename PAT_T>
 struct AdaptedParserFactory<CTX_T, DST_T, RecurChildReqs, PAT_T> {

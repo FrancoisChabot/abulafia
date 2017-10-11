@@ -11,25 +11,11 @@
 
 using namespace abu;
 
-TEST(test_recur, weaken_non_recur) {
-  struct abc;
-  using Recur_t = Recur<abc>;
-  auto pattern = *char_();
-
-  using pattern_t = decltype(pattern);
-  using weakened_t = decltype(weaken_recur<Recur_t>(pattern));
-
-  static_assert(std::is_same<pattern_t, weakened_t>::value, "");
-
-  auto weakened = weaken_recur<Recur_t>(pattern);
-
-  static_assert(std::is_same<decltype(weakened), weakened_t>::value, "");
-}
-
 // Test basic syntax without any recursivity involved.
 TEST(test_recur, simple_test) {
-  struct abc;
-  Recur<abc, std::vector<char>> recur;
+  RecurMemoryPool pool;
+
+  Recur<struct abc, std::vector<char>> recur(pool);
 
   ABU_Recur_define(recur, abc, *char_());
 
@@ -38,7 +24,9 @@ TEST(test_recur, simple_test) {
 
 // Test with simple recursivity
 TEST(test_recur, recur_test) {
-  Recur<struct abc> recur;
+  RecurMemoryPool pool;
+
+  Recur<struct abc> recur(pool);
 
   auto recur_pat = Int<10, 2, 2>() >> *recur;
 
@@ -49,14 +37,15 @@ TEST(test_recur, recur_test) {
 
 // Reproduces https://github.com/FrancoisChabot/abulafia/issues/17
 template <typename PAT_T>
-auto as_recur(PAT_T const& p) {
-  Recur<struct as_recur_t> as_recur;
+auto as_recur(PAT_T const& p, RecurMemoryPool& pool) {
+  Recur<struct as_recur_t> as_recur(pool);
   ABU_Recur_define(as_recur, as_recur_t, p);
   return as_recur;
 }
 
 TEST(test_recur, recur_delegate_to_template) {
+  RecurMemoryPool pool;
   auto pat = Int<10, 2, 2>();
 
-  testPatternSuccess("12", as_recur(pat), 12);
+  testPatternSuccess("12", as_recur(pat, pool), 12);
 }

@@ -10,12 +10,12 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/patterns/leaf/leaf_pattern.h"
+#include "abulafia/patterns/pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
 
 // The Fail pattern always fails, and does not emit anything.
-class Pass : public LeafPattern<Pass> {};
+class Pass : public Pattern<Pass> {};
 
 static constexpr Pass pass;
 

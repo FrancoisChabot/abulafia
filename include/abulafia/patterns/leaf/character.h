@@ -16,14 +16,14 @@
 #include "abulafia/char_set/set.h"
 #include "abulafia/char_set/single.h"
 
-#include "abulafia/patterns/leaf/leaf_pattern.h"
+#include "abulafia/patterns/pattern.h"
 
 namespace ABULAFIA_NAMESPACE {
 
 // The Character pattern checks the next token against its character
 // set. If the test passes, the next character is emmited and it succeeds.
 template <typename CHARSET_T>
-class Char : public LeafPattern<Char<CHARSET_T>> {
+class Char : public Pattern<Char<CHARSET_T>> {
   CHARSET_T char_set_;
 
  public:

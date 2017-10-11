@@ -10,14 +10,14 @@
 
 #include "abulafia/config.h"
 
-#include "abulafia/patterns/leaf/leaf_pattern.h"
+#include "abulafia/patterns/pattern.h"
 
 #include <map>
 
 namespace ABULAFIA_NAMESPACE {
 
 template <typename CHAR_T, typename VAL_T>
-class CharSymbol : public LeafPattern<CharSymbol<CHAR_T, VAL_T>> {
+class CharSymbol : public Pattern<CharSymbol<CHAR_T, VAL_T>> {
   std::map<CHAR_T, VAL_T> mapping_;
 
  public:

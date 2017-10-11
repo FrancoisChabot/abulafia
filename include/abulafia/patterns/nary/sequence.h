@@ -44,28 +44,13 @@ auto seq(CHILD_PATS_T&&... childs) {
       std::make_tuple(std::forward<CHILD_PATS_T>(childs)...));
 }
 
-template <typename CHILD_TUP_T, typename CB_T, std::size_t... Is>
-auto transform_seq_impl(CHILD_TUP_T const& c, CB_T const& cb,
-                        std::index_sequence<Is...>) {
-  return seq(cb(std::get<Is>(c))...);
-}
-
-template <typename... CHILD_PATS_T, typename CB_T>
-auto transform(Seq<CHILD_PATS_T...> const& tgt, CB_T const& cb) {
-  using indices = std::make_index_sequence<sizeof...(CHILD_PATS_T)>;
-  auto const& childs_tuple = tgt.childs();
-
-  return transform_seq_impl(childs_tuple, cb, indices());
-}
-
 template <typename LHS_T, typename RHS_T>
 std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
                  typename detail::NaryPatternBuilder<Seq, pattern_t<LHS_T>,
                                                      pattern_t<RHS_T>>::type>
 operator>>(LHS_T lhs, RHS_T rhs) {
   return detail::NaryPatternBuilder<Seq, pattern_t<LHS_T>, pattern_t<RHS_T>>::
-      build(make_pattern(std::move(lhs)),
-            make_pattern(std::move(rhs)));
+      build(make_pattern(std::move(lhs)), make_pattern(std::move(rhs)));
 }
 
 }  // namespace ABULAFIA_NAMESPACE

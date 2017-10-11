@@ -14,7 +14,7 @@
 // This parser will evaluate the expression as its being parsed, storing the
 // result directly in the dst. Building an AST is a very similar process, which
 // you can see in (insert example reference here)
-auto make_expr_pattern() {
+auto make_expr_pattern(abu::RecurMemoryPool& pool) {
   // Simply assign a bound dst's value to the child parser's result
   auto assign = [](int v, auto p) -> void { p.bound_dst.get() = v; };
 
@@ -42,7 +42,7 @@ auto make_expr_pattern() {
     }
   };
 
-  abu::Recur<struct expr_t, int> expr;
+  abu::Recur<struct expr_t, int> expr(pool);
   auto primary = abu::int_ | ('(' >> expr >> ')');
 
   auto muldiv = abu::bind_dst(primary[assign] >>
@@ -57,7 +57,8 @@ auto make_expr_pattern() {
 }
 
 int main(int, const char* []) {
-  auto pattern = make_expr_pattern();
+  abu::RecurMemoryPool pool;
+  auto pattern = make_expr_pattern(pool);
 
   while (1) {
     std::cout << "enter a mathematical expression:\n";

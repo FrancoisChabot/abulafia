@@ -44,13 +44,12 @@ struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, RHS_T,
   using type = PAT_T<LHS_T..., RHS_T>;
 
   static auto build(PAT_T<LHS_T...> const& lhs, RHS_T rhs) {
-    return type(
-        std::tuple_cat(lhs.childs(), std::make_tuple(std::move(rhs))));
+    return type(std::tuple_cat(lhs.childs(), std::make_tuple(std::move(rhs))));
   }
 };
 
 // A op (B op C)
-//   ^^ 
+//   ^^
 template <template <typename...> typename PAT_T, typename LHS_T,
           typename... RHS_T>
 struct NaryPatternBuilder<PAT_T, LHS_T, PAT_T<RHS_T...>,
@@ -58,8 +57,7 @@ struct NaryPatternBuilder<PAT_T, LHS_T, PAT_T<RHS_T...>,
   using type = PAT_T<LHS_T, RHS_T...>;
 
   static auto build(LHS_T lhs, PAT_T<RHS_T...> const& rhs) {
-    return type(
-        std::tuple_cat(std::make_tuple(std::move(lhs)), rhs.childs()));
+    return type(std::tuple_cat(std::make_tuple(std::move(lhs)), rhs.childs()));
   }
 };
 
