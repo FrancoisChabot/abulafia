@@ -20,36 +20,35 @@ namespace ABULAFIA_NAMESPACE {
 
 namespace alt_ {
 
-  template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
-            typename CHILDS_TUPLE_T>
-  struct WrappedParser {
-    using type =
-        Parser<CTX_T, DST_T, REQ_T, tuple_element_t<PAT_ID, CHILDS_TUPLE_T>>;
-  };
+template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
+          typename CHILDS_TUPLE_T>
+struct WrappedParser {
+  using type =
+      Parser<CTX_T, DST_T, REQ_T, tuple_element_t<PAT_ID, CHILDS_TUPLE_T>>;
+};
 
-  template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
-            typename CHILDS_TUPLE_T>
-  using WrappedParser_t =
-      typename WrappedParser<PAT_ID, CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T>::type;
+template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
+          typename CHILDS_TUPLE_T>
+using WrappedParser_t =
+    typename WrappedParser<PAT_ID, CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T>::type;
 
-  template <typename CTX_T, typename DST_T, typename REQ_T,
-            typename CHILDS_TUPLE_T, typename INDEX_SEQ>
-  struct AltSubParser;
+template <typename CTX_T, typename DST_T, typename REQ_T,
+          typename CHILDS_TUPLE_T, typename INDEX_SEQ>
+struct AltSubParser;
 
-  template <typename CTX_T, typename DST_T, typename REQ_T,
-            typename CHILDS_TUPLE_T, std::size_t... PAT_IDS>
-  struct AltSubParser<CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T,
-                      std::index_sequence<PAT_IDS...>> {
-    using test_test = std::index_sequence<PAT_IDS...>;
-    using type = std::variant<
-        WrappedParser_t<PAT_IDS, CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T>...>;
-  };
+template <typename CTX_T, typename DST_T, typename REQ_T,
+          typename CHILDS_TUPLE_T, std::size_t... PAT_IDS>
+struct AltSubParser<CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T,
+                    std::index_sequence<PAT_IDS...>> {
+  using test_test = std::index_sequence<PAT_IDS...>;
+  using type = std::variant<
+      WrappedParser_t<PAT_IDS, CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T>...>;
+};
 }  // namespace alt_
 
 template <typename CTX_T, typename DST_T, typename REQ_T,
           typename... CHILD_PATS_T>
 class AltImpl {
-
   using pat_t = Alt<CHILD_PATS_T...>;
 
   struct child_req_t : public REQ_T {
@@ -65,9 +64,9 @@ class AltImpl {
 
  public:
   AltImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
-      : child_parsers_(std::in_place_index_t<0>(), 
-        std::variant_alternative_t<0, child_parsers_t>(ctx, dst, getChild<0>(pat))) {
-  }
+      : child_parsers_(std::in_place_index_t<0>(),
+                       std::variant_alternative_t<0, child_parsers_t>(
+                           ctx, dst, getChild<0>(pat))) {}
 
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (CTX_T::IS_RESUMABLE) {

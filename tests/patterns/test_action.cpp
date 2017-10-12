@@ -15,7 +15,8 @@ TEST(test_action, simple_action) {
   int count = 0;
   auto pattern = *apply_action(UInt<10, 2, 2>(), [&]() { ++count; });
 
-  auto success = parse("123456", pattern);
+  std::string data = "123456";
+  auto success = parse(data.begin(), data.end(), pattern);
   EXPECT_EQ(Result::SUCCESS, success);
   EXPECT_EQ(3, count);
 }
@@ -25,17 +26,22 @@ TEST(test_action, consuming_action) {
   auto pattern =
       *apply_action(UInt<10, 2, 2>(), [&](unsigned int v) { count += v; });
 
-  auto success = parse("123456", pattern);
+  std::string data = "123456";
+  auto success = parse(data.begin(), data.end(), pattern);
   EXPECT_EQ(Result::SUCCESS, success);
   EXPECT_EQ(12 + 34 + 56, count);
 }
 
 TEST(test_action, emmiting_action) {
-  auto action = [&](unsigned int v) { return v * v; };
+  auto action = [&](unsigned int v) { 
+    return v * v; 
+  };
+
   auto pattern = *apply_action(UInt<10, 2, 2>(), action);
 
   std::vector<int> result;
-  auto success = parse("123456", pattern, result);
+  std::string data = "123456";
+  auto success = parse(data.begin(), data.end(), pattern, result);
   EXPECT_EQ(Result::SUCCESS, success);
   EXPECT_EQ(std::vector<int>({12 * 12, 34 * 34, 56 * 56}), result);
 }

@@ -68,7 +68,7 @@ int main(int, const char* []) {
       break;
     }
     int dst = 0;
-    auto status = abu::parse(expr, pattern, dst);
+    auto status = abu::parse(expr.begin(), expr.end(), pattern, dst);
 
     if (abu::Result::SUCCESS == status) {
       std::cout << dst << "\n";

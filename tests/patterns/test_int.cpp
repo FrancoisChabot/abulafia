@@ -8,32 +8,17 @@
 #include "abulafia/abulafia.h"
 
 #include "gtest/gtest.h"
+#include "test_utils.h"
 
 using namespace abu;
 
 TEST(test_int, test_default_pattern) {
   auto pattern = int_;
 
-  int dst = 0;
+  testPatternSuccess("12", pattern, 12);
+  testPatternSuccess("-1", pattern, -1);
+  testPatternSuccess("+14", pattern, 14);
+  testPatternFailure<int>("", pattern);
+  testPatternFailure<int>("a123", pattern);
 
-  // Basic use case.
-  auto status = parse("12", pattern, dst);
-  EXPECT_EQ(status, Result::SUCCESS);
-  EXPECT_EQ(12, dst);
-
-  status = parse("-1", pattern, dst);
-  EXPECT_EQ(status, Result::SUCCESS);
-  EXPECT_EQ(-1, dst);
-
-  status = parse("+14", pattern, dst);
-  EXPECT_EQ(status, Result::SUCCESS);
-  EXPECT_EQ(14, dst);
-
-  // Empty string.
-  status = parse("", pattern, dst);
-  EXPECT_EQ(status, Result::FAILURE);
-
-  // Bad string
-  status = parse("a123", pattern, dst);
-  EXPECT_EQ(status, Result::FAILURE);
 }

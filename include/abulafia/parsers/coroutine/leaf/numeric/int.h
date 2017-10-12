@@ -31,6 +31,9 @@ class IntImpl {
     while (true) {
       if (ctx.data().empty()) {
         if (ctx.data().final_buffer()) {
+          if (neg_) {
+            dst.get() *= -1;
+          }
           return digit_count_ >= DIGITS_MIN ? Result::SUCCESS : Result::FAILURE;
         } else {
           return Result::PARTIAL;

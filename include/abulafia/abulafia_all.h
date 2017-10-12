@@ -1008,14 +1008,6 @@ template <typename ITE_T, typename PAT_T>
 Result parse(ITE_T b, ITE_T e, const PAT_T& pat) {
   return parse(b, e, pat, nil);
 }
-template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
-Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
-  return parse(std::begin(data), std::end(data), pat, dst);
-}
-template <typename PAT_T, typename DATA_RANGE_T>
-Result parse(const DATA_RANGE_T& data, const PAT_T& pat) {
-  return parse(std::begin(data), std::end(data), pat, nil);
-}
 }  // namespace ABULAFIA_NAMESPACE
 
 namespace ABULAFIA_NAMESPACE {
@@ -1527,6 +1519,9 @@ class IntImpl {
     while (true) {
       if (ctx.data().empty()) {
         if (ctx.data().final_buffer()) {
+          if (neg_) {
+            dst.get() *= -1;
+          }
           return digit_count_ >= DIGITS_MIN ? Result::SUCCESS : Result::FAILURE;
         } else {
           return Result::PARTIAL;
@@ -2063,27 +2058,27 @@ decltype(auto) visit_val(std::size_t v, VISITOR_T&& visit) {
 
 namespace ABULAFIA_NAMESPACE {
 namespace alt_ {
-  template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
-            typename CHILDS_TUPLE_T>
-  struct WrappedParser {
-    using type =
-        Parser<CTX_T, DST_T, REQ_T, tuple_element_t<PAT_ID, CHILDS_TUPLE_T>>;
-  };
-  template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
-            typename CHILDS_TUPLE_T>
-  using WrappedParser_t =
-      typename WrappedParser<PAT_ID, CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T>::type;
-  template <typename CTX_T, typename DST_T, typename REQ_T,
-            typename CHILDS_TUPLE_T, typename INDEX_SEQ>
-  struct AltSubParser;
-  template <typename CTX_T, typename DST_T, typename REQ_T,
-            typename CHILDS_TUPLE_T, std::size_t... PAT_IDS>
-  struct AltSubParser<CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T,
-                      std::index_sequence<PAT_IDS...>> {
-    using test_test = std::index_sequence<PAT_IDS...>;
-    using type = std::variant<
-        WrappedParser_t<PAT_IDS, CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T>...>;
-  };
+template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
+          typename CHILDS_TUPLE_T>
+struct WrappedParser {
+  using type =
+      Parser<CTX_T, DST_T, REQ_T, tuple_element_t<PAT_ID, CHILDS_TUPLE_T>>;
+};
+template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
+          typename CHILDS_TUPLE_T>
+using WrappedParser_t =
+    typename WrappedParser<PAT_ID, CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T>::type;
+template <typename CTX_T, typename DST_T, typename REQ_T,
+          typename CHILDS_TUPLE_T, typename INDEX_SEQ>
+struct AltSubParser;
+template <typename CTX_T, typename DST_T, typename REQ_T,
+          typename CHILDS_TUPLE_T, std::size_t... PAT_IDS>
+struct AltSubParser<CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T,
+                    std::index_sequence<PAT_IDS...>> {
+  using test_test = std::index_sequence<PAT_IDS...>;
+  using type = std::variant<
+      WrappedParser_t<PAT_IDS, CTX_T, DST_T, REQ_T, CHILDS_TUPLE_T>...>;
+};
 }  // namespace alt_
 template <typename CTX_T, typename DST_T, typename REQ_T,
           typename... CHILD_PATS_T>
@@ -2100,8 +2095,8 @@ class AltImpl {
  public:
   AltImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(),
-        std::variant_alternative_t<0, child_parsers_t>(ctx, dst, getChild<0>(pat))) {
-  }
+                       std::variant_alternative_t<0, child_parsers_t>(
+                           ctx, dst, getChild<0>(pat))) {}
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (CTX_T::IS_RESUMABLE) {
       return visit_val<sizeof...(CHILD_PATS_T)>(
@@ -2157,14 +2152,12 @@ constexpr bool child_ignores() {
 }
 template <int PAT_ID, typename CHILDS_TUPLE_T>
 constexpr int choose_tuple_index() {
-  if constexpr(PAT_ID == -1) {
+  if constexpr (PAT_ID == -1) {
     return -1;
-  }
-  else if constexpr(child_ignores<PAT_ID, CHILDS_TUPLE_T>()) {
-    return choose_tuple_index<PAT_ID-1, CHILDS_TUPLE_T>();
-  }
-  else {
-    return choose_tuple_index<PAT_ID-1, CHILDS_TUPLE_T>() + 1;
+  } else if constexpr (child_ignores<PAT_ID, CHILDS_TUPLE_T>()) {
+    return choose_tuple_index<PAT_ID - 1, CHILDS_TUPLE_T>();
+  } else {
+    return choose_tuple_index<PAT_ID - 1, CHILDS_TUPLE_T>() + 1;
   }
   return 0;
 }
@@ -2179,9 +2172,8 @@ struct choose_dst_accessor {
       (void)dst;
       return nil;
     } else if constexpr (is_tuple<typename DST_T::dst_type>::value) {
-      constexpr int dst_index =
-          choose_tuple_index<PAT_ID, CHILDS_TUPLE_T>();
-          static_assert(dst_index >= 0);
+      constexpr int dst_index = choose_tuple_index<PAT_ID, CHILDS_TUPLE_T>();
+      static_assert(dst_index >= 0);
       return wrap_dst(std::get<dst_index>(dst.get()));
     } else {
       return dst;
@@ -2309,7 +2301,7 @@ constexpr bool has_incoming_param() {
   return std::is_invocable<ACT_T, ActionParam<DST_T>>::value ||
          std::is_invocable<ACT_T, arbitrary, ActionParam<DST_T>>::value;
 }
-template <typename ACT_T, typename DST_T=Nil>
+template <typename ACT_T, typename DST_T = Nil>
 struct act_arg_traits {
   enum {
     VAL_ARG = has_incoming_val<ACT_T, DST_T>(),
@@ -2322,15 +2314,15 @@ struct determine_result_type {
   using type = typename function_traits<ACT_T>::result_type;
 };
 template <typename ACT_T>
-struct determine_result_type<ACT_T,
-                             std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
-                                              act_arg_traits<ACT_T>::VAL_ARG>> {
+struct determine_result_type<
+    ACT_T, std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
+                            act_arg_traits<ACT_T>::VAL_ARG>> {
   using type = decltype(std::declval<ACT_T>()(arbitrary{}, ActionParam<Nil>()));
 };
 template <typename ACT_T>
-struct determine_result_type<ACT_T,
-                             std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
-                                              !act_arg_traits<ACT_T>::VAL_ARG>> {
+struct determine_result_type<
+    ACT_T, std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
+                            !act_arg_traits<ACT_T>::VAL_ARG>> {
   using type = decltype(std::declval<ACT_T>()(ActionParam<Nil>()));
 };
 template <typename ACT_T>
@@ -2365,38 +2357,31 @@ void act_dispatch(ACT_T const& act, LAND_T land, DST_T dst, CTX_T ctx) {
   (void)p;
   (void)land;
   (void)dst;
-  if constexpr(writes) {
-    if constexpr(has_val) {
-      if constexpr(has_param) {
+  if constexpr (writes) {
+    if constexpr (has_val) {
+      if constexpr (has_param) {
         dst = act(std::move(land), p);
-      }
-      else {
+      } else {
         dst = act(std::move(land));
       }
-    }
-    else {
-      if constexpr(has_param) {
+    } else {
+      if constexpr (has_param) {
         dst = act(p);
-      }
-      else {
+      } else {
         dst = act();
       }
     }
-  }
-  else {
-    if constexpr(has_val) {
-      if constexpr(has_param) {
+  } else {
+    if constexpr (has_val) {
+      if constexpr (has_param) {
         act(std::move(land), p);
-      }
-      else {
+      } else {
         act(std::move(land));
       }
-    }
-    else {
-      if constexpr(has_param) {
+    } else {
+      if constexpr (has_param) {
         act(p);
-      }
-      else {
+      } else {
         act();
       }
     }

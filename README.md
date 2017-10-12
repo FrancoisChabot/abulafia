@@ -73,7 +73,8 @@ int main() {
   auto ignoring_whitespace = abu::apply_skipper(with_brackets, abu::char_(" \t\r\n"));
 
   std::vector<int> dst;
-  auto status = abu::parse("[1, 2, 3, 4, 5]", ignoring_whitespace, dst);
+  std::string data = "[1, 2, 3, 4, 5]";
+  auto status = abu::parse(data.begin(), data.end(), ignoring_whitespace, dst);
 
   if(status == abu::result::SUCCESS) {
     for(auto v : dst) {
@@ -112,8 +113,11 @@ int main() {
   auto pattern = abu::apply_skipper(rect, space);
 
   Rectangle rect_a, rect_b; 
-  abu::parse("[1, 45]", pattern, rect_a);
-  abu::parse("[1, 45, 1, 1]", pattern, rect_b);
+  std::string data_a = "[1, 45]";
+  std::string data_b = "[1, 45, 1, 1]"; 
+
+  abu::parse(data_a.begin(), data_a.end(), pattern, rect_a);
+  abu::parse(data_b.begin(), data_b.end(), pattern, rect_b);
   
   return 0;
 }

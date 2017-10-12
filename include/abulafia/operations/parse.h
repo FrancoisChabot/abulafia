@@ -47,16 +47,6 @@ Result parse(ITE_T b, ITE_T e, const PAT_T& pat) {
   return parse(b, e, pat, nil);
 }
 
-// Container-based verison of the parse api.
-template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
-Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
-  return parse(std::begin(data), std::end(data), pat, dst);
-}
-
-template <typename PAT_T, typename DATA_RANGE_T>
-Result parse(const DATA_RANGE_T& data, const PAT_T& pat) {
-  return parse(std::begin(data), std::end(data), pat, nil);
-}
 }  // namespace ABULAFIA_NAMESPACE
 
 #endif

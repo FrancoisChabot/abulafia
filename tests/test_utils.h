@@ -11,14 +11,14 @@ void testPatternSuccess(std::string const& data, PAT_T const& pat,
                         DST_T const& expected_value) {
   // Test parsing into Nil
   {
-    auto status = abu::parse(data, pat);
+    auto status = abu::parse(std::begin(data), std::end(data), pat);
     EXPECT_EQ(status, abu::Result::SUCCESS);
   }
 
   // Test parsing into Value
   {
     DST_T dst{};
-    auto status = abu::parse(data, pat, dst);
+    auto status = abu::parse(std::begin(data), std::end(data), pat, dst);
     EXPECT_EQ(status, abu::Result::SUCCESS);
     EXPECT_EQ(dst, expected_value);
   }
@@ -30,7 +30,7 @@ void testPatternSuccess(std::string const& data, PAT_T const& pat,
     ABU_Recur_define(as_recur, as_recur_t, abu::make_pattern(pat));
 
     DST_T dst{};
-    auto status = abu::parse(data, as_recur, dst);
+    auto status = abu::parse(std::begin(data), std::end(data), as_recur, dst);
     EXPECT_EQ(status, abu::Result::SUCCESS);
     EXPECT_EQ(dst, expected_value);
   }
@@ -81,14 +81,14 @@ template <typename DST_T, typename PAT_T>
 void testPatternFailure(std::string const& data, PAT_T const& pat) {
   // Test parsing into Nil
   {
-    auto status = abu::parse(data, pat);
+    auto status = abu::parse(std::begin(data), std::end(data), pat);
     EXPECT_EQ(status, abu::Result::FAILURE);
   }
 
   // Test parsing into Value
   {
     DST_T dst;
-    auto status = abu::parse(data, pat, dst);
+    auto status = abu::parse(std::begin(data), std::end(data), pat, dst);
     EXPECT_EQ(status, abu::Result::FAILURE);
   }
 

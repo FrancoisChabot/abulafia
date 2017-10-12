@@ -39,11 +39,10 @@ constexpr bool has_incoming_param() {
          std::is_invocable<ACT_T, arbitrary, ActionParam<DST_T>>::value;
 }
 
+// This is a workaround for MSVC, it does not resolve usage of constexpr bool
+// functions in enable_if<> correctly.
 
-// This is a workaround for MSVC, it does not resolve usage of constexpr bool functions
-// in enable_if<> correctly.
-
-template <typename ACT_T, typename DST_T=Nil>
+template <typename ACT_T, typename DST_T = Nil>
 struct act_arg_traits {
   enum {
     VAL_ARG = has_incoming_val<ACT_T, DST_T>(),
@@ -58,16 +57,16 @@ struct determine_result_type {
 };
 
 template <typename ACT_T>
-struct determine_result_type<ACT_T,
-                             std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
-                                              act_arg_traits<ACT_T>::VAL_ARG>> {
+struct determine_result_type<
+    ACT_T, std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
+                            act_arg_traits<ACT_T>::VAL_ARG>> {
   using type = decltype(std::declval<ACT_T>()(arbitrary{}, ActionParam<Nil>()));
 };
 
 template <typename ACT_T>
-struct determine_result_type<ACT_T,
-                             std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
-                                              !act_arg_traits<ACT_T>::VAL_ARG>> {
+struct determine_result_type<
+    ACT_T, std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
+                            !act_arg_traits<ACT_T>::VAL_ARG>> {
   using type = decltype(std::declval<ACT_T>()(ActionParam<Nil>()));
 };
 
@@ -108,43 +107,36 @@ void act_dispatch(ACT_T const& act, LAND_T land, DST_T dst, CTX_T ctx) {
   constexpr bool has_param = has_incoming_param<ACT_T>();
 
   ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
-  
+
   (void)p;
   (void)land;
   (void)dst;
 
-  if constexpr(writes) {
-    if constexpr(has_val) {
-      if constexpr(has_param) {
+  if constexpr (writes) {
+    if constexpr (has_val) {
+      if constexpr (has_param) {
         dst = act(std::move(land), p);
-      }
-      else {
+      } else {
         dst = act(std::move(land));
       }
-    }
-    else {
-      if constexpr(has_param) {
+    } else {
+      if constexpr (has_param) {
         dst = act(p);
-      }
-      else {
+      } else {
         dst = act();
       }
     }
-  }
-  else {
-    if constexpr(has_val) {
-      if constexpr(has_param) {
+  } else {
+    if constexpr (has_val) {
+      if constexpr (has_param) {
         act(std::move(land), p);
-      }
-      else {
+      } else {
         act(std::move(land));
       }
-    }
-    else {
-      if constexpr(has_param) {
+    } else {
+      if constexpr (has_param) {
         act(p);
-      }
-      else {
+      } else {
         act();
       }
     }

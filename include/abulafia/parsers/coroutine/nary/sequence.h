@@ -31,14 +31,12 @@ constexpr bool child_ignores() {
 // Determine the index in the dst tuple at which pattern PAT_ID writes at.
 template <int PAT_ID, typename CHILDS_TUPLE_T>
 constexpr int choose_tuple_index() {
-  if constexpr(PAT_ID == -1) {
+  if constexpr (PAT_ID == -1) {
     return -1;
-  }
-  else if constexpr(child_ignores<PAT_ID, CHILDS_TUPLE_T>()) {
-    return choose_tuple_index<PAT_ID-1, CHILDS_TUPLE_T>();
-  }
-  else {
-    return choose_tuple_index<PAT_ID-1, CHILDS_TUPLE_T>() + 1;
+  } else if constexpr (child_ignores<PAT_ID, CHILDS_TUPLE_T>()) {
+    return choose_tuple_index<PAT_ID - 1, CHILDS_TUPLE_T>();
+  } else {
+    return choose_tuple_index<PAT_ID - 1, CHILDS_TUPLE_T>() + 1;
   }
 
   return 0;
@@ -56,9 +54,8 @@ struct choose_dst_accessor {
       (void)dst;
       return nil;
     } else if constexpr (is_tuple<typename DST_T::dst_type>::value) {
-      constexpr int dst_index =
-          choose_tuple_index<PAT_ID, CHILDS_TUPLE_T>();
-          static_assert(dst_index >= 0);
+      constexpr int dst_index = choose_tuple_index<PAT_ID, CHILDS_TUPLE_T>();
+      static_assert(dst_index >= 0);
       return wrap_dst(std::get<dst_index>(dst.get()));
     } else {
       return dst;
