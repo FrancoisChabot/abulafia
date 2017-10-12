@@ -85,8 +85,8 @@ struct determine_landing_type {
 template <typename ACT_T, typename DST_T>
 struct determine_landing_type<
     ACT_T, DST_T,
-    std::enable_if_t<has_incoming_val<ACT_T, DST_T>() &&
-                     !has_incoming_param<ACT_T, DST_T>()>> {
+    std::enable_if_t<act_arg_traits<ACT_T>::VAL_ARG &&
+                     !act_arg_traits<ACT_T>::PARAM_ARG>> {
   using type = typename function_traits<ACT_T>::template arg<0>::type;
 };
 
@@ -94,8 +94,8 @@ struct determine_landing_type<
 template <typename ACT_T, typename DST_T>
 struct determine_landing_type<
     ACT_T, DST_T,
-    std::enable_if_t<has_incoming_val<ACT_T, DST_T>() &&
-                     has_incoming_param<ACT_T, DST_T>()>> {
+    std::enable_if_t<act_arg_traits<ACT_T>::VAL_ARG &&
+                     act_arg_traits<ACT_T>::PARAM_ARG>> {
   using oper = decltype(&ACT_T::template operator()<ActionParam<DST_T>>);
 
   using type = typename function_traits<oper>::template arg<0>::type;
