@@ -41,6 +41,11 @@ Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
   return parser.consume(real_ctx, real_dst, real_pat);
 }
 
+template <typename ITE_T, typename PAT_T>
+Result parse(ITE_T b, ITE_T e, const PAT_T& pat) {
+  return parse(b, e, pat, nil);
+}
+
 template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
 Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
   return parse(std::begin(data), std::end(data), pat, dst);
@@ -50,7 +55,7 @@ Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
 // The resulting parser simply checks that the range matches the pattern.
 template <typename PAT_T, typename DATA_RANGE_T>
 Result parse(const DATA_RANGE_T& data, const PAT_T& pat) {
-  return parse(data, pat, nil);
+  return parse(std::begin(data), std::end(data), pat, nil);
 }
 }  // namespace ABULAFIA_NAMESPACE
 

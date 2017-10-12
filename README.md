@@ -111,8 +111,9 @@ int main() {
  
   auto pattern = abu::apply_skipper(rect, space);
 
-  Rectangle rect_a = abu::decode<Rectangle>("[1, 45]", pattern);
-  Rectangle rect_b = abu::decode<Rectangle>("[1, 45, 1, 1]", pattern);
+  Rectangle rect_a, rect_b; 
+  abu::parse("[1, 45]", pattern, rect_a);
+  abu::parse("[1, 45, 1, 1]", pattern, rect_b);
   
   return 0;
 }
