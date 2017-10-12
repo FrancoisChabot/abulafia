@@ -28,16 +28,16 @@ auto make_expr_pattern(abu::RecurMemoryPool& pool) {
 
     switch (std::get<0>(v)) {
       case '+':
-        p.bound_dst.get() = lhs + rhs;
+        p.bound_dst.get() = (int)lhs + rhs;
         break;
       case '-':
-        p.bound_dst.get() = lhs - rhs;
+        p.bound_dst.get() = (int)lhs - rhs;
         break;
       case '*':
-        p.bound_dst.get() = lhs * rhs;
+        p.bound_dst.get() = (int)lhs * rhs;
         break;
       case '/':
-        p.bound_dst.get() = lhs / rhs;
+        p.bound_dst.get() = (int)lhs / rhs;
         break;
     }
   };

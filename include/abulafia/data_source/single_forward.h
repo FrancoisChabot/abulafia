@@ -60,8 +60,6 @@ class SingleForwardDataSource {
   }
 
   bool empty() const { return current_ == end_; }
-
-  static constexpr bool isResumable() { return false; }
 };
 
 }  // namespace ABULAFIA_NAMESPACE

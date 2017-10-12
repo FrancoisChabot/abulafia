@@ -20,40 +20,29 @@ namespace ABULAFIA_NAMESPACE {
 
 namespace seq_ {
 
+// Determines if the child pattern at index PAT_ID in a sequence ignores the DST
 template <int PAT_ID, typename CHILDS_TUPLE_T>
 constexpr bool child_ignores() {
-  using pattern_t = tuple_element_t<PAT_ID == -1 ? 0 : PAT_ID, CHILDS_TUPLE_T>;
+  using pattern_t = tuple_element_t<PAT_ID, CHILDS_TUPLE_T>;
   using pattern_factory_t = ParserFactory<pattern_t>;
   return pattern_factory_t::dst_behavior() == DstBehavior::IGNORE;
 }
 
-template <int PAT_ID, typename CHILDS_TUPLE_T, typename Enable = void>
-struct choose_tuple_index;
-
-template <typename CHILDS_TUPLE_T>
-struct choose_tuple_index<-1, CHILDS_TUPLE_T> {
-  enum { value = -1, next_val = 0 };
-};
-
+// Determine the index in the dst tuple at which pattern PAT_ID writes at.
 template <int PAT_ID, typename CHILDS_TUPLE_T>
-struct choose_tuple_index<
-    PAT_ID, CHILDS_TUPLE_T,
-    enable_if_t<(PAT_ID != -1 && child_ignores<PAT_ID, CHILDS_TUPLE_T>())>> {
-  enum {
-    value = -1,
-    next_val = choose_tuple_index<PAT_ID - 1, CHILDS_TUPLE_T>::next_val
-  };
-};
+constexpr int choose_tuple_index() {
+  if constexpr(PAT_ID == -1) {
+    return -1;
+  }
+  else if constexpr(child_ignores<PAT_ID, CHILDS_TUPLE_T>()) {
+    return choose_tuple_index<PAT_ID-1, CHILDS_TUPLE_T>();
+  }
+  else {
+    return choose_tuple_index<PAT_ID-1, CHILDS_TUPLE_T>() + 1;
+  }
 
-template <int PAT_ID, typename CHILDS_TUPLE_T>
-struct choose_tuple_index<
-    PAT_ID, CHILDS_TUPLE_T,
-    enable_if_t<(PAT_ID != -1 && !child_ignores<PAT_ID, CHILDS_TUPLE_T>())>> {
-  enum {
-    value = choose_tuple_index<PAT_ID - 1, CHILDS_TUPLE_T>::next_val,
-    next_val = value + 1
-  };
-};
+  return 0;
+}
 
 template <std::size_t PAT_ID, typename CTX_T, typename DST_T,
           typename CHILDS_TUPLE_T>
@@ -61,17 +50,17 @@ struct choose_dst_accessor {
   using pattern_t = tuple_element_t<PAT_ID, CHILDS_TUPLE_T>;
   using pattern_factory_t = ParserFactory<pattern_t>;
 
-  static auto access(DST_T dst) { 
+  static auto access(DST_T dst) {
     if constexpr (std::is_same<Nil, DST_T>::value ||
-      pattern_factory_t::dst_behavior() == DstBehavior::IGNORE) {
+                  pattern_factory_t::dst_behavior() == DstBehavior::IGNORE) {
       (void)dst;
       return nil;
-    }
-    else if constexpr (is_tuple<typename DST_T::dst_type>::value) {
-      constexpr int dst_index = choose_tuple_index<PAT_ID, CHILDS_TUPLE_T>::value;
+    } else if constexpr (is_tuple<typename DST_T::dst_type>::value) {
+      constexpr int dst_index =
+          choose_tuple_index<PAT_ID, CHILDS_TUPLE_T>();
+          static_assert(dst_index >= 0);
       return wrap_dst(std::get<dst_index>(dst.get()));
-    }
-    else {
+    } else {
       return dst;
     }
   }

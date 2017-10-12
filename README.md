@@ -32,7 +32,7 @@ Parsing to a value now works in many scenarios, but there are known holes (when 
 
 Abulafia currently requires a C++17 compiler. The level of C++17 compatibility required will be kept at the lowest bar set by the current release of the following compilers:
 
-- Microsoft VC++ (2017, update 3) **Currently broken due to an ICE that will be resolved in the next release.**
+- Microsoft VC++ (2017, update 4)
 - Clang (5.0.0)
 - GCC (7.2)
 

@@ -37,10 +37,10 @@ auto const& getChild(Alt<CHILD_PATS_T...> const& pat) {
   return std::get<Index>(pat.childs());
 }
 
-template <typename... T>
-auto alt(T&&... args) {
-  using ret_type = Alt<T...>;
-  return ret_type(std::make_tuple(forward<T>(args)...));
+template <typename... CHILD_PATS_T>
+auto alt(CHILD_PATS_T&&... childs) {
+  return Alt<CHILD_PATS_T...>(
+      std::make_tuple(std::forward<CHILD_PATS_T>(childs)...));
 }
 
 template <typename LHS_T, typename RHS_T>

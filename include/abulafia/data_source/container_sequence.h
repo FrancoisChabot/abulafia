@@ -144,8 +144,6 @@ class ContainerSequenceDataSource {
     }
   }
 
-  static constexpr bool isResumable() { return true; }
-
  private:
   void cleanup_rollback_() {
     // The only hold that matters is the front of the rollback stack.

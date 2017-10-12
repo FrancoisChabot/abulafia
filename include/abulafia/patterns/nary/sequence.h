@@ -24,8 +24,7 @@ class Seq : public Pattern<Seq<CHILD_PATS_T...>> {
  public:
   using child_tuple_t = std::tuple<CHILD_PATS_T...>;
 
-  // The computed type for individual members of the sequence
-  Seq(child_tuple_t const& childs) : childs_(childs) {}
+  Seq(child_tuple_t childs) : childs_(std::move(childs)) {}
 
   child_tuple_t const& childs() const { return childs_; }
 

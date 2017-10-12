@@ -39,6 +39,17 @@ constexpr bool has_incoming_param() {
          std::is_invocable<ACT_T, arbitrary, ActionParam<DST_T>>::value;
 }
 
+
+// This is a workaround for MSVC, it does not resolve usage of constexpr bool functions
+// in enable_if<> correctly.
+
+template <typename ACT_T, typename DST_T=Nil>
+struct act_arg_traits {
+  enum {
+    VAL_ARG = has_incoming_val<ACT_T, DST_T>(),
+    PARAM_ARG = has_incoming_param<ACT_T, DST_T>()
+  };
+};
 /*Used primarily to determine if the return type is void or not*/
 
 template <typename ACT_T, typename Enable = void>
@@ -48,15 +59,15 @@ struct determine_result_type {
 
 template <typename ACT_T>
 struct determine_result_type<ACT_T,
-                             std::enable_if_t<has_incoming_param<ACT_T>() &&
-                                              has_incoming_val<ACT_T>()>> {
+                             std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
+                                              act_arg_traits<ACT_T>::VAL_ARG>> {
   using type = decltype(std::declval<ACT_T>()(arbitrary{}, ActionParam<Nil>()));
 };
 
 template <typename ACT_T>
 struct determine_result_type<ACT_T,
-                             std::enable_if_t<has_incoming_param<ACT_T>() &&
-                                              !has_incoming_val<ACT_T>()>> {
+                             std::enable_if_t<act_arg_traits<ACT_T>::PARAM_ARG &&
+                                              !act_arg_traits<ACT_T>::VAL_ARG>> {
   using type = decltype(std::declval<ACT_T>()(ActionParam<Nil>()));
 };
 
@@ -90,92 +101,55 @@ struct determine_landing_type<
   using type = typename function_traits<oper>::template arg<0>::type;
 };
 
-template <typename ACT_T, typename Enable = void>
-struct Dispatch;
+template <typename ACT_T, typename LAND_T, typename DST_T, typename CTX_T>
+void act_dispatch(ACT_T const& act, LAND_T land, DST_T dst, CTX_T ctx) {
+  constexpr bool writes = !returns_void<ACT_T>();
+  constexpr bool has_val = has_incoming_val<ACT_T>();
+  constexpr bool has_param = has_incoming_param<ACT_T>();
 
-template <typename ACT_T>
-struct Dispatch<
-    ACT_T, enable_if_t<!returns_void<ACT_T>() && !has_incoming_val<ACT_T>() &&
-                       !has_incoming_param<ACT_T>()>> {
-  template <typename LAND_T, typename DST_T, typename CTX_T>
-  static void dispatch(ACT_T const& act, LAND_T, DST_T dst, CTX_T) {
-    dst = act();
-  }
-};
+  ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
+  
+  (void)p;
+  (void)land;
+  (void)dst;
 
-template <typename ACT_T>
-struct Dispatch<
-    ACT_T, enable_if_t<returns_void<ACT_T>() && !has_incoming_val<ACT_T>() &&
-                       !has_incoming_param<ACT_T>()>> {
-  template <typename LAND_T, typename DST_T, typename CTX_T>
-  static void dispatch(ACT_T const& act, LAND_T, DST_T, CTX_T) {
-    act();
+  if constexpr(writes) {
+    if constexpr(has_val) {
+      if constexpr(has_param) {
+        dst = act(std::move(land), p);
+      }
+      else {
+        dst = act(std::move(land));
+      }
+    }
+    else {
+      if constexpr(has_param) {
+        dst = act(p);
+      }
+      else {
+        dst = act();
+      }
+    }
   }
-};
-
-template <typename ACT_T>
-struct Dispatch<
-    ACT_T, enable_if_t<!returns_void<ACT_T>() && has_incoming_val<ACT_T>() &&
-                       !has_incoming_param<ACT_T>()>> {
-  template <typename LAND_T, typename DST_T, typename CTX_T>
-  static void dispatch(ACT_T const& act, LAND_T land, DST_T dst, CTX_T) {
-    dst = act(std::move(land));
+  else {
+    if constexpr(has_val) {
+      if constexpr(has_param) {
+        act(std::move(land), p);
+      }
+      else {
+        act(std::move(land));
+      }
+    }
+    else {
+      if constexpr(has_param) {
+        act(p);
+      }
+      else {
+        act();
+      }
+    }
   }
-};
-
-template <typename ACT_T>
-struct Dispatch<
-    ACT_T, enable_if_t<returns_void<ACT_T>() && has_incoming_val<ACT_T>() &&
-                       !has_incoming_param<ACT_T>()>> {
-  template <typename LAND_T, typename DST_T, typename CTX_T>
-  static void dispatch(ACT_T const& act, LAND_T land, DST_T, CTX_T) {
-    act(std::move(land));
-  }
-};
-
-template <typename ACT_T>
-struct Dispatch<
-    ACT_T, enable_if_t<!returns_void<ACT_T>() && !has_incoming_val<ACT_T>() &&
-                       has_incoming_param<ACT_T>()>> {
-  template <typename LAND_T, typename DST_T, typename CTX_T>
-  static void dispatch(ACT_T const& act, LAND_T, DST_T dst, CTX_T ctx) {
-    ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
-    dst = act(p);
-  }
-};
-
-template <typename ACT_T>
-struct Dispatch<
-    ACT_T, enable_if_t<returns_void<ACT_T>() && !has_incoming_val<ACT_T>() &&
-                       has_incoming_param<ACT_T>()>> {
-  template <typename LAND_T, typename DST_T, typename CTX_T>
-  static void dispatch(ACT_T const& act, LAND_T, DST_T dst, CTX_T ctx) {
-    ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
-    act(p);
-  }
-};
-
-template <typename ACT_T>
-struct Dispatch<
-    ACT_T, enable_if_t<!returns_void<ACT_T>() && has_incoming_val<ACT_T>() &&
-                       has_incoming_param<ACT_T>()>> {
-  template <typename LAND_T, typename DST_T, typename CTX_T>
-  static void dispatch(ACT_T const& act, LAND_T land, DST_T dst, CTX_T ctx) {
-    ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
-    dst = act(std::move(land), p);
-  }
-};
-
-template <typename ACT_T>
-struct Dispatch<
-    ACT_T, enable_if_t<returns_void<ACT_T>() && has_incoming_val<ACT_T>() &&
-                       has_incoming_param<ACT_T>()>> {
-  template <typename LAND_T, typename DST_T, typename CTX_T>
-  static void dispatch(ACT_T const& act, LAND_T land, DST_T, CTX_T ctx) {
-    ActionParam<typename CTX_T::bound_dst_t> p{ctx.bound_dst()};
-    act(std::move(land), p);
-  }
-};
+}
 
 }  // namespace act_
 
@@ -217,8 +191,7 @@ class ActionImpl {
     auto status =
         child_parser_.consume(ctx, wrap_dst(landing), pat.child_pattern());
     if (status == Result::SUCCESS) {
-      act_::Dispatch<ACT_T>::template dispatch(pat.action(), std::move(landing),
-                                               dst, ctx);
+      act_::act_dispatch(pat.action(), std::move(landing), dst, ctx);
     }
     return status;
   }

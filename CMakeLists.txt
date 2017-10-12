@@ -8,7 +8,7 @@ option(ABULAFIA_BUILD_TESTS "Build the abulafia examples" ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /W4 /wd4127")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 /W4 /wd4127")
   set(gtest_force_shared_crt ON CACHE BOOL "Always use msvcrt.dll" FORCE)
   
   #Gtest workaround for MSVC2017
