@@ -86,7 +86,6 @@ int main() {
 
 Working with custom types is also simple:
 
-**Note:** This example uses features that are still work in progress. It represents what will work once every piece is in place.
 ```c++
 
 #include "abulafia/abulafia.h"
