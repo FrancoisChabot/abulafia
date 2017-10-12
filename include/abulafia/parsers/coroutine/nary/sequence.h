@@ -55,67 +55,27 @@ struct choose_tuple_index<
   };
 };
 
-enum class DstAccessorCategory { USE_NIL, PASSTHROUGH, INDEXED };
-
 template <std::size_t PAT_ID, typename CTX_T, typename DST_T,
           typename CHILDS_TUPLE_T>
-constexpr DstAccessorCategory ChooseAccessorCategory() {
+struct choose_dst_accessor {
   using pattern_t = tuple_element_t<PAT_ID, CHILDS_TUPLE_T>;
   using pattern_factory_t = ParserFactory<pattern_t>;
 
-  if (std::is_same<Nil, DST_T>::value ||
+  static auto access(DST_T dst) { 
+    if constexpr (std::is_same<Nil, DST_T>::value ||
       pattern_factory_t::dst_behavior() == DstBehavior::IGNORE) {
-    return DstAccessorCategory::USE_NIL;
-  } else if (is_tuple<typename DST_T::dst_type>::value) {
-    return DstAccessorCategory::INDEXED;
-  } else {
-    return DstAccessorCategory::PASSTHROUGH;
+      (void)dst;
+      return nil;
+    }
+    else if constexpr (is_tuple<typename DST_T::dst_type>::value) {
+      constexpr int dst_index = choose_tuple_index<PAT_ID, CHILDS_TUPLE_T>::value;
+      return wrap_dst(std::get<dst_index>(dst.get()));
+    }
+    else {
+      return dst;
+    }
   }
-}
-
-template <std::size_t PAT_ID, typename CTX_T, typename DST_T,
-          typename CHILDS_TUPLE_T, typename Enable = void>
-struct choose_dst_accessor;
-
-// Pass nil
-template <std::size_t PAT_ID, typename CTX_T, typename DST_T,
-          typename CHILDS_TUPLE_T>
-struct choose_dst_accessor<
-    PAT_ID, CTX_T, DST_T, CHILDS_TUPLE_T,
-    enable_if_t<
-        ChooseAccessorCategory<PAT_ID, CTX_T, DST_T, CHILDS_TUPLE_T>() ==
-        DstAccessorCategory::USE_NIL>> {
-  using type = Nil;
-  static Nil access(DST_T const&) { return nil; }
-};
-
-// Passthrough
-template <std::size_t PAT_ID, typename CTX_T, typename DST_T,
-          typename CHILDS_TUPLE_T>
-struct choose_dst_accessor<
-    PAT_ID, CTX_T, DST_T, CHILDS_TUPLE_T,
-    enable_if_t<
-        ChooseAccessorCategory<PAT_ID, CTX_T, DST_T, CHILDS_TUPLE_T>() ==
-        DstAccessorCategory::PASSTHROUGH>> {
-  using type = DST_T;
-  static DST_T const& access(DST_T const& dst) { return dst; }
-};
-
-// Indexed
-template <std::size_t PAT_ID, typename CTX_T, typename DST_T,
-          typename CHILDS_TUPLE_T>
-struct choose_dst_accessor<
-    PAT_ID, CTX_T, DST_T, CHILDS_TUPLE_T,
-    enable_if_t<
-        ChooseAccessorCategory<PAT_ID, CTX_T, DST_T, CHILDS_TUPLE_T>() ==
-        DstAccessorCategory::INDEXED>> {
-  enum { dst_index = choose_tuple_index<PAT_ID, CHILDS_TUPLE_T>::value };
-
-  using type =
-      wrapped_dst_t<tuple_element_t<dst_index, typename DST_T::dst_type>>;
-  static auto access(DST_T dst) {
-    return wrap_dst(std::get<dst_index>(dst.get()));
-  }
+  using type = decltype(access(std::declval<DST_T>()));
 };
 
 template <std::size_t PAT_ID, typename CTX_T, typename DST_T, typename REQ_T,
