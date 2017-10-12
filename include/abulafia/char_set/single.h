@@ -19,10 +19,10 @@ template <typename CHAR_T>
 struct Single : public CharacterSet {
   using char_t = CHAR_T;
 
-  explicit Single(CHAR_T c) : character_(c) {}
+  constexpr explicit Single(CHAR_T c) : character_(c) {}
 
   template <typename T>
-  bool is_valid(T const& token) const {
+  constexpr bool is_valid(T const& token) const {
     return token == character_;
   }
 
@@ -31,7 +31,7 @@ struct Single : public CharacterSet {
 };
 
 template <typename CHAR_T>
-auto single(CHAR_T c) {
+constexpr auto single(CHAR_T c) {
   return Single<CHAR_T>(c);
 }
 

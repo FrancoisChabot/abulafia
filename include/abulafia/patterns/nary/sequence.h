@@ -24,9 +24,9 @@ class Seq : public Pattern<Seq<CHILD_PATS_T...>> {
  public:
   using child_tuple_t = std::tuple<CHILD_PATS_T...>;
 
-  Seq(child_tuple_t childs) : childs_(std::move(childs)) {}
+  constexpr Seq(child_tuple_t childs) : childs_(std::move(childs)) {}
 
-  child_tuple_t const& childs() const { return childs_; }
+  constexpr child_tuple_t const& childs() const { return childs_; }
 
  private:
   child_tuple_t childs_;
@@ -38,13 +38,13 @@ auto const& getChild(Seq<CHILD_PATS_T...> const& pat) {
 }
 
 template <typename... CHILD_PATS_T>
-auto seq(CHILD_PATS_T&&... childs) {
+constexpr auto seq(CHILD_PATS_T&&... childs) {
   return Seq<CHILD_PATS_T...>(
       std::make_tuple(std::forward<CHILD_PATS_T>(childs)...));
 }
 
 template <typename LHS_T, typename RHS_T>
-std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
+constexpr std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
                  typename detail::NaryPatternBuilder<Seq, pattern_t<LHS_T>,
                                                      pattern_t<RHS_T>>::type>
 operator>>(LHS_T lhs, RHS_T rhs) {

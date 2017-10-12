@@ -27,13 +27,13 @@ class Char : public Pattern<Char<CHARSET_T>> {
   CHARSET_T char_set_;
 
  public:
-  Char(CHARSET_T chars) : char_set_(std::move(chars)) {}
+  constexpr Char(CHARSET_T chars) : char_set_(std::move(chars)) {}
 
-  CHARSET_T const& char_set() const { return char_set_; }
+  constexpr CHARSET_T const& char_set() const { return char_set_; }
 };
 
 template <typename T = char>
-auto char_() {
+constexpr auto char_() {
   return Char<char_set::Any<T>>(char_set::Any<T>());
 }
 

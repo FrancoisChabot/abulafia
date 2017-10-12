@@ -10,16 +10,16 @@
 #include <iostream>
 
 
-constexpr int parse_int(std::string_view data) {
-  auto pattern = abu::uint_;
+constexpr int twelve() {
   int result = 0;
 
-  abu::parse(data, pattern, result);
+  abu::parse(std::string_view("?12?", 2), '?' >> abu::uint_ >> '?', result);
   return result;
-}
-int main(int, const char* []) {
-  constexpr int result = parse_int(std::string_view("12", 2));
-  std::cout <<  result << std::endl;
+} 
 
-  return result;
+
+int foo() {
+  return twelve();
 }
+
+int main() {return foo();}

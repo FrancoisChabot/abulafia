@@ -301,16 +301,16 @@ namespace char_set {
 template <typename CHAR_T>
 struct Single : public CharacterSet {
   using char_t = CHAR_T;
-  explicit Single(CHAR_T c) : character_(c) {}
+  constexpr explicit Single(CHAR_T c) : character_(c) {}
   template <typename T>
-  bool is_valid(T const& token) const {
+  constexpr bool is_valid(T const& token) const {
     return token == character_;
   }
  private:
   CHAR_T character_;
 };
 template <typename CHAR_T>
-auto single(CHAR_T c) {
+constexpr auto single(CHAR_T c) {
   return Single<CHAR_T>(c);
 }
 template <>
@@ -1148,11 +1148,11 @@ template <typename CHARSET_T>
 class Char : public Pattern<Char<CHARSET_T>> {
   CHARSET_T char_set_;
  public:
-  Char(CHARSET_T chars) : char_set_(std::move(chars)) {}
-  CHARSET_T const& char_set() const { return char_set_; }
+  constexpr Char(CHARSET_T chars) : char_set_(std::move(chars)) {}
+  constexpr CHARSET_T const& char_set() const { return char_set_; }
 };
 template <typename T = char>
-auto char_() {
+constexpr auto char_() {
   return Char<char_set::Any<T>>(char_set::Any<T>());
 }
 template <typename T>
@@ -1183,11 +1183,11 @@ template <typename PAT_T>
 class Discard : public Pattern<Discard<PAT_T>> {
   PAT_T operand_;
  public:
-  Discard(PAT_T op) : operand_(std::move(op)) {}
-  PAT_T const& operand() const { return operand_; }
+  constexpr Discard(PAT_T op) : operand_(std::move(op)) {}
+  constexpr PAT_T const& operand() const { return operand_; }
 };
 template <typename PAT_T>
-auto discard(PAT_T pat) {
+constexpr auto discard(PAT_T pat) {
   return Discard<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
 }
 }  // namespace ABULAFIA_NAMESPACE
@@ -1319,7 +1319,7 @@ template <template <typename...> typename PAT_T, typename LHS_T, typename RHS_T,
           typename Enable = void>
 struct NaryPatternBuilder {
   using type = PAT_T<decay_t<LHS_T>, decay_t<RHS_T>>;
-  static auto build(LHS_T lhs, RHS_T rhs) {
+  static constexpr auto build(LHS_T lhs, RHS_T rhs) {
     return type(std::make_tuple(std::move(lhs), std::move(rhs)));
   }
 };
@@ -1328,7 +1328,7 @@ template <template <typename...> typename PAT_T, typename RHS_T,
 struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, RHS_T,
                           enable_if_t<!is_nary_pattern<RHS_T, PAT_T>()>> {
   using type = PAT_T<LHS_T..., RHS_T>;
-  static auto build(PAT_T<LHS_T...> const& lhs, RHS_T rhs) {
+  static constexpr auto build(PAT_T<LHS_T...> const& lhs, RHS_T rhs) {
     return type(std::tuple_cat(lhs.childs(), std::make_tuple(std::move(rhs))));
   }
 };
@@ -1337,7 +1337,7 @@ template <template <typename...> typename PAT_T, typename LHS_T,
 struct NaryPatternBuilder<PAT_T, LHS_T, PAT_T<RHS_T...>,
                           enable_if_t<!is_nary_pattern<LHS_T, PAT_T>()>> {
   using type = PAT_T<LHS_T, RHS_T...>;
-  static auto build(LHS_T lhs, PAT_T<RHS_T...> const& rhs) {
+  static constexpr auto build(LHS_T lhs, PAT_T<RHS_T...> const& rhs) {
     return type(std::tuple_cat(std::make_tuple(std::move(lhs)), rhs.childs()));
   }
 };
@@ -1345,7 +1345,7 @@ template <template <typename...> typename PAT_T, typename... LHS_T,
           typename... RHS_T>
 struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, PAT_T<RHS_T...>, void> {
   using type = PAT_T<LHS_T..., RHS_T...>;
-  static auto build(PAT_T<LHS_T...> const& lhs, PAT_T<RHS_T...> const& rhs) {
+  static constexpr auto build(PAT_T<LHS_T...> const& lhs, PAT_T<RHS_T...> const& rhs) {
     return type(std::tuple_cat(lhs.childs(), rhs.childs()));
   }
 };
@@ -1386,8 +1386,8 @@ template <typename... CHILD_PATS_T>
 class Seq : public Pattern<Seq<CHILD_PATS_T...>> {
  public:
   using child_tuple_t = std::tuple<CHILD_PATS_T...>;
-  Seq(child_tuple_t childs) : childs_(std::move(childs)) {}
-  child_tuple_t const& childs() const { return childs_; }
+  constexpr Seq(child_tuple_t childs) : childs_(std::move(childs)) {}
+  constexpr child_tuple_t const& childs() const { return childs_; }
  private:
   child_tuple_t childs_;
 };
@@ -1396,12 +1396,12 @@ auto const& getChild(Seq<CHILD_PATS_T...> const& pat) {
   return std::get<Index>(pat.childs());
 }
 template <typename... CHILD_PATS_T>
-auto seq(CHILD_PATS_T&&... childs) {
+constexpr auto seq(CHILD_PATS_T&&... childs) {
   return Seq<CHILD_PATS_T...>(
       std::make_tuple(std::forward<CHILD_PATS_T>(childs)...));
 }
 template <typename LHS_T, typename RHS_T>
-std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
+constexpr std::enable_if_t<are_valid_binary_operands<LHS_T, RHS_T>(),
                  typename detail::NaryPatternBuilder<Seq, pattern_t<LHS_T>,
                                                      pattern_t<RHS_T>>::type>
 operator>>(LHS_T lhs, RHS_T rhs) {
@@ -1692,8 +1692,8 @@ template <typename CTX_T, typename DST_T, typename CHARSET_T>
 class CharImpl {
  public:
   using pat_t = Char<CHARSET_T>;
-  CharImpl(CTX_T, DST_T, pat_t const&) {}
-  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+  constexpr CharImpl(CTX_T, DST_T, pat_t const&) {}
+  constexpr Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (ctx.data().empty()) {
       return ctx.data().final_buffer() ? Result::FAILURE : Result::PARTIAL;
     }
@@ -2240,18 +2240,18 @@ class SeqImpl {
   child_parsers_t child_parsers_;
  public:
   template <std::size_t ID>
-  decltype(auto) getDstFor(DST_T dst) {
+  constexpr decltype(auto) getDstFor(DST_T dst) {
     using accessor_t =
         seq_::choose_dst_accessor<ID, CTX_T, DST_T, childs_tuple_t>;
     return accessor_t::access(dst);
   }
-  SeqImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
+  constexpr SeqImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(),
                        std::variant_alternative_t<0, child_parsers_t>(
                            ctx, getDstFor<0>(dst), getChild<0>(pat))) {
     //    reset_if_collection<DST_T>::exec(dst);
   }
-  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+  constexpr Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (CTX_T::IS_RESUMABLE) {
       return visit_val<sizeof...(CHILD_PATS_T)>(
           child_parsers_.index(),
@@ -2262,7 +2262,7 @@ class SeqImpl {
     }
   }
   template <std::size_t ID>
-  Result consume_from(CTX_T ctx, DST_T dst, pat_t const& pat) {
+ constexpr Result consume_from(CTX_T ctx, DST_T dst, pat_t const& pat) {
     abu_assume(child_parsers_.index() == ID);
     auto& c_parser = std::get<ID>(child_parsers_);
     auto const& c_pattern = getChild<ID>(pat);
@@ -2555,9 +2555,9 @@ class DiscardImpl {
   using child_parser_t = Parser<ctx_t, Nil, req_t, CHILD_PAT_T>;
   child_parser_t child_parser_;
  public:
-  DiscardImpl(ctx_t ctx, dst_t, pat_t const& pat)
+  constexpr DiscardImpl(ctx_t ctx, dst_t, pat_t const& pat)
       : child_parser_(ctx, nil, pat.operand()) {}
-  Result consume(ctx_t ctx, dst_t, pat_t const& pat) {
+  constexpr Result consume(ctx_t ctx, dst_t, pat_t const& pat) {
     return child_parser_.consume(ctx, nil, pat.operand());
   }
 };

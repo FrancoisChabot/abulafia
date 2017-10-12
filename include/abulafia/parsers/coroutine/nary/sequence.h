@@ -112,21 +112,21 @@ class SeqImpl {
 
  public:
   template <std::size_t ID>
-  decltype(auto) getDstFor(DST_T dst) {
+  constexpr decltype(auto) getDstFor(DST_T dst) {
     using accessor_t =
         seq_::choose_dst_accessor<ID, CTX_T, DST_T, childs_tuple_t>;
 
     return accessor_t::access(dst);
   }
 
-  SeqImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
+  constexpr SeqImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
       : child_parsers_(std::in_place_index_t<0>(),
                        std::variant_alternative_t<0, child_parsers_t>(
                            ctx, getDstFor<0>(dst), getChild<0>(pat))) {
     //    reset_if_collection<DST_T>::exec(dst);
   }
 
-  Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
+  constexpr Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
     if (CTX_T::IS_RESUMABLE) {
       return visit_val<sizeof...(CHILD_PATS_T)>(
           child_parsers_.index(),
@@ -138,7 +138,7 @@ class SeqImpl {
   }
 
   template <std::size_t ID>
-  Result consume_from(CTX_T ctx, DST_T dst, pat_t const& pat) {
+ constexpr Result consume_from(CTX_T ctx, DST_T dst, pat_t const& pat) {
     abu_assume(child_parsers_.index() == ID);
 
     auto& c_parser = std::get<ID>(child_parsers_);

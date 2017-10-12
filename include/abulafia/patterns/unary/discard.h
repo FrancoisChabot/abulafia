@@ -20,13 +20,13 @@ class Discard : public Pattern<Discard<PAT_T>> {
   PAT_T operand_;
 
  public:
-  Discard(PAT_T op) : operand_(std::move(op)) {}
+  constexpr Discard(PAT_T op) : operand_(std::move(op)) {}
 
-  PAT_T const& operand() const { return operand_; }
+  constexpr PAT_T const& operand() const { return operand_; }
 };
 
 template <typename PAT_T>
-auto discard(PAT_T pat) {
+constexpr auto discard(PAT_T pat) {
   return Discard<pattern_t<PAT_T>>(make_pattern(std::move(pat)));
 }
 

@@ -27,10 +27,10 @@ class DiscardImpl {
   child_parser_t child_parser_;
 
  public:
-  DiscardImpl(ctx_t ctx, dst_t, pat_t const& pat)
+  constexpr DiscardImpl(ctx_t ctx, dst_t, pat_t const& pat)
       : child_parser_(ctx, nil, pat.operand()) {}
 
-  Result consume(ctx_t ctx, dst_t, pat_t const& pat) {
+  constexpr Result consume(ctx_t ctx, dst_t, pat_t const& pat) {
     return child_parser_.consume(ctx, nil, pat.operand());
   }
 };

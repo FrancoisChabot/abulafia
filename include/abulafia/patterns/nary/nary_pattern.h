@@ -30,7 +30,7 @@ template <template <typename...> typename PAT_T, typename LHS_T, typename RHS_T,
 struct NaryPatternBuilder {
   using type = PAT_T<decay_t<LHS_T>, decay_t<RHS_T>>;
 
-  static auto build(LHS_T lhs, RHS_T rhs) {
+  static constexpr auto build(LHS_T lhs, RHS_T rhs) {
     return type(std::make_tuple(std::move(lhs), std::move(rhs)));
   }
 };
@@ -43,7 +43,7 @@ struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, RHS_T,
                           enable_if_t<!is_nary_pattern<RHS_T, PAT_T>()>> {
   using type = PAT_T<LHS_T..., RHS_T>;
 
-  static auto build(PAT_T<LHS_T...> const& lhs, RHS_T rhs) {
+  static constexpr auto build(PAT_T<LHS_T...> const& lhs, RHS_T rhs) {
     return type(std::tuple_cat(lhs.childs(), std::make_tuple(std::move(rhs))));
   }
 };
@@ -56,7 +56,7 @@ struct NaryPatternBuilder<PAT_T, LHS_T, PAT_T<RHS_T...>,
                           enable_if_t<!is_nary_pattern<LHS_T, PAT_T>()>> {
   using type = PAT_T<LHS_T, RHS_T...>;
 
-  static auto build(LHS_T lhs, PAT_T<RHS_T...> const& rhs) {
+  static constexpr auto build(LHS_T lhs, PAT_T<RHS_T...> const& rhs) {
     return type(std::tuple_cat(std::make_tuple(std::move(lhs)), rhs.childs()));
   }
 };
@@ -68,7 +68,7 @@ template <template <typename...> typename PAT_T, typename... LHS_T,
 struct NaryPatternBuilder<PAT_T, PAT_T<LHS_T...>, PAT_T<RHS_T...>, void> {
   using type = PAT_T<LHS_T..., RHS_T...>;
 
-  static auto build(PAT_T<LHS_T...> const& lhs, PAT_T<RHS_T...> const& rhs) {
+  static constexpr auto build(PAT_T<LHS_T...> const& lhs, PAT_T<RHS_T...> const& rhs) {
     return type(std::tuple_cat(lhs.childs(), rhs.childs()));
   }
 };
