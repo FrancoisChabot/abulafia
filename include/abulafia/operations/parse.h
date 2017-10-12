@@ -25,8 +25,7 @@ namespace ABULAFIA_NAMESPACE {
 // binds a pattern, a data source and a destination as a parser
 // and executes it immediately. It's implied that this will be a
 // single buffer parser.
-// If you need a multi-buffer parser, use begin_parse() instead.
-
+// If you need a multi-buffer parser, use make_parser() instead.
 template <typename ITE_T, typename PAT_T, typename DST_T>
 Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
   SingleForwardDataSource<ITE_T> data(b, e);
@@ -41,18 +40,19 @@ Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
   return parser.consume(real_ctx, real_dst, real_pat);
 }
 
+// calling parse() with no dst implies using a Nil as destination.
+// The resulting parser simply checks that the range matches the pattern.
 template <typename ITE_T, typename PAT_T>
 Result parse(ITE_T b, ITE_T e, const PAT_T& pat) {
   return parse(b, e, pat, nil);
 }
 
+// Container-based verison of the parse api.
 template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
 Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
   return parse(std::begin(data), std::end(data), pat, dst);
 }
 
-// calling parse() with no dst implies using a Nil as destination.
-// The resulting parser simply checks that the range matches the pattern.
 template <typename PAT_T, typename DATA_RANGE_T>
 Result parse(const DATA_RANGE_T& data, const PAT_T& pat) {
   return parse(std::begin(data), std::end(data), pat, nil);
