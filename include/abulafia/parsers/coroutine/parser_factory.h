@@ -75,7 +75,7 @@ using ConditionalAdapter_t =
 
 template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 struct AdaptedParserFactory {
-  static auto create(CTX_T ctx, DST_T dst, PAT_T const& pat) {
+  static constexpr auto create(CTX_T ctx, DST_T dst, PAT_T const& pat) {
     using raw_factory = ParserFactory<PAT_T>;
     using skip_t = typename CTX_T::skip_pattern_t;
 

@@ -41,7 +41,7 @@ template <typename T>
 struct expr_traits<T, enable_if_t<std::is_base_of<PatternBase, T>::value>> {
   enum { is_pattern = true, converts_to_pattern = false };
 
-  static const T& make_pattern(const T& v) { return v; }
+  static constexpr const T& make_pattern(const T& v) { return v; }
 };
 
 }  // namespace ABULAFIA_NAMESPACE

@@ -34,7 +34,7 @@ struct Parser_t
 };
 
 template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
-auto make_parser_(CTX_T ctx, DST_T dst, REQ_T, PAT_T const& pat) {
+constexpr auto make_parser_(CTX_T ctx, DST_T dst, REQ_T, PAT_T const& pat) {
   return AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(ctx, dst,
                                                                   pat);
 }

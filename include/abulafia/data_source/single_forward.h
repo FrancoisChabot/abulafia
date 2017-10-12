@@ -21,7 +21,7 @@ namespace ABULAFIA_NAMESPACE {
 template <typename ITE_T>
 class SingleForwardDataSource {
   using iterator = ITE_T;
-  std::stack<iterator> rollback_stack_;
+//  std::stack<iterator> rollback_stack_;
 
   iterator current_;
   iterator end_;
@@ -35,31 +35,33 @@ class SingleForwardDataSource {
 
   enum { IS_RESUMABLE = false };
 
-  SingleForwardDataSource(iterator b, iterator e) : current_(b), end_(e) {}
+  constexpr SingleForwardDataSource(iterator b, iterator e) : current_(b), end_(e) {}
   SingleForwardDataSource(SingleForwardDataSource const&) = delete;
   constexpr bool final_buffer() const { return true; }
 
-  void prepare_rollback() { rollback_stack_.push(current_); }
+  void prepare_rollback() { 
+    //rollback_stack_.push(current_); 
+  }
 
   void commit_rollback() {
-    assert(!rollback_stack_.empty());
-    current_ = rollback_stack_.top();
-    rollback_stack_.pop();
+ //   assert(!rollback_stack_.empty());
+  //  current_ = rollback_stack_.top();
+  //  rollback_stack_.pop();
   }
 
   void cancel_rollback() {
-    assert(!rollback_stack_.empty());
-    rollback_stack_.pop();
+  //  assert(!rollback_stack_.empty());
+  //  rollback_stack_.pop();
   }
 
-  value_type next() const { return *current_; }
+  constexpr value_type next() const { return *current_; }
 
-  void advance() {
+  constexpr void advance() {
     assert(!empty());
     current_++;
   }
 
-  bool empty() const { return current_ == end_; }
+  constexpr bool empty() const { return current_ == end_; }
 };
 
 }  // namespace ABULAFIA_NAMESPACE

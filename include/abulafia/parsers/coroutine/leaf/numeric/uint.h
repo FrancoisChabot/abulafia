@@ -25,9 +25,9 @@ class UIntImpl {
 
   using digit_vals = DigitValues<BASE>;
 
-  UIntImpl(CTX_T, DST_T dst, pat_t const&) { dst.get() = 0; }
+  constexpr UIntImpl(CTX_T, DST_T dst, pat_t const&) { dst.get() = 0; }
 
-  Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
+  constexpr Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
     while (true) {
       if (ctx.data().empty()) {
         if (ctx.data().final_buffer()) {

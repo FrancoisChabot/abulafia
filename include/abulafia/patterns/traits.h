@@ -54,7 +54,7 @@ using pattern_t =
 
 // Utility function to make a pattern out of a value (if possible).
 template <typename T>
-inline auto make_pattern(T&& p) {
+constexpr auto make_pattern(T&& p) {
   static_assert(expr_traits<decay_t<T>>::is_pattern ||
                     expr_traits<decay_t<T>>::converts_to_pattern,
                 "Cannot create pattern from T");

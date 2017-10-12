@@ -33,7 +33,7 @@ template <typename T>
 using wrapped_dst_t = typename SelectDstWrapper<T>::type;
 
 template <typename T>
-auto wrap_dst(T& dst) {
+constexpr auto wrap_dst(T& dst) {
   return typename SelectDstWrapper<T>::type(dst);
 }
 

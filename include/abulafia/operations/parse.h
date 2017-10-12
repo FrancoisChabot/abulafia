@@ -28,7 +28,7 @@ namespace ABULAFIA_NAMESPACE {
 // If you need a multi-buffer parser, use begin_parse() instead.
 
 template <typename ITE_T, typename PAT_T, typename DST_T>
-Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
+constexpr Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
   SingleForwardDataSource<ITE_T> data(b, e);
 
   auto real_pat = make_pattern(pat);
@@ -42,7 +42,7 @@ Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
 }
 
 template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
-Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
+constexpr Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
   return parse(std::begin(data), std::end(data), pat, dst);
 }
 

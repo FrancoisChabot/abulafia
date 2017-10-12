@@ -21,7 +21,7 @@ struct Context {
   using skip_pattern_t = SKIPPER_T;
   using bound_dst_t = BOUND_DST_T;
 
-  Context(datasource_t& ds, skip_pattern_t const& skip, BOUND_DST_T bound_dst)
+  constexpr Context(datasource_t& ds, skip_pattern_t const& skip, BOUND_DST_T bound_dst)
       : data_(ds), skipper_(skip), bound_dst_(bound_dst) {}
 
   template <typename T>
@@ -35,7 +35,7 @@ struct Context {
     HAS_SKIPPER = !std::is_same<Fail, skip_pattern_t>::value,
   };
 
-  DATASOURCE_T& data() { return data_; }
+  constexpr DATASOURCE_T& data() { return data_; }
   SKIPPER_T const& skipper() { return skipper_; }
   BOUND_DST_T const& bound_dst() { return bound_dst_; }
 

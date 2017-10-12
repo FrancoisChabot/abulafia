@@ -433,7 +433,6 @@ namespace ABULAFIA_NAMESPACE {
 template <typename ITE_T>
 class SingleForwardDataSource {
   using iterator = ITE_T;
-  std::stack<iterator> rollback_stack_;
   iterator current_;
   iterator end_;
  public:
@@ -442,25 +441,27 @@ class SingleForwardDataSource {
   };
   using value_type = decltype(*(ITE_T()));
   enum { IS_RESUMABLE = false };
-  SingleForwardDataSource(iterator b, iterator e) : current_(b), end_(e) {}
+  constexpr SingleForwardDataSource(iterator b, iterator e) : current_(b), end_(e) {}
   SingleForwardDataSource(SingleForwardDataSource const&) = delete;
   constexpr bool final_buffer() const { return true; }
-  void prepare_rollback() { rollback_stack_.push(current_); }
+  void prepare_rollback() {
+    //rollback_stack_.push(current_);
+  }
   void commit_rollback() {
-    assert(!rollback_stack_.empty());
-    current_ = rollback_stack_.top();
-    rollback_stack_.pop();
+ //   assert(!rollback_stack_.empty());
+  //  current_ = rollback_stack_.top();
+  //  rollback_stack_.pop();
   }
   void cancel_rollback() {
-    assert(!rollback_stack_.empty());
-    rollback_stack_.pop();
+  //  assert(!rollback_stack_.empty());
+  //  rollback_stack_.pop();
   }
-  value_type next() const { return *current_; }
-  void advance() {
+  constexpr value_type next() const { return *current_; }
+  constexpr void advance() {
     assert(!empty());
     current_++;
   }
-  bool empty() const { return current_ == end_; }
+  constexpr bool empty() const { return current_ == end_; }
 };
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -545,15 +546,15 @@ class ValueWrapper {
  public:
   using dst_type = T;
   using dst_value_type = T;
-  ValueWrapper(T& v) : v_(&v) {}
-  ValueWrapper(ValueWrapper const& rhs) : v_(rhs.v_) {}
+  constexpr ValueWrapper(T& v) : v_(&v) {}
+  constexpr ValueWrapper(ValueWrapper const& rhs) : v_(rhs.v_) {}
   template <typename U>
-  ValueWrapper& operator=(U&& v) {
+  constexpr ValueWrapper& operator=(U&& v) {
     *v_ = std::forward<U>(v);
     return *this;
   }
   // using this implies that we are NOT atomic in nature.
-  T& get() { return *v_; }
+  constexpr T& get() { return *v_; }
  private:
   T* v_;
 };
@@ -575,7 +576,7 @@ struct SelectDstWrapper<T, std::enable_if_t<is_collection<T>::value>> {
 template <typename T>
 using wrapped_dst_t = typename SelectDstWrapper<T>::type;
 template <typename T>
-auto wrap_dst(T& dst) {
+constexpr auto wrap_dst(T& dst) {
   return typename SelectDstWrapper<T>::type(dst);
 }
 }  // namespace ABULAFIA_NAMESPACE
@@ -587,18 +588,18 @@ template <int BASE>
 struct DigitValues<BASE, enable_if_t<(BASE <= 10U)>> {
   static_assert(BASE >= 2, "");
   static_assert(BASE <= 35, "");
-  static bool is_valid(char c) { return c >= '0' && c <= ('0' + BASE - 1); }
-  static int value(char c) { return c - '0'; }
+  static constexpr bool is_valid(char c) { return c >= '0' && c <= ('0' + BASE - 1); }
+  static constexpr int value(char c) { return c - '0'; }
 };
 template <int BASE>
 struct DigitValues<BASE, enable_if_t<(BASE > 10U) && (BASE <= 35U)>> {
   static_assert(BASE >= 2, "");
   static_assert(BASE <= 35, "");
-  static bool is_valid(char c) {
+  static constexpr bool is_valid(char c) {
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= ('a' + BASE - 11)) ||
            (c >= 'A' && c <= ('A' + BASE - 11));
   }
-  static int value(char c) {
+  static constexpr int value(char c) {
     if (c >= '0' && c <= '9') {
       return c - '0';
     }
@@ -640,7 +641,7 @@ template <typename T>
 using pattern_t =
     decay_t<decltype(expr_traits<decay_t<T>>::make_pattern(std::declval<T>()))>;
 template <typename T>
-inline auto make_pattern(T&& p) {
+constexpr auto make_pattern(T&& p) {
   static_assert(expr_traits<decay_t<T>>::is_pattern ||
                     expr_traits<decay_t<T>>::converts_to_pattern,
                 "Cannot create pattern from T");
@@ -668,7 +669,7 @@ class Pattern : public PatternBase {
 template <typename T>
 struct expr_traits<T, enable_if_t<std::is_base_of<PatternBase, T>::value>> {
   enum { is_pattern = true, converts_to_pattern = false };
-  static const T& make_pattern(const T& v) { return v; }
+  static constexpr const T& make_pattern(const T& v) { return v; }
 };
 }  // namespace ABULAFIA_NAMESPACE
 
@@ -796,7 +797,7 @@ struct Context {
   using datasource_t = DATASOURCE_T;
   using skip_pattern_t = SKIPPER_T;
   using bound_dst_t = BOUND_DST_T;
-  Context(datasource_t& ds, skip_pattern_t const& skip, BOUND_DST_T bound_dst)
+  constexpr Context(datasource_t& ds, skip_pattern_t const& skip, BOUND_DST_T bound_dst)
       : data_(ds), skipper_(skip), bound_dst_(bound_dst) {}
   template <typename T>
   using set_skipper_t = Context<datasource_t, T, bound_dst_t>;
@@ -806,7 +807,7 @@ struct Context {
     IS_RESUMABLE = DATASOURCE_T::IS_RESUMABLE,
     HAS_SKIPPER = !std::is_same<Fail, skip_pattern_t>::value,
   };
-  DATASOURCE_T& data() { return data_; }
+  constexpr DATASOURCE_T& data() { return data_; }
   SKIPPER_T const& skipper() { return skipper_; }
   BOUND_DST_T const& bound_dst() { return bound_dst_; }
  private:
@@ -918,7 +919,7 @@ using ConditionalAdapter_t =
     typename ConditionalAdapter<T, ADAPT_T, enable>::type;
 template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
 struct AdaptedParserFactory {
-  static auto create(CTX_T ctx, DST_T dst, PAT_T const& pat) {
+  static constexpr auto create(CTX_T ctx, DST_T dst, PAT_T const& pat) {
     using raw_factory = ParserFactory<PAT_T>;
     using skip_t = typename CTX_T::skip_pattern_t;
     constexpr bool apply_atomic_adapter = REQ_T::ATOMIC && !raw_factory::ATOMIC;
@@ -941,7 +942,7 @@ struct AdaptedParserFactory {
 
 namespace ABULAFIA_NAMESPACE {
 template <typename ITE_T, typename PAT_T, typename DST_T>
-Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
+constexpr Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
   SingleForwardDataSource<ITE_T> data(b, e);
   auto real_pat = make_pattern(pat);
   auto real_dst = wrap_dst(dst);
@@ -951,7 +952,7 @@ Result parse(ITE_T b, ITE_T e, const PAT_T& pat, DST_T& dst) {
   return parser.consume(real_ctx, real_dst, real_pat);
 }
 template <typename DATA_RANGE_T, typename PAT_T, typename DST_T>
-Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
+constexpr Result parse(const DATA_RANGE_T& data, const PAT_T& pat, DST_T& dst) {
   return parse(std::begin(data), std::end(data), pat, dst);
 }
 template <typename PAT_T, typename DATA_RANGE_T>
@@ -992,7 +993,7 @@ struct Parser_t
   using real_parser_t::real_parser_t;
 };
 template <typename CTX_T, typename DST_T, typename REQ_T, typename PAT_T>
-auto make_parser_(CTX_T ctx, DST_T dst, REQ_T, PAT_T const& pat) {
+constexpr auto make_parser_(CTX_T ctx, DST_T dst, REQ_T, PAT_T const& pat) {
   return AdaptedParserFactory<CTX_T, DST_T, REQ_T, PAT_T>::create(ctx, dst,
                                                                   pat);
 }
@@ -1602,8 +1603,8 @@ class UIntImpl {
  public:
   using pat_t = UInt<BASE, DIGITS_MIN, DIGITS_MAX>;
   using digit_vals = DigitValues<BASE>;
-  UIntImpl(CTX_T, DST_T dst, pat_t const&) { dst.get() = 0; }
-  Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
+  constexpr UIntImpl(CTX_T, DST_T dst, pat_t const&) { dst.get() = 0; }
+  constexpr Result consume(CTX_T ctx, DST_T dst, pat_t const&) {
     while (true) {
       if (ctx.data().empty()) {
         if (ctx.data().final_buffer()) {
@@ -2356,15 +2357,15 @@ struct determine_landing_type {
 template <typename ACT_T, typename DST_T>
 struct determine_landing_type<
     ACT_T, DST_T,
-    std::enable_if_t<has_incoming_val<ACT_T, DST_T>() &&
-                     !has_incoming_param<ACT_T, DST_T>()>> {
+    std::enable_if_t<act_arg_traits<ACT_T>::VAL_ARG &&
+                     !act_arg_traits<ACT_T>::PARAM_ARG>> {
   using type = typename function_traits<ACT_T>::template arg<0>::type;
 };
 template <typename ACT_T, typename DST_T>
 struct determine_landing_type<
     ACT_T, DST_T,
-    std::enable_if_t<has_incoming_val<ACT_T, DST_T>() &&
-                     has_incoming_param<ACT_T, DST_T>()>> {
+    std::enable_if_t<act_arg_traits<ACT_T>::VAL_ARG &&
+                     act_arg_traits<ACT_T>::PARAM_ARG>> {
   using oper = decltype(&ACT_T::template operator()<ActionParam<DST_T>>);
   using type = typename function_traits<oper>::template arg<0>::type;
 };

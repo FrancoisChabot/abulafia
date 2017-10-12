@@ -25,8 +25,8 @@ struct DigitValues<BASE, enable_if_t<(BASE <= 10U)>> {
   static_assert(BASE >= 2, "");
   static_assert(BASE <= 35, "");
 
-  static bool is_valid(char c) { return c >= '0' && c <= ('0' + BASE - 1); }
-  static int value(char c) { return c - '0'; }
+  static constexpr bool is_valid(char c) { return c >= '0' && c <= ('0' + BASE - 1); }
+  static constexpr int value(char c) { return c - '0'; }
 };
 
 // Supporting bases up to 35, while overkill, is no more work than up to 16.
@@ -35,12 +35,12 @@ struct DigitValues<BASE, enable_if_t<(BASE > 10U) && (BASE <= 35U)>> {
   static_assert(BASE >= 2, "");
   static_assert(BASE <= 35, "");
 
-  static bool is_valid(char c) {
+  static constexpr bool is_valid(char c) {
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= ('a' + BASE - 11)) ||
            (c >= 'A' && c <= ('A' + BASE - 11));
   }
 
-  static int value(char c) {
+  static constexpr int value(char c) {
     if (c >= '0' && c <= '9') {
       return c - '0';
     }
