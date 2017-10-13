@@ -15,8 +15,7 @@
 namespace ABULAFIA_NAMESPACE {
 
 // Pattern for a signed integer
-template <std::size_t BASE, std::size_t DIGITS_MIN = 1,
-          std::size_t DIGITS_MAX = 0>
+template <int BASE, int DIGITS_MIN = 1, int DIGITS_MAX = 0>
 class Int : public Pattern<Int<BASE, DIGITS_MIN, DIGITS_MAX>> {
  public:
   static_assert(DIGITS_MIN >= 1);

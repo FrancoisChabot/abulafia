@@ -20,5 +20,4 @@ TEST(test_int, test_default_pattern) {
   testPatternSuccess("+14", pattern, 14);
   testPatternFailure<int>("", pattern);
   testPatternFailure<int>("a123", pattern);
-
 }

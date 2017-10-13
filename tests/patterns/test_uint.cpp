@@ -19,10 +19,10 @@ TEST(test_uint, test_default_pattern) {
   testPatternSuccess("1", pattern, 1U);
 
   // Empty string
-  testPatternFailure<unsigned int>("", pattern);
+  testPatternFailure<int>("", pattern);
 
   // Bad String
-  testPatternFailure<unsigned int>("a123", pattern);
+  testPatternFailure<int>("a123", pattern);
 }
 
 TEST(test_uint, test_arbitrary_base) {
@@ -39,7 +39,7 @@ TEST(test_uint, test_min_digits) {
   testPatternSuccess("1234", pattern, 1234U);
 
   // Not enough digits.
-  testPatternFailure<unsigned int>("12", pattern);
+  testPatternFailure<int>("12", pattern);
 }
 
 TEST(test_uint, test_max_digits) {

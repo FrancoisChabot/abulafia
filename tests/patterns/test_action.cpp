@@ -23,8 +23,7 @@ TEST(test_action, simple_action) {
 
 TEST(test_action, consuming_action) {
   int count = 0;
-  auto pattern =
-      *apply_action(UInt<10, 2, 2>(), [&](unsigned int v) { count += v; });
+  auto pattern = *apply_action(UInt<10, 2, 2>(), [&](int v) { count += v; });
 
   std::string data = "123456";
   auto success = parse(data.begin(), data.end(), pattern);
@@ -33,9 +32,7 @@ TEST(test_action, consuming_action) {
 }
 
 TEST(test_action, emmiting_action) {
-  auto action = [&](unsigned int v) { 
-    return v * v; 
-  };
+  auto action = [&](int v) { return v * v; };
 
   auto pattern = *apply_action(UInt<10, 2, 2>(), action);
 

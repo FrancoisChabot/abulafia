@@ -42,7 +42,7 @@ class ContainerSequenceDataSource {
 
   using rollback_entry_t = std::pair<iterator, buffer_iterator>;
   std::vector<rollback_entry_t> rollback_stack_;
-  unsigned int empty_rollbacks_ = 0;
+  int empty_rollbacks_ = 0;
 
  public:
   using value_type = typename CONTAINER_T::value_type;
@@ -64,7 +64,7 @@ class ContainerSequenceDataSource {
       if (is_empty) {
         current_buffer_ = std::prev(buffers_.end());
         current_ = (*current_buffer_)->begin();
-        for (unsigned int i = 0; i < empty_rollbacks_; ++i) {
+        for (int i = 0; i < empty_rollbacks_; ++i) {
           rollback_stack_.emplace_back(current_, current_buffer_);
         }
         empty_rollbacks_ = 0;

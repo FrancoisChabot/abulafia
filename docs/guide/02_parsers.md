@@ -19,7 +19,7 @@ auto my_pattern = int_ >> ',' >> *char('a', 'z');
 Furthermore, patterns are composed using **value semantics**. This means that writing reusable grammars is mostly a matter of creating a function that returns the proper pattern. This is the prefered way to create custom pattern types.[^1]
 ```c++
 // Parses hexadecimal numbers, expecting them to be prefixed by the standard 0x
-template<std::size_t MIN_DIGITS, std::size_t MAX_DIGITS>
+template<int MIN_DIGITS, int MAX_DIGITS>
 auto prefixed_hex() {
   return (lit("0x") | lit("0X") >> UInt<16, MIN_DIGITS, MAX_DIGITS>();
 }

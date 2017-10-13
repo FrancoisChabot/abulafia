@@ -32,7 +32,7 @@ class Alt : public Pattern<Alt<CHILD_PATS_T...>> {
   child_tuple_t childs_;
 };
 
-template <std::size_t Index, typename... CHILD_PATS_T>
+template <int Index, typename... CHILD_PATS_T>
 auto const& getChild(Alt<CHILD_PATS_T...> const& pat) {
   return std::get<Index>(pat.childs());
 }

@@ -35,7 +35,6 @@ TEST(test_recur, recur_test) {
   testPatternSuccess("123456", recur, nil);
 }
 
-
 TEST(test_recur, node_generation) {
   RecurMemoryPool pool;
 
@@ -43,21 +42,19 @@ TEST(test_recur, node_generation) {
     char c;
     std::vector<Node> n;
 
-    bool operator==(Node const& rhs) const {
-      return c == rhs.c && n == rhs.n;
-    }
+    bool operator==(Node const& rhs) const { return c == rhs.c && n == rhs.n; }
   };
-  
-  auto make_node = [](std::tuple<char, std::vector<Node>> v) { 
-    return Node{std::get<0>(v), std::get<1>(v)}; 
+
+  auto make_node = [](std::tuple<char, std::vector<Node>> v) {
+    return Node{std::get<0>(v), std::get<1>(v)};
   };
 
   Recur<struct abc, Node> recur(pool);
 
-  auto recur_pat = ( char_() >> '(' >> *recur >> ')' )[make_node];
-  
+  auto recur_pat = (char_() >> '(' >> *recur >> ')')[make_node];
+
   ABU_Recur_define(recur, abc, recur_pat);
-  
+
   Node expected;
   expected.c = 'a';
   expected.n.resize(2);
@@ -71,7 +68,7 @@ TEST(test_recur, multi_recur_test) {
   RecurMemoryPool pool;
 
   struct SubNode {
-    unsigned int c;
+    int c;
     std::vector<SubNode> s;
 
     bool operator==(SubNode const& rhs) const {
@@ -80,7 +77,7 @@ TEST(test_recur, multi_recur_test) {
   };
 
   struct Node {
-    unsigned int c;    
+    int c;
     std::vector<Node> n;
     std::vector<SubNode> s;
 
@@ -89,23 +86,25 @@ TEST(test_recur, multi_recur_test) {
     }
   };
 
-  auto make_node = [](std::tuple<unsigned int, std::vector<Node>, std::vector<SubNode>> p) { 
-    return Node{std::get<0>(p), std::get<1>(p), std::get<2>(p)}; 
-  };
+  auto make_node =
+      [](std::tuple<int, std::vector<Node>, std::vector<SubNode>> p) {
+        return Node{std::get<0>(p), std::get<1>(p), std::get<2>(p)};
+      };
 
-  auto make_sub_node = [](std::tuple<unsigned int, std::vector<SubNode>> p) { 
-    return SubNode{std::get<0>(p), std::get<1>(p)}; 
+  auto make_sub_node = [](std::tuple<int, std::vector<SubNode>> p) {
+    return SubNode{std::get<0>(p), std::get<1>(p)};
   };
 
   Recur<struct abc, Node> recur(pool);
   Recur<struct def, SubNode> sub_recur(pool);
- 
-  auto sub_recur_pat = ( uint_ >> '(' >> *sub_recur >> ')' )[make_sub_node];
-  auto recur_pat = ( uint_ >> '(' >> *recur >> ')' >> '[' >> *sub_recur >> ']' )[make_node];
-  
+
+  auto sub_recur_pat = (uint_ >> '(' >> *sub_recur >> ')')[make_sub_node];
+  auto recur_pat =
+      (uint_ >> '(' >> *recur >> ')' >> '[' >> *sub_recur >> ']')[make_node];
+
   ABU_Recur_define(recur, abc, recur_pat);
   ABU_Recur_define(sub_recur, def, sub_recur_pat);
-  
+
   Node expected;
 
   expected.c = 1;
@@ -116,10 +115,7 @@ TEST(test_recur, multi_recur_test) {
   expected.s[1].s[0].c = 4;
 
   testPatternSuccess("1()[2()3(4())]", recur, expected);
-
 }
-
-
 
 // Reproduces https://github.com/FrancoisChabot/abulafia/issues/17
 template <typename PAT_T>

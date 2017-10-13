@@ -52,13 +52,13 @@ TEST(test_readme, rectangle) {
 
   auto pattern = abu::apply_skipper(rect, space);
 
-  Rectangle rect_a, rect_b; 
+  Rectangle rect_a, rect_b;
   std::string data_a = "[1, 45]";
-  std::string data_b = "[1, 45, 1, 1]"; 
+  std::string data_b = "[1, 45, 1, 1]";
 
   abu::parse(data_a.begin(), data_a.end(), pattern, rect_a);
   abu::parse(data_b.begin(), data_b.end(), pattern, rect_b);
-  
+
   EXPECT_EQ(0, rect_a.x);
   EXPECT_EQ(0, rect_a.y);
   EXPECT_EQ(1, rect_a.w);

@@ -16,7 +16,7 @@
 namespace ABULAFIA_NAMESPACE {
 
 template <typename CTX_T, typename DST_T, typename REQ_T, typename CHILD_PAT_T,
-          std::size_t MIN_REP, std::size_t MAX_REP>
+          int MIN_REP, int MAX_REP>
 class RepeatImpl {
   static_assert(!REQ_T::CONSUMES_ON_SUCCESS || MIN_REP > 0);
 
@@ -46,7 +46,7 @@ class RepeatImpl {
   using child_dst_t = dst_t;
   using child_parser_t = Parser<ctx_t, child_dst_t, child_req_t, CHILD_PAT_T>;
 
-  std::size_t count_ = 0;
+  int count_ = 0;
   child_parser_t child_parser_;
 
  public:
@@ -81,7 +81,7 @@ class RepeatImpl {
   }
 };
 
-template <typename CHILD_PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
+template <typename CHILD_PAT_T, int MIN_REP, int MAX_REP>
 struct ParserFactory<Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>> {
   using pat_t = Repeat<CHILD_PAT_T, MIN_REP, MAX_REP>;
 

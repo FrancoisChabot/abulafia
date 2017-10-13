@@ -36,7 +36,7 @@ TEST(test_repeat, test_plus) {
 TEST(test_repeat, test_max_count) {
   auto pattern = repeat<0, 3>(UInt<10, 1, 1>());
 
-  std::vector<unsigned int> dst;
+  std::vector<int> dst;
 
   testPatternSuccess("1234", pattern, std::vector<int>({1, 2, 3}));
 }

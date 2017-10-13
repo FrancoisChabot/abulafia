@@ -17,8 +17,8 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename CTX_T, typename DST_T, std::size_t BASE,
-          std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
+template <typename CTX_T, typename DST_T, int BASE, int DIGITS_MIN,
+          int DIGITS_MAX>
 class UIntImpl {
  public:
   using pat_t = UInt<BASE, DIGITS_MIN, DIGITS_MAX>;
@@ -55,10 +55,10 @@ class UIntImpl {
   }
 
  private:
-  std::size_t digit_count_ = 0;
+  int digit_count_ = 0;
 };
 
-template <std::size_t BASE, std::size_t DIGITS_MIN, std::size_t DIGITS_MAX>
+template <int BASE, int DIGITS_MIN, int DIGITS_MAX>
 struct ParserFactory<UInt<BASE, DIGITS_MIN, DIGITS_MAX>> {
   using pat_t = UInt<BASE, DIGITS_MIN, DIGITS_MAX>;
 

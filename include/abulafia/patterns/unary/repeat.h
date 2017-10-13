@@ -18,7 +18,7 @@
 
 namespace ABULAFIA_NAMESPACE {
 
-template <typename PAT_T, std::size_t MIN_REP, std::size_t MAX_REP>
+template <typename PAT_T, int MIN_REP, int MAX_REP>
 class Repeat : public Pattern<Repeat<PAT_T, MIN_REP, MAX_REP>> {
   PAT_T operand_;
 
@@ -28,7 +28,7 @@ class Repeat : public Pattern<Repeat<PAT_T, MIN_REP, MAX_REP>> {
   PAT_T const& operand() const { return operand_; }
 };
 
-template <std::size_t MIN_REP = 0, std::size_t MAX_REP = 0, typename PAT_T>
+template <int MIN_REP = 0, int MAX_REP = 0, typename PAT_T>
 inline auto repeat(PAT_T pat) {
   return Repeat<pattern_t<PAT_T>, MIN_REP, MAX_REP>(
       make_pattern(std::move(pat)));

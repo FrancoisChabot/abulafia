@@ -38,16 +38,16 @@ TEST(test_list, list_of_lists) {
 
   // unlike other repeat parsers, the list parser DOES create
   // collections of collections by default
-  std::vector<std::vector<unsigned int>> expected;
+  std::vector<std::vector<int>> expected;
 
-  expected.emplace_back(std::vector<unsigned int>{12, 13});
-  expected.emplace_back(std::vector<unsigned int>{14, 15, 16});
+  expected.emplace_back(std::vector<int>{12, 13});
+  expected.emplace_back(std::vector<int>{14, 15, 16});
 
   testPatternSuccess("12,13;14,15,16", pattern, expected);
   /*
 
     // While this probably won't see much use, it still should work because
-    std::vector<unsigned int> alt_dst;
+    std::vector<int> alt_dst;
     status = parse(pattern, "12,13;14,15,16", alt_dst);
     EXPECT_EQ(status, result::SUCCESS);
 
@@ -64,9 +64,9 @@ TEST(test_list, list_of_unstable_append) {
   // comma separated list of between 2 and three single digit uints
   auto pattern = (repeat<2, 3>(UInt<10, 1, 1>()) % ',');
 
-  std::vector<std::vector<unsigned int>> expected;
-  expected.emplace_back(std::vector<unsigned int>{1, 1});
-  expected.emplace_back(std::vector<unsigned int>{2, 3, 4});
+  std::vector<std::vector<int>> expected;
+  expected.emplace_back(std::vector<int>{1, 1});
+  expected.emplace_back(std::vector<int>{2, 3, 4});
 
   testPatternSuccess("11,234", pattern, expected);
 
