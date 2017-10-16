@@ -27,14 +27,14 @@ class LexemeImpl {
 
  public:
   LexemeImpl(CTX_T ctx, DST_T dst, pat_t const& pat)
-      : parser_(sub_ctx_t(ctx.data(), fail), dst, pat.operand()) {}
+      : parser_(sub_ctx_t(ctx.data(), fail, ctx.bound_dst()), dst, pat.operand()) {}
 
   Result consume(CTX_T ctx, DST_T dst, pat_t const& pat) {
-    return parser_.consume(sub_ctx_t(ctx.data(), fail), dst, pat.operand());
+    return parser_.consume(sub_ctx_t(ctx.data(), fail, ctx.bound_dst()), dst, pat.operand());
   }
 
   Result peek(CTX_T ctx, pat_t const& pat) {
-    return parser_.peek(sub_ctx_t(ctx.data(), fail), pat.operand());
+    return parser_.peek(sub_ctx_t(ctx.data(), fail, ctx.bound_dst()), pat.operand());
   }
 };
 

@@ -19,9 +19,9 @@ namespace ABULAFIA_NAMESPACE {
 template <typename T, T MAX_V, T N>
 struct val_visitor {
   template <typename VISIT_T>
-  static decltype(auto) visit(int val, VISIT_T&& visitor) {
+  static decltype(auto) visit(T val, VISIT_T&& visitor) {
     if (N == val) {
-      return visitor(std::integral_constant<int, N>());
+      return visitor(std::integral_constant<T, N>());
     } else {
       return val_visitor<T, MAX_V, N + 1>::visit(
           val, std::forward<VISIT_T>(visitor));
@@ -32,14 +32,14 @@ struct val_visitor {
 template <typename T, T MAX_V>
 struct val_visitor<T, MAX_V, MAX_V> {
   template <typename VISIT_T>
-  static decltype(auto) visit(int, VISIT_T&& visitor) {
-    return visitor(std::integral_constant<int, MAX_V>());
+  static decltype(auto) visit(T, VISIT_T&& visitor) {
+    return visitor(std::integral_constant<T, MAX_V>());
   }
 };
 
-template <int MAX_V, typename VISITOR_T>
-decltype(auto) visit_val(int v, VISITOR_T&& visit) {
-  return val_visitor<int, MAX_V - 1, 0>::visit(v,
+template <std::size_t MAX_V, typename VISITOR_T>
+decltype(auto) visit_val(std::size_t v, VISITOR_T&& visit) {
+  return val_visitor<std::size_t, MAX_V - 1, 0>::visit(v,
                                                std::forward<VISITOR_T>(visit));
 }  // namespace ABULAFIA_NAMESPACE
 
