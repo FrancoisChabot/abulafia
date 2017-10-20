@@ -78,7 +78,7 @@ int main() {
   std::string data = "[1, 2, 3, 4, 5]";
   auto status = abu::parse(data.begin(), data.end(), ignoring_whitespace, dst);
 
-  if(status == abu::result::SUCCESS) {
+  if(status == abu::Result::SUCCESS) {
     for(auto v : dst) {
       std::cout << v << std::endl;
     }
