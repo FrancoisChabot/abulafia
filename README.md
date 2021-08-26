@@ -36,7 +36,7 @@ Using Abulafia is a two stage process: Creating patterns and parsing data
 
 
 ```cpp
-auto a = abu::tok_set<char, char8_t>(std::isalpha);
+auto a = abu::tok_set(std::isalpha);
 auto na = ~alpha;
 
 auto pattern = *(discard(*na) >> *a);
