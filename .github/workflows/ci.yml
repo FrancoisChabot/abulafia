@@ -10,8 +10,16 @@ jobs:
 
     runs-on: ubuntu-20.04 
     steps:
+      - name: Dependencies
+      - run: |
+         sudo apt update
+         sudo apt install gcc-10 g++-10
+         
       - uses: actions/checkout@v2
       - name: Configure
+        env:
+          CC: gcc-10
+          CXX: g++-10
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
 
       - name: Build
