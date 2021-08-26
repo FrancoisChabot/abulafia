@@ -3,6 +3,8 @@
 
 A standalone C++ parsing framework
 
+[![CI](https://github.com/FrancoisChabot/abulafia/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/FrancoisChabot/abulafia/actions/workflows/ci.yml)
+
 ## V2
 
 A major V2 rewrite is in progress.
