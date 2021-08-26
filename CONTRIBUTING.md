@@ -1,18 +1,18 @@
-## Before you submit a pull request:
+### Tests
 
-### Add tests if useful.
+Running the test suite looks like this:
+```
+cmake path/to/abulafia
+make
+ctest
+```
 
-If you are fixing a bug, please add a unit test reproducing the bug. If you are adding a 
-feature, please add a reasonable amount of test coverage.
+### Code coverage
 
-### Run all tests.
+You can run code coverage on the test suite. This is here as a tool. Do not take a 100% result at face value.
 
-We won't look at a pull request unless all existing unit tests pass
+```
+cmake -DCODE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug path/to/abulafia
+make ccov-abulafia_tests
+```
 
-### run clang-format on all your changes.
-
-If you are lazy, you can simply clang-format everything:
-
-    find include -iname *.h | xargs clang-format -i -style=file
-    find tests -iname *.h -o -iname *.cpp | xargs clang-format -i -style=file
-    find examples -iname *.h -o -iname *.cpp | xargs clang-format -i -style=file

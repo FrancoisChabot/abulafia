@@ -1,24 +1,17 @@
-add_library(abu_test_main test_main.cpp)
+add_executable(abulafia_tests
+    test_result.cpp
+    test_tok.cpp
+)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(abulafia_tests PRIVATE gtest_main abulafia)
+target_code_coverage(abulafia_tests EXCLUDE *gtest*)
 
-add_subdirectory(char_set)
-add_subdirectory(data_sources)
-add_subdirectory(patterns)
-add_subdirectory(documentation)
+if (MSVC)
+    # warning level 4 and all warnings as errors
+    target_compile_options(abulafia_tests PRIVATE /W4 /WX)
+else()
+    # lots of warnings and all warnings as errors
+    target_compile_options(abulafia_tests PRIVATE -Wall -Wextra -pedantic -Werror)
+endif()
 
-SET(HEADER_SAN_SRC "")
-
-# Create the header sanitizer targets
-foreach(HEADER_FILE ${ABULAFIA_HEADERS})
-  get_filename_component(TGT_DIR ${HEADER_FILE} DIRECTORY)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${TGT_DIR})
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${HEADER_FILE}.cpp "#include \"${HEADER_FILE}\"")
-
-  list(APPEND HEADER_SAN_SRC ${CMAKE_CURRENT_BINARY_DIR}/${HEADER_FILE}.cpp)
-endforeach()
-
-add_library(header_sanitizer ${HEADER_SAN_SRC})
-
-set_target_properties(abu_test_main PROPERTIES FOLDER "tests")
-set_target_properties(header_sanitizer PROPERTIES FOLDER "tests")
+add_test(abulafia_tests abulafia_tests)

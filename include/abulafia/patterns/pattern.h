@@ -1,49 +1,64 @@
-//  Copyright 2017 Francois Chabot
+//  Copyright 2017-2021 Francois Chabot
 //  (francois.chabot.dev@gmail.com)
 //
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_PATTERN_H_
-#define ABULAFIA_PATTERN_H_
+#ifndef ABULAFIA_PATTERNS_PATTERN_H_INCLUDED
+#define ABULAFIA_PATTERNS_PATTERN_H_INCLUDED
 
-#include "abulafia/config.h"
+#include <utility>
 
-#include "abulafia/patterns/traits.h"
-#include "abulafia/support/type_traits.h"
+#include "abulafia/result.h"
+#include "abulafia/token.h"
 
-namespace ABULAFIA_NAMESPACE {
+namespace abu {
 
-class PatternBase {};
-
-template <typename CHILD_PAT_T, typename... ARGS_T>
-class Construct;
-
-template <typename CRTP_T>
-class Pattern : public PatternBase {
+template <typename CrtpT>
+class pattern {
  public:
-  using pat_t = CRTP_T;
+  using pattern_type = CrtpT;
 
-  template <typename ACT_T>
-  auto operator[](ACT_T act) const {
-    return apply_action(*static_cast<pat_t const*>(this), std::move(act));
-  }
-
-  template <typename... ARGS_T>
-  auto as() const {
-    return Construct<pat_t, ARGS_T...>(*static_cast<pat_t const*>(this));
+  template <typename ActT>
+  auto operator[](ActT act) const {
+    return apply_action(*static_cast<pattern_type const*>(this),
+                        std::move(act));
   }
 };
 
-// Catch-all set of traits for every subclass of pattern.
+namespace details {
+template <typename CrtpT>
+void pattern_test(pattern<CrtpT>&);
+}
+
 template <typename T>
-struct expr_traits<T, enable_if_t<std::is_base_of<PatternBase, T>::value>> {
-  enum { is_pattern = true, converts_to_pattern = false };
-
-  static const T& make_pattern(const T& v) { return v; }
+concept Pattern = requires(T x) {
+  typename T::value_type;
+  ::abu::details::pattern_test(x);
+  { T::template can_match<char> } -> std::convertible_to<bool>;
 };
 
-}  // namespace ABULAFIA_NAMESPACE
+template <Pattern T>
+using pattern_value_t = typename T::value_type;
+
+template <Pattern PatT, Token TokT>
+static constexpr bool pattern_can_match = PatT::template can_match<TokT>;
+
+template <Pattern T>
+using parse_result_t = result<pattern_value_t<T>>;
+
+using check_result_t = result<void>;
+
+// ***** Pattern Convertible ***** //
+template <typename T>
+struct to_pattern;
+
+template <typename T>
+concept PatternConvertible = requires(T x) {
+  { ::abu::to_pattern<T>{}(x) } -> Pattern;
+};
+
+}  // namespace abu
 
 #endif
