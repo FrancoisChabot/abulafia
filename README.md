@@ -12,7 +12,7 @@ A major V2 rewrite is in progress.
 Progress:
 
 - [x] Basic repo setup
-- [ ] Automated testing
+- [x] Automated testing
 - [ ] token sets
 - [ ] basic pattern library
 - [ ] semantic actions
