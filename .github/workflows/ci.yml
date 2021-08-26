@@ -1,0 +1,22 @@
+name: Abulafia Primary CI
+
+on: [push]
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    runs-on: ubuntu-20.04 
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{matrix.build_type}}
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ctest -C ${{matrix.build_type}}
