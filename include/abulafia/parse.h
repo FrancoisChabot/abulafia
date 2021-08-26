@@ -15,18 +15,25 @@
 namespace abu {
 template <std::ranges::input_range Data, Pattern PatT>
 constexpr auto parse(const Data& data, const PatT& pat) {
-  static_assert(pattern_can_match<PatT, std::ranges::range_value_t<Data>>);
-
   auto beg = std::ranges::begin(data);
   return parse(beg, std::ranges::end(data), pat);
 }
 
+template <std::ranges::input_range Data, PatternConvertible PatT>
+constexpr auto parse(const Data& data, const PatT& pat) {
+  return parse(data, to_pattern<PatT>{}(pat));
+}
+
+
 template <std::ranges::input_range Data, Pattern PatT>
 constexpr auto check(const Data& data, const PatT& pat) {
-  static_assert(pattern_can_match<PatT, std::ranges::range_value_t<Data>>);
-
   auto beg = std::ranges::begin(data);
   return check(beg, std::ranges::end(data), pat);
+}
+
+template <std::ranges::input_range Data, PatternConvertible PatT>
+constexpr auto check(const Data& data, const PatT& pat) {
+  return check(data, to_pattern<PatT>{}(pat));
 }
 }  // namespace abu
 

@@ -34,16 +34,11 @@ void pattern_test(pattern<CrtpT>&);
 
 template <typename T>
 concept Pattern = requires(T x) {
-  typename T::value_type;
   ::abu::details::pattern_test(x);
-  { T::template can_match<char> } -> std::convertible_to<bool>;
 };
 
 template <Pattern T>
 using pattern_value_t = typename T::value_type;
-
-template <Pattern PatT, Token TokT>
-static constexpr bool pattern_can_match = PatT::template can_match<TokT>;
 
 template <Pattern T>
 using parse_result_t = result<pattern_value_t<T>>;

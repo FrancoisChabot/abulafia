@@ -18,20 +18,16 @@ namespace abu {
 
 // The Character pattern checks the next token against its character
 // set. If the test passes, the next character is emmited and it succeeds.
-template <Token TokT, TokenSet<TokT> TokSetT>
-class tok_t : public pattern<tok_t<TokT, TokSetT>> {
+template <TokenSet TokSetT>
+class tok : public pattern<tok<TokSetT>> {
  public:
   using token_set_type = TokSetT;
-  using token_type = TokT;
-  using value_type = token_type;
 
-  template <Token U>
-  static constexpr bool can_match = std::is_same_v<U, token_type>;
-
-  explicit constexpr tok_t(token_set_type tokens) noexcept
+  explicit constexpr tok(token_set_type tokens) noexcept
       : tokens_(std::move(tokens)) {}
 
-  constexpr bool matches(const token_type& c) const noexcept {
+  template <Token TokT>
+  constexpr bool matches(const TokT& c) const noexcept {
     return tokens_(c);
   }
 
@@ -41,11 +37,11 @@ class tok_t : public pattern<tok_t<TokT, TokSetT>> {
 
 template <typename T>
 concept TokPattern = requires(T x) {
-  { tok_t(x) } -> std::same_as<T>;
+  { tok(x) } -> std::same_as<T>;
 };
 
 template <std::input_iterator I, std::sentinel_for<I> S, TokPattern PatT>
-constexpr parse_result_t<PatT> parse(I& begin, S end, const PatT& pat) {
+constexpr result<std::iter_value_t<I>> parse(I& begin, S end, const PatT& pat) {
   if (begin != end) {
     auto t = *begin;
     if (pat.matches(t)) {
@@ -60,6 +56,14 @@ template <std::input_iterator I, std::sentinel_for<I> S, TokPattern PatT>
 constexpr check_result_t check(I& begin, S end, const PatT& pat) {
   return parse(begin, end, pat);
 }
+
+// Token Sets are convertible to the tok pattern
+template <TokenSet TokSetT>
+struct to_pattern<TokSetT> {
+  constexpr auto operator()(TokSetT tokset) const {
+    return tok{std::move(tokset)};
+  }
+};
 
 }  // namespace abu
 

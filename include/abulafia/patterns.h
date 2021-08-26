@@ -12,11 +12,6 @@
 
 namespace abu {
 
-template <Token TokT, TokenSet<TokT> TokSetT>
-constexpr auto tok(TokSetT tokens) {
-  return tok_t<TokT, TokSetT>{std::move(tokens)};
-}
-
 }  // namespace abu
 
 #endif

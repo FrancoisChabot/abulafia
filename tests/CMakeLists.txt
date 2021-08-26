@@ -11,7 +11,7 @@ if (MSVC)
     target_compile_options(abulafia_tests PRIVATE /W4 /WX)
 else()
     # lots of warnings and all warnings as errors
-    target_compile_options(abulafia_tests PRIVATE -Wall -Wextra -pedantic -Werror)
+    target_compile_options(abulafia_tests PRIVATE -Wall -Wextra -pedantic -Werror -ftemplate-backtrace-limit=20)
 endif()
 
 add_test(abulafia_tests abulafia_tests)

@@ -38,8 +38,12 @@ inline void unreachable [[noreturn]] () { std::terminate(); }
 #define abu_precondition(condition) abu_assume(condition)
 
 namespace abu {
-struct error {
-  constexpr bool operator==(const error& rhs) const = default;
+struct error {};
+struct bad_result_access : public std::exception {
+  bad_result_access(error err) : err_(err) {}
+  const error& get_error() const { return err_; }
+ private:
+  error err_;
 };
 template <typename T>
 class result {
@@ -49,23 +53,26 @@ class result {
   result(success_type arg) : storage_(std::move(arg)) {}
   result(error arg) : storage_(std::move(arg)) {}
   operator bool() const { return storage_.index() == 0; }
-  constexpr T& value() {
-    abu_assume(storage_.index() == 0);
+  constexpr T& operator*() {
+    if (storage_.index() != 0) {
+      throw bad_result_access{std::get<1>(storage_)};
+    }
     return std::get<0>(storage_);
   }
-  constexpr const T& value() const {
-    abu_assume(storage_.index() == 0);
+  constexpr const T& operator*() const {
+    if (storage_.index() != 0) {
+      throw bad_result_access{std::get<1>(storage_)};
+    }
     return std::get<0>(storage_);
   }
-  constexpr failure_type& failure() {
+  constexpr failure_type& get_error() {
     abu_assume(storage_.index() == 1);
     return std::get<1>(storage_);
   }
-  constexpr const failure_type& failure() const {
+  constexpr const failure_type& get_error() const {
     abu_assume(storage_.index() == 1);
     return std::get<1>(storage_);
   }
-
  private:
   std::variant<success_type, failure_type> storage_;
 };
@@ -79,19 +86,18 @@ class result<void> {
   template <typename T>
   result(const result<T>& other) {
     if (!other) {
-      storage_ = other.failure();
+      storage_ = other.get_error();
     }
   }
   operator bool() const { return !storage_; }
-  constexpr failure_type& failure() {
+  constexpr failure_type& get_error() {
     abu_assume(storage_);
     return *storage_;
   }
-  constexpr const failure_type& failure() const {
+  constexpr const failure_type& get_error() const {
     abu_assume(storage_);
     return *storage_;
   }
-
  private:
   std::optional<failure_type> storage_;
 };
@@ -99,12 +105,33 @@ class result<void> {
 
 namespace abu {
 template <typename T>
-concept Token = std::regular<T>;
-template <typename T, typename TokT>
-concept TokenSet = requires {
-  Token<TokT>;
-  std::predicate<T, TokT>;
+concept Token = std::copyable<T>;
+template <typename PredT>
+struct token_set {
+  using predicate = PredT;
+  explicit constexpr token_set(predicate pred) : pred_(std::move(pred)) {}
+  template <Token T>
+  constexpr bool operator()(const T& t) const {
+    return pred_(t);
+  }
+  constexpr const predicate& pred() const { return pred_; }
+ private:
+  [[no_unique_address]] predicate pred_;
 };
+template <typename T>
+concept TokenSet = requires(T x) {
+  { token_set(x) } -> std::same_as<T>;
+};
+template <TokenSet T>
+constexpr auto operator~(const T& arg) {
+  return token_set([p = arg.pred()](const auto& t) { return !p(t); });
+}
+template <TokenSet LhsT, TokenSet RhsT>
+constexpr auto operator-(const LhsT& lhs, const RhsT& rhs) {
+  return token_set([pl = lhs.pred(), pr = rhs.pred()](const auto& t) {
+    return !pr(t) && pl(t);
+  });
+}
 }  // namespace abu
 
 namespace abu {
@@ -124,14 +151,10 @@ void pattern_test(pattern<CrtpT>&);
 }
 template <typename T>
 concept Pattern = requires(T x) {
-  typename T::value_type;
   ::abu::details::pattern_test(x);
-  { T::template can_match<char> } -> std::convertible_to<bool>;
 };
 template <Pattern T>
 using pattern_value_t = typename T::value_type;
-template <Pattern PatT, Token TokT>
-static constexpr bool pattern_can_match = PatT::template can_match<TokT>;
 template <Pattern T>
 using parse_result_t = result<pattern_value_t<T>>;
 using check_result_t = result<void>;
@@ -146,42 +169,44 @@ concept PatternConvertible = requires(T x) {
 namespace abu {
 template <std::ranges::input_range Data, Pattern PatT>
 constexpr auto parse(const Data& data, const PatT& pat) {
-  static_assert(pattern_can_match<PatT, std::ranges::range_value_t<Data>>);
   auto beg = std::ranges::begin(data);
   return parse(beg, std::ranges::end(data), pat);
 }
+template <std::ranges::input_range Data, PatternConvertible PatT>
+constexpr auto parse(const Data& data, const PatT& pat) {
+  return parse(data, to_pattern<PatT>{}(pat));
+}
 template <std::ranges::input_range Data, Pattern PatT>
 constexpr auto check(const Data& data, const PatT& pat) {
-  static_assert(pattern_can_match<PatT, std::ranges::range_value_t<Data>>);
   auto beg = std::ranges::begin(data);
   return check(beg, std::ranges::end(data), pat);
+}
+template <std::ranges::input_range Data, PatternConvertible PatT>
+constexpr auto check(const Data& data, const PatT& pat) {
+  return check(data, to_pattern<PatT>{}(pat));
 }
 }  // namespace abu
 
 namespace abu {
-template <Token TokT, TokenSet<TokT> TokSetT>
-class tok_t : public pattern<tok_t<TokT, TokSetT>> {
+template <TokenSet TokSetT>
+class tok : public pattern<tok<TokSetT>> {
  public:
   using token_set_type = TokSetT;
-  using token_type = TokT;
-  using value_type = token_type;
-  template <Token U>
-  static constexpr bool can_match = std::is_same_v<U, token_type>;
-  explicit constexpr tok_t(token_set_type tokens) noexcept
+  explicit constexpr tok(token_set_type tokens) noexcept
       : tokens_(std::move(tokens)) {}
-  constexpr bool matches(const token_type& c) const noexcept {
+  template <Token TokT>
+  constexpr bool matches(const TokT& c) const noexcept {
     return tokens_(c);
   }
-
  private:
   [[no_unique_address]] token_set_type tokens_;
 };
 template <typename T>
 concept TokPattern = requires(T x) {
-  { tok_t(x) } -> std::same_as<T>;
+  { tok(x) } -> std::same_as<T>;
 };
 template <std::input_iterator I, std::sentinel_for<I> S, TokPattern PatT>
-constexpr parse_result_t<PatT> parse(I& begin, S end, const PatT& pat) {
+constexpr result<std::iter_value_t<I>> parse(I& begin, S end, const PatT& pat) {
   if (begin != end) {
     auto t = *begin;
     if (pat.matches(t)) {
@@ -195,13 +220,15 @@ template <std::input_iterator I, std::sentinel_for<I> S, TokPattern PatT>
 constexpr check_result_t check(I& begin, S end, const PatT& pat) {
   return parse(begin, end, pat);
 }
+template <TokenSet TokSetT>
+struct to_pattern<TokSetT> {
+  constexpr auto operator()(TokSetT tokset) const {
+    return tok{std::move(tokset)};
+  }
+};
 }  // namespace abu
 
 namespace abu {
-template <Token TokT, TokenSet<TokT> TokSetT>
-constexpr auto tok(TokSetT tokens) {
-  return tok_t<TokT, TokSetT>{std::move(tokens)};
-}
 }  // namespace abu
 
 #ifdef __clang__
