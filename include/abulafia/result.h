@@ -10,14 +10,22 @@
 
 #include <concepts>
 #include <optional>
+#include <stdexcept>
 #include <variant>
 
 #include "abulafia/assert.h"
 
 namespace abu {
 
-struct error {
-  constexpr bool operator==(const error& rhs) const = default;
+struct error {};
+
+struct bad_result_access : public std::exception {
+  bad_result_access(error err) : err_(err) {}
+
+  const error& get_error() const { return err_; }
+
+ private:
+  error err_;
 };
 
 template <typename T>
@@ -32,21 +40,25 @@ class result {
   operator bool() const { return storage_.index() == 0; }
 
   constexpr T& operator*() {
-    abu_assume(storage_.index() == 0);
+    if (storage_.index() != 0) {
+      throw bad_result_access{std::get<1>(storage_)};
+    }
     return std::get<0>(storage_);
   }
 
   constexpr const T& operator*() const {
-    abu_assume(storage_.index() == 0);
+    if (storage_.index() != 0) {
+      throw bad_result_access{std::get<1>(storage_)};
+    }
     return std::get<0>(storage_);
   }
 
-  constexpr failure_type& failure() {
+  constexpr failure_type& get_error() {
     abu_assume(storage_.index() == 1);
     return std::get<1>(storage_);
   }
 
-  constexpr const failure_type& failure() const {
+  constexpr const failure_type& get_error() const {
     abu_assume(storage_.index() == 1);
     return std::get<1>(storage_);
   }
@@ -67,18 +79,18 @@ class result<void> {
   template <typename T>
   result(const result<T>& other) {
     if (!other) {
-      storage_ = other.failure();
+      storage_ = other.get_error();
     }
   }
 
   operator bool() const { return !storage_; }
 
-  constexpr failure_type& failure() {
+  constexpr failure_type& get_error() {
     abu_assume(storage_);
     return *storage_;
   }
 
-  constexpr const failure_type& failure() const {
+  constexpr const failure_type& get_error() const {
     abu_assume(storage_);
     return *storage_;
   }

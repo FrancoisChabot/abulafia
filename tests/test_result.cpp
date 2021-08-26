@@ -15,7 +15,7 @@ TEST(test_result, success_with_value) {
   EXPECT_EQ(*r, 3);
 
 #ifndef NDEBUG
-  EXPECT_DEATH(r.failure(), "");
+  EXPECT_DEATH(r.get_error(), "");
 #endif
 }
 
@@ -25,11 +25,7 @@ TEST(test_result, failure_with_value) {
   abu::result<int> r{err};
 
   EXPECT_FALSE(r);
-  EXPECT_EQ(r.failure(), err);
-
-#ifndef NDEBUG
-  EXPECT_DEATH(*r, "");
-#endif
+  EXPECT_THROW(*r, abu::bad_result_access);
 }
 
 TEST(test_result, success_void) {
@@ -38,7 +34,7 @@ TEST(test_result, success_void) {
   EXPECT_TRUE(r);
 
 #ifndef NDEBUG
-  EXPECT_DEATH(r.failure(), "");
+  EXPECT_DEATH(r.get_error(), "");
 #endif
 }
 
@@ -47,5 +43,4 @@ TEST(test_result, failure_void) {
   abu::result<void> r{err};
 
   EXPECT_FALSE(r);
-  EXPECT_EQ(r.failure(), err);
 }
