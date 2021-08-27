@@ -16,6 +16,7 @@
 
 namespace abu {
 
+namespace pat {
 // The Character pattern checks the next token against its character
 // set. If the test passes, the next character is emmited and it succeeds.
 template <TokenSet TokSetT>
@@ -35,35 +36,25 @@ class tok : public pattern<tok<TokSetT>> {
   [[no_unique_address]] token_set_type tokens_;
 };
 
-template <typename T>
-concept TokPattern = requires(T x) {
-  { tok(x) } -> std::same_as<T>;
-};
+}  // namespace pat
 
-template <std::input_iterator I, std::sentinel_for<I> S, TokPattern PatT>
-constexpr result<std::iter_value_t<I>> parse(I& begin, S end, const PatT& pat) {
-  if (begin != end) {
-    auto t = *begin;
+template <std::input_iterator I, std::sentinel_for<I> S, TokenSet T>
+constexpr result<std::iter_value_t<I>> parse(I& i, S e,
+                                             const pat::tok<T>& pat) {
+  if (i != e) {
+    auto t = *i;
     if (pat.matches(t)) {
-      ++begin;
+      ++i;
       return t;
     }
   }
   return error{};
 }
 
-template <std::input_iterator I, std::sentinel_for<I> S, TokPattern PatT>
-constexpr check_result_t check(I& begin, S end, const PatT& pat) {
-  return parse(begin, end, pat);
+template <std::input_iterator I, std::sentinel_for<I> S, TokenSet T>
+constexpr check_result_t check(I& i, S e, const pat::tok<T>& pat) {
+  return parse(i, e, pat);
 }
-
-// Token Sets are convertible to the tok pattern
-template <TokenSet TokSetT>
-struct to_pattern<TokSetT> {
-  constexpr auto operator()(TokSetT tokset) const {
-    return tok{std::move(tokset)};
-  }
-};
 
 }  // namespace abu
 

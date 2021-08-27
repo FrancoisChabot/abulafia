@@ -67,6 +67,11 @@ class result {
   std::variant<success_type, failure_type> storage_;
 };
 
+template <typename T>
+concept Result = (T x) {
+  { ::abu::result(x) } -> std::same_as<T>;
+};
+
 template <>
 class result<void> {
  public:

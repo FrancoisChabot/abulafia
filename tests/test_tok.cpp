@@ -9,7 +9,7 @@
 #include "gtest/gtest.h"
 
 namespace {
-constexpr auto any = abu::token_set([](char) { return true; });
+constexpr auto any = abu::tok;
 }  // namespace
 
 TEST(token, any_works) {
@@ -26,7 +26,7 @@ TEST(token, any_works) {
 }
 
 namespace {
-constexpr auto any_non_null = abu::token_set([](char c) { return c != '\0'; });
+constexpr abu::token_set any_non_null = [](char c) { return c != '\0'; };
 }  // namespace
 
 TEST(token, any_non_null_works) {
@@ -37,8 +37,7 @@ TEST(token, any_non_null_works) {
 }
 
 TEST(token, reverse) {
-  auto abc =
-      abu::token_set([](char c) { return c == 'a' || c == 'b' || c == 'c'; });
+  abu::token_set abc = [](char c) { return c == 'a' || c == 'b' || c == 'c'; };
 
   auto abc_inv = ~abc;
 
@@ -54,12 +53,13 @@ TEST(token, reverse) {
 }
 
 TEST(token, exclude) {
-  auto abc_tok =
-      abu::token_set([](char c) { return c == 'a' || c == 'b' || c == 'c'; });
+  abu::token_set abc = [](char c) {
+    return c == 'a' || c == 'b' || c == 'c';
+  };
 
-  auto b_tok = abu::token_set([](char c) { return c == 'b'; });
+  abu::token_set b = [](char c) { return c == 'b'; };
 
-  auto sut = abc_tok - b_tok;
+  auto sut = abc - b;
 
   EXPECT_TRUE(check("a", sut));
   EXPECT_FALSE(check("b", sut));

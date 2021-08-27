@@ -8,6 +8,7 @@
 #ifndef ABULAFIA_PATTERNS_PATTERN_H_INCLUDED
 #define ABULAFIA_PATTERNS_PATTERN_H_INCLUDED
 
+#include <iterator>
 #include <utility>
 
 #include "abulafia/result.h"
@@ -15,15 +16,35 @@
 
 namespace abu {
 
+namespace details {
+using input_archetype = std::istream_iterator;
+using forward_archetype = std::istream_iterator;
+}  // namespace details
+
+template <typename T>
+concept ForwardPattern = requires(T x, details::forward_archetype b,
+                                  details::forward_archetype e) {
+  { ::abu::parse(b, e, x) } -> Result;
+  { ::abu::check(b, e, x) } -> std::same_as<result<void>>;
+};
+
+// Input patterns can be parsed/check using an input iterator
+template <typename T>
+concept InputPattern = requires(T x, details::input_archetype b,
+                                details::input_archetype e) {
+  { ::abu::parse(b, e, x) } -> Result;
+  { ::abu::check(b, e, x) } -> std::same_as<result<void>>;
+};
+
+// Inheriting from pattern<CrtpT>
 template <typename CrtpT>
 class pattern {
  public:
   using pattern_type = CrtpT;
 
   template <typename ActT>
-  auto operator[](ActT act) const {
-    return apply_action(*static_cast<pattern_type const*>(this),
-                        std::move(act));
+  constexpr auto operator[](ActT act) const {
+    return action(*static_cast<pattern_type const*>(this), std::move(act));
   }
 };
 
@@ -33,24 +54,27 @@ void pattern_test(pattern<CrtpT>&);
 }
 
 template <typename T>
-concept Pattern = requires(T x) {
+struct to_pattern;
+
+template <PatternConvertible T>
+auto as_pattern(const T& p) {
+  return to_pattern<T>{}(p);
+}
+
+template <typename T>
+concept TruePattern = requires(T x) {
   ::abu::details::pattern_test(x);
 };
 
-template <Pattern T>
-using pattern_value_t = typename T::value_type;
-
-template <Pattern T>
-using parse_result_t = result<pattern_value_t<T>>;
-
-using check_result_t = result<void>;
-
-// ***** Pattern Convertible ***** //
 template <typename T>
-struct to_pattern;
+concept StrongPattern = requires(T x) {
+  ::abu::is_strong_pattern<T>;
+  { ::abu::to_pattern<T>{}(x) } -> Pattern;
+};
 
 template <typename T>
-concept PatternConvertible = requires(T x) {
+concept WeakPattern = requires(T x) {
+  ::abu::is_weak_pattern<T>;
   { ::abu::to_pattern<T>{}(x) } -> Pattern;
 };
 

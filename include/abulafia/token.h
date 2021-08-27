@@ -21,7 +21,7 @@ concept Token = std::copyable<T>;
 template <typename PredT>
 struct token_set {
   using predicate = PredT;
-  explicit constexpr token_set(predicate pred) : pred_(std::move(pred)) {}
+  constexpr token_set(predicate pred) : pred_(std::move(pred)) {}
 
   template <Token T>
   constexpr bool operator()(const T& t) const {
