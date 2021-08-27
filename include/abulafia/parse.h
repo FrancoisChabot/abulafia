@@ -5,36 +5,68 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_ABULAFIA_PARSE_H_INCLUDED
-#define ABULAFIA_ABULAFIA_PARSE_H_INCLUDED
+#ifndef ABULAFIA_PARSE_H_INCLUDED
+#define ABULAFIA_PARSE_H_INCLUDED
 
 #include <ranges>
 
-#include "abulafia/patterns/pattern.h"
+#include "abulafia/pattern.h"
 
 namespace abu {
-template <std::ranges::input_range Data, Pattern PatT>
-constexpr auto parse(const Data& data, const PatT& pat) {
-  auto beg = std::ranges::begin(data);
-  return parse(beg, std::ranges::end(data), pat);
+
+// ***** parse *****
+
+template <std::forward_iterator I, std::sentinel_for<I> S, PatternLike Pat>
+constexpr auto parse(I& b, const S& e, const Pat& pat_like) {
+  const auto& pat = as_pattern(pat_like);
+
+  using parser_type = basic_parser<std::decay_t<decltype(pat)>>;
+  return parser_type::parse(b, e, pat);
 }
 
-template <std::ranges::input_range Data, PatternConvertible PatT>
-constexpr auto parse(const Data& data, const PatT& pat) {
-  return parse(data, to_pattern<PatT>{}(pat));
+template <std::ranges::forward_range R, PatternLike Pat>
+constexpr auto parse(const R& range, const Pat& pat) {
+  auto b = std::ranges::begin(range);
+  auto e = std::ranges::end(range);
+  return parse(b, e, pat);
 }
 
+// ***** check *****
 
-template <std::ranges::input_range Data, Pattern PatT>
-constexpr auto check(const Data& data, const PatT& pat) {
-  auto beg = std::ranges::begin(data);
-  return check(beg, std::ranges::end(data), pat);
+template <std::forward_iterator I, std::sentinel_for<I> S, Pattern Pat>
+constexpr auto check(I& b,
+                     const S& e,
+                     const Pat& pat) requires(ExplicitelyCheckable<Pat>) {
+  using parser_type = basic_parser<std::decay_t<decltype(pat)>>;
+  return parser_type::check(b, e, pat);
 }
 
-template <std::ranges::input_range Data, PatternConvertible PatT>
-constexpr auto check(const Data& data, const PatT& pat) {
-  return check(data, to_pattern<PatT>{}(pat));
+template <std::forward_iterator I, std::sentinel_for<I> S, Pattern Pat>
+constexpr auto check(I& b,
+                     const S& e,
+                     const Pat& pat) requires(!ExplicitelyCheckable<Pat>) {
+  using parser_type = basic_parser<std::decay_t<decltype(pat)>>;
+
+  static_assert(TrivialResult<decltype(parser_type::parse(b, e, pat))>,
+                "Using parse() to check a non-trivial result");
+
+  return parser_type::parse(b, e, pat);
 }
+
+template <std::forward_iterator I,
+          std::sentinel_for<I> S,
+          PatternConvertible Pat>
+constexpr auto check(I& b, const S& e, const Pat& pat_like) {
+  return check(b, e, as_pattern(pat_like));
+}
+
+template <std::ranges::forward_range R, PatternLike Pat>
+constexpr auto check(const R& range, const Pat& pat) {
+  auto b = std::ranges::begin(range);
+  auto e = std::ranges::end(range);
+  return check(b, e, pat);
+}
+
 }  // namespace abu
 
 #endif

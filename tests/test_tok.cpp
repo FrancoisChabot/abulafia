@@ -8,61 +8,43 @@
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
 
-namespace {
-constexpr auto any = abu::tok;
-}  // namespace
+using namespace abu;
+
+// Constexpr usage
+static_assert(check("a", tok));
+static_assert(*parse("a", tok) == 'a');
 
 TEST(token, any_works) {
-  EXPECT_TRUE(check("a", any));
-  EXPECT_EQ(*parse("a", any), 'a');
-  EXPECT_EQ(*parse("ab", any), 'a');
+  EXPECT_TRUE(check("a", tok));
+  EXPECT_EQ(*parse("a", tok), 'a');
+  EXPECT_EQ(*parse("ab", tok), 'a');
 
   // The empty string string literal contains the null termination, which is
   // a valid token in its own right.
-  EXPECT_EQ(*parse("", any), '\0');
+  EXPECT_EQ(*parse("", tok), '\0');
 
-  EXPECT_FALSE(check(std::string_view(""), any));
-  EXPECT_FALSE(parse(std::string_view(""), any));
+  EXPECT_FALSE(check(std::string_view(""), tok));
+  EXPECT_FALSE(parse(std::string_view(""), tok));
 }
 
-namespace {
-constexpr abu::token_set any_non_null = [](char c) { return c != '\0'; };
-}  // namespace
-
 TEST(token, any_non_null_works) {
+  constexpr auto any_non_null = [](char c) { return c != '\0'; };
+
   EXPECT_TRUE(check("a", any_non_null));
   EXPECT_EQ(*parse("a", any_non_null), 'a');
   EXPECT_FALSE(parse("", any_non_null));
   EXPECT_FALSE(check("", any_non_null));
 }
 
-TEST(token, reverse) {
-  abu::token_set abc = [](char c) { return c == 'a' || c == 'b' || c == 'c'; };
+TEST(token, non_trivial_token_type) {
+  std::vector<std::string> empty_tokens;
+  std::vector<std::string> tokens = {"aaa", "bbb", "ccc"};
+  std::vector<std::string> tokens_2 = {"bbb", "aaa", "ccc"};
 
-  auto abc_inv = ~abc;
+  constexpr auto not_bbb = [](const std::string& t) { return t != "bbb"; };
 
-  EXPECT_TRUE(check("a", abc));
-  EXPECT_TRUE(check("b", abc));
-  EXPECT_TRUE(check("c", abc));
-  EXPECT_FALSE(check("d", abc));
-
-  EXPECT_FALSE(check("a", abc_inv));
-  EXPECT_FALSE(check("b", abc_inv));
-  EXPECT_FALSE(check("c", abc_inv));
-  EXPECT_TRUE(check("d", abc_inv));
-}
-
-TEST(token, exclude) {
-  abu::token_set abc = [](char c) {
-    return c == 'a' || c == 'b' || c == 'c';
-  };
-
-  abu::token_set b = [](char c) { return c == 'b'; };
-
-  auto sut = abc - b;
-
-  EXPECT_TRUE(check("a", sut));
-  EXPECT_FALSE(check("b", sut));
-  EXPECT_TRUE(check("c", sut));
-  EXPECT_FALSE(check("d", sut));
+  EXPECT_TRUE(check(tokens, tok));
+  EXPECT_EQ(*parse(tokens, tok), "aaa");
+  EXPECT_FALSE(parse(empty_tokens, tok));
+  EXPECT_FALSE(check(tokens_2, not_bbb));
 }

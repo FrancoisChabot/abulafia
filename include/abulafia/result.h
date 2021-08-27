@@ -11,6 +11,7 @@
 #include <concepts>
 #include <optional>
 #include <stdexcept>
+#include <type_traits>
 #include <variant>
 
 #include "abulafia/assert.h"
@@ -31,13 +32,13 @@ struct bad_result_access : public std::exception {
 template <typename T>
 class result {
  public:
-  using success_type = T;
+  using value_type = T;
   using failure_type = error;
 
-  result(success_type arg) : storage_(std::move(arg)) {}
-  result(error arg) : storage_(std::move(arg)) {}
+  constexpr result(value_type arg) : storage_(std::move(arg)) {}
+  constexpr result(error arg) noexcept : storage_(std::move(arg)) {}
 
-  operator bool() const { return storage_.index() == 0; }
+  constexpr operator bool() const { return storage_.index() == 0; }
 
   constexpr T& operator*() {
     if (storage_.index() != 0) {
@@ -64,22 +65,17 @@ class result {
   }
 
  private:
-  std::variant<success_type, failure_type> storage_;
-};
-
-template <typename T>
-concept Result = (T x) {
-  { ::abu::result(x) } -> std::same_as<T>;
+  std::variant<value_type, failure_type> storage_;
 };
 
 template <>
 class result<void> {
  public:
-  using success_type = void;
+  using value_type = void;
   using failure_type = error;
 
-  result() noexcept = default;
-  result(failure_type arg) : storage_(std::move(arg)) {}
+  constexpr result() noexcept = default;
+  constexpr result(failure_type arg) : storage_(std::move(arg)) {}
 
   template <typename T>
   result(const result<T>& other) {
@@ -88,7 +84,7 @@ class result<void> {
     }
   }
 
-  operator bool() const { return !storage_; }
+  constexpr operator bool() const { return !storage_; }
 
   constexpr failure_type& get_error() {
     abu_assume(storage_);
@@ -103,6 +99,16 @@ class result<void> {
  private:
   std::optional<failure_type> storage_;
 };
+
+template <typename T>
+concept Result = requires(T x) {
+  { ::abu::result(std::move(x)) } -> std::same_as<T>;
+};
+
+template <typename T>
+concept TrivialResult = Result<T> &&
+    (std::same_as<typename T::value_type, void> ||
+     std::is_trivial_v<typename T::value_type>);
 
 }  // namespace abu
 #endif

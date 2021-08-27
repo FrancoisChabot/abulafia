@@ -1,3 +1,4 @@
+
 ### Tests
 
 Running the test suite looks like this:
@@ -15,4 +16,3 @@ You can run code coverage on the test suite. This is here as a tool. Do not take
 cmake -DCODE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug path/to/abulafia
 make ccov-abulafia_tests
 ```
-

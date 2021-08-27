@@ -8,7 +8,7 @@
 #include "abulafia/abulafia.h"
 #include "gtest/gtest.h"
 
-TEST(test_result, success_with_value) {
+TEST(result, success_with_value) {
   abu::result<int> r{3};
 
   EXPECT_TRUE(r);
@@ -19,7 +19,7 @@ TEST(test_result, success_with_value) {
 #endif
 }
 
-TEST(test_result, failure_with_value) {
+TEST(result, failure_with_value) {
   auto err = abu::error{};
 
   abu::result<int> r{err};
@@ -28,7 +28,7 @@ TEST(test_result, failure_with_value) {
   EXPECT_THROW(*r, abu::bad_result_access);
 }
 
-TEST(test_result, success_void) {
+TEST(result, success_void) {
   abu::result<void> r{};
 
   EXPECT_TRUE(r);
@@ -38,7 +38,7 @@ TEST(test_result, success_void) {
 #endif
 }
 
-TEST(test_result, failure_void) {
+TEST(result, failure_void) {
   auto err = abu::error{};
   abu::result<void> r{err};
 

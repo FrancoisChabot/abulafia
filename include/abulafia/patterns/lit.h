@@ -8,48 +8,73 @@
 #ifndef ABULAFIA_PATTERNS_LIT_H_INCLUDED
 #define ABULAFIA_PATTERNS_LIT_H_INCLUDED
 
-#include <concepts>
-#include <iterator>
+#include <algorithm>
 
-#include "abulafia/patterns/pattern.h"
+#include "abulafia/pattern.h"
+#include "abulafia/stdlib_utils.h"
 #include "abulafia/token.h"
 
 namespace abu {
 
-template <typename T>
-concept LiteralString = requires(T x) {
-  std::input_range<T>;
-  Token<std::ranges::range_value_t<T>>;
-};
-
 namespace pat {
-  template <LiteralString T>
-  class lit : public pattern<lit<T>> {
-   public:
-    explicit constexpr lit(T expected) noexcept
-        : expected_(std::move(expected)) {}
+template <typename T>
+class lit {
+ public:
+  explicit constexpr lit(T expected) noexcept
+      : expected_(std::move(expected)) {}
 
-   private:
-    [[no_unique_address]] T expected_;
-  };
+  constexpr const T& expected() const { return expected_; }
 
-  template <LiteralString auto T>
-  class lit_ct : public pattern<ct_lit<T>> {};
+ private:
+  [[no_unique_address]] T expected_;
+};
 
 }  // namespace pat
 
-template <std::input_iterator I, std::sentinel_for<I> S, LiteralString T>
-constexpr result<std::iter_value_t<I>> parse(I& i, S e,
-                                             const pat::lit<T>& pat) {
-  if (i != e) {
-    auto t = *i;
-    if (pat.matches(t)) {
-      ++i;
-      return t;
+namespace lit_details {
+template <typename I, typename T>
+concept ValueLiteralIterator = std::input_iterator<I> &&
+    requires(const I& i, const T& t) {
+  { *i == t } -> std::convertible_to<bool>;
+};
+
+template <typename I, typename T>
+concept RangeLiteralIterator =
+    std::ranges::input_range<T> && !ValueLiteralIterator<I, T> &&
+        std::input_iterator<I> &&
+    requires(const I& i, const std::ranges::range_value_t<T>& t) {
+  { *i == t } -> std::convertible_to<bool>;
+};
+
+// TODO: what if there's ambiguity?
+
+}  // namespace lit_details
+
+template <typename T>
+struct basic_parser<pat::lit<T>> {
+  // When T is a single token
+  template <lit_details::ValueLiteralIterator<T> I, std::sentinel_for<I> S>
+  static constexpr check_result_t parse(I& i, S e, const pat::lit<T>& pat) {
+    if (i != e && *i == pat.expected()) {
+      std::advance(i, 1);
+      return {};
     }
+    return error{};
   }
-  return error{};
-}
+
+  // // When T is a range of tokens
+  template <lit_details::RangeLiteralIterator<T> I, std::sentinel_for<I> S>
+  static constexpr check_result_t parse(I& i, S e, const pat::lit<T>& pat) {
+    const auto& pat_i = std::ranges::begin(pat.expected());
+    const auto pat_e = std::ranges::end(pat.expected());
+
+    if (std::mismatch(i, e, pat_i, pat_e).second == pat_e) {
+      std::advance(i, std::ranges::size(pat.expected()));
+      return {};
+    }
+    return error{};
+  }
+};
 }  // namespace abu
 
 #endif

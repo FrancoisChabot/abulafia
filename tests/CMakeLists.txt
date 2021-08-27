@@ -1,8 +1,11 @@
 add_executable(abulafia_tests
     test_discard.cpp
+    test_lit.cpp
+    test_opt.cpp
+    test_repeat.cpp
     test_result.cpp
     test_tok.cpp
-)
+ )
 
 target_link_libraries(abulafia_tests PRIVATE gtest_main abulafia)
 target_code_coverage(abulafia_tests EXCLUDE *gtest*)

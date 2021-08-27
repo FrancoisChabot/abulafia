@@ -9,47 +9,18 @@
 #define ABULAFIA_TOKEN_H_INCLUDED
 
 #include <concepts>
+#include <type_traits>
+
+#include "abulafia/archetypes.h"
 
 namespace abu {
 
-// While tokens are only required to be regular, it's possible for additional
-// requirements to be added by individual patterns.
+// Additional requirements can be added by individual patterns.
 template <typename T>
-concept Token = std::copyable<T>;
-
-// TODO: this should be constrained somewhat, but it's trickier than it looks...
-template <typename PredT>
-struct token_set {
-  using predicate = PredT;
-  constexpr token_set(predicate pred) : pred_(std::move(pred)) {}
-
-  template <Token T>
-  constexpr bool operator()(const T& t) const {
-    return pred_(t);
-  }
-
-  constexpr const predicate& pred() const { return pred_; }
-
- private:
-  [[no_unique_address]] predicate pred_;
-};
+concept Token = std::is_copy_constructible_v<T>;
 
 template <typename T>
-concept TokenSet = requires(T x) {
-  { token_set(x) } -> std::same_as<T>;
-};
-
-template <TokenSet T>
-constexpr auto operator~(const T& arg) {
-  return token_set([p = arg.pred()](const auto& t) { return !p(t); });
-}
-
-template <TokenSet LhsT, TokenSet RhsT>
-constexpr auto operator-(const LhsT& lhs, const RhsT& rhs) {
-  return token_set([pl = lhs.pred(), pr = rhs.pred()](const auto& t) {
-    return !pr(t) && pl(t);
-  });
-}
+concept TokenSet = std::predicate<T, archetypes::placeholder_token>;
 
 }  // namespace abu
 #endif

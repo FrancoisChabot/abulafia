@@ -42,6 +42,7 @@ struct error {};
 struct bad_result_access : public std::exception {
   bad_result_access(error err) : err_(err) {}
   const error& get_error() const { return err_; }
+
  private:
   error err_;
 };
@@ -73,6 +74,7 @@ class result {
     abu_assume(storage_.index() == 1);
     return std::get<1>(storage_);
   }
+
  private:
   std::variant<success_type, failure_type> storage_;
 };
@@ -98,6 +100,7 @@ class result<void> {
     abu_assume(storage_);
     return *storage_;
   }
+
  private:
   std::optional<failure_type> storage_;
 };
@@ -115,6 +118,7 @@ struct token_set {
     return pred_(t);
   }
   constexpr const predicate& pred() const { return pred_; }
+
  private:
   [[no_unique_address]] predicate pred_;
 };
@@ -198,6 +202,7 @@ class tok : public pattern<tok<TokSetT>> {
   constexpr bool matches(const TokT& c) const noexcept {
     return tokens_(c);
   }
+
  private:
   [[no_unique_address]] token_set_type tokens_;
 };
@@ -228,8 +233,7 @@ struct to_pattern<TokSetT> {
 };
 }  // namespace abu
 
-namespace abu {
-}  // namespace abu
+namespace abu {}  // namespace abu
 
 #ifdef __clang__
 #pragma clang diagnostic pop

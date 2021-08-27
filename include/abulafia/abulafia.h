@@ -15,9 +15,11 @@
 
 #include "abulafia/assert.h"
 #include "abulafia/parse.h"
-#include "abulafia/patterns.h"
+#include "abulafia/pattern.h"
+#include "abulafia/patterns_api.h"
 #include "abulafia/result.h"
 #include "abulafia/token.h"
+
 
 #ifdef __clang__
 #pragma clang diagnostic pop

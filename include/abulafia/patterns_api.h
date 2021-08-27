@@ -8,34 +8,40 @@
 #ifndef ABULAFIA_ABULAFIA_PATTERNS_H_INCLUDED
 #define ABULAFIA_ABULAFIA_PATTERNS_H_INCLUDED
 
+#include "abulafia/pattern.h"
 #include "abulafia/patterns/discard.h"
+#include "abulafia/patterns/lit.h"
+#include "abulafia/patterns/misc.h"
+#include "abulafia/patterns/opt.h"
+#include "abulafia/patterns/repeat.h"
 #include "abulafia/patterns/tok.h"
 
 // Quick Reference:
 
 // Patterns:
-//   lit(Token)                   : discards single token
-//   lit(std::input_range<Token>) : discards sequence of token
-//   tok                          : matches any token
-//   tok(token_set)               : matches any token allowed by the set.
-//   eoi                          : matches end-of-input
-//   fail                         : always fails
-//   pass                         : always passes
+//   tok                          : matche any token
+//   tok(token_set)               : matche any token allowed by the set.
+//   lit(Token)                   : expect and discard single token
+//   lit(std::input_range<Token>) : expect and discard sequence of token
+//   eoi                          : matche end-of-input
+//   fail                         : always fail
+//   pass                         : always pass
 //
 //   discard(pat)                 : remove output
 //   opt(pat)                     : make optional
-//   repeat<min=0, max=0>(pat)    : Repeat between min and max times
+//   repeat<min, max>(pat)        : Repeat within range (max=0 means no limit)
+//   raw(pat)                     : replace output with sequence of tokens
 //   action(pat, act)             : Execute act when pat parses.
-//   raw(pat)                     : Replace the output of pat with the raw tokens
+//   raw(pat)                     : Replace output with original tokens
 //   neg(pat)                     : Fails if pat passes.
-//   construct<T>(pat)            : Use the output of pat to construct a T. Tuples are applied.
+//   construct<T>(pat)            : Use the output of pat to construct a T.
+//                                  - Tuples are applied.
 //
-//   exclude(op, excl)            : exclusion
-//   list(op, delim)              : delimited list
+//   exclude(pat, excl)            : pat if not excl
+//   list(pat, delim)              : delimited list
 //
 //   alt(a, b, ...)               : alternatives
 //   sequence(a, b, ...)          : sequence
-
 
 // Unary operators:
 //   Pattern operator op(StrongPattern);
@@ -57,7 +63,6 @@
 //   a >> b >> ...      : seq(a, b, ...)
 //   a | b | ...        : alt(a, b, ...)
 
-
 // Strong Implicit patterns:
 //  token_set    ->  tok(token_set)
 
@@ -71,36 +76,35 @@
 namespace abu {
 
 // ***** tok *****
-struct tok_api_obj {
+namespace _api {
+struct tok_api {
   template <TokenSet T>
   constexpr auto operator()(T tokset) const {
     return pat::tok{std::move(tokset)};
   }
 };
-static constexpr tok_api_obj tok;
+
+}  // namespace _api
+static constexpr _api::tok_api tok;
 
 template <>
-struct to_pattern<tok_api_obj> {
-  constexpr auto operator()(const tok_api_obj&) const {
-    return pat::tok{[](const auto&) { return true; }};
+struct to_pattern<_api::tok_api> {
+  static constexpr bool is_strong_conversion = true;
+
+  constexpr auto operator()(const _api::tok_api&) const {
+    return pat::tok([](const auto&) { return true; });
   }
 };
 
-template <TokenSet T>
-struct to_pattern<T> {
-  constexpr auto operator()(T tokset) const {
-    return pat::tok{std::move(tokset)};
+template <TokenSet TokSet>
+struct to_pattern<TokSet> {
+  constexpr auto operator()(TokSet tok_set) const {
+    return pat::tok(std::move(tok_set));
   }
 };
 
-// ***** discard *****
-static constexpr auto discard(Pattern auto pat) {
-  return pat::discard{std::move(pat)};
-}
-
-static constexpr auto discard(const PatternConvertible auto& pat) {
-  return pat::discard{as_pattern(pat)};
-}
+// ***** lit *****
+static constexpr auto lit(auto r) { return pat::lit{std::move(r)}; }
 
 // ***** eoi *****
 static constexpr pat::eoi eoi;
@@ -110,6 +114,27 @@ static constexpr pat::pass pass;
 
 // ***** fail *****
 static constexpr pat::fail fail;
+
+
+// ***** drop *****
+static constexpr auto discard(PatternLike auto pat_like) {
+  return pat::discard{as_pattern(pat_like)};
+}
+
+// ***** opt *****
+static constexpr auto opt(PatternLike auto pat_like) {
+  return pat::opt{as_pattern(pat_like)};
+}
+
+// ***** repeat *****
+template<std::size_t Min, std::size_t Max>
+static constexpr auto repeat(PatternLike auto pat_like) {
+  using P = std::decay_t<decltype(as_pattern(pat_like))>;
+  return pat::repeat<P, Min, Max>{as_pattern(pat_like)};
+}
+
+
+
 }  // namespace abu
 
 #endif
