@@ -20,7 +20,10 @@ template <typename T>
 concept Token = std::is_copy_constructible_v<T>;
 
 template <typename T>
-concept TokenSet = std::predicate<T, archetypes::placeholder_token>;
+concept TokenSet = std::predicate<T, archetypes::token>;
 
+struct any_token {
+  constexpr bool operator()(const auto&) const { return true; }
+};
 }  // namespace abu
 #endif

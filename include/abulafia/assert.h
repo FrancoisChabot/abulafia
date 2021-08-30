@@ -23,14 +23,15 @@ inline void unreachable [[noreturn]] () { std::terminate(); }
 #endif
 }  // namespace abu
 
+#define abu_assert assert
+
 #if defined(NDEBUG)
 #define abu_assume(condition) \
   if (!(condition)) unreachable()
 #else
 #define abu_assume(condition) \
-  if (!(condition)) assert(condition)
+  if (!(condition)) abu_assert(condition)
 #endif
 
-// TODO: allow for different modes: assert/assume/throw
 #define abu_precondition(condition) abu_assume(condition)
 #endif

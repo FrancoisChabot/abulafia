@@ -8,13 +8,7 @@
 #ifndef ABULAFIA_ABULAFIA_PATTERNS_H_INCLUDED
 #define ABULAFIA_ABULAFIA_PATTERNS_H_INCLUDED
 
-#include "abulafia/pattern.h"
-#include "abulafia/patterns/discard.h"
-#include "abulafia/patterns/lit.h"
-#include "abulafia/patterns/misc.h"
-#include "abulafia/patterns/opt.h"
-#include "abulafia/patterns/repeat.h"
-#include "abulafia/patterns/tok.h"
+#include "abulafia/patterns.h"
 
 // Quick Reference:
 
@@ -85,55 +79,55 @@ struct tok_api {
 };
 
 }  // namespace _api
+
 static constexpr _api::tok_api tok;
 
 template <>
-struct to_pattern<_api::tok_api> {
-  static constexpr bool is_strong_conversion = true;
+struct pattern_traits<_api::tok_api> {
+  using pattern_tag = strong_pattern_tag;
 
-  constexpr auto operator()(const _api::tok_api&) const {
-    return pat::tok([](const auto&) { return true; });
+  static constexpr auto to_pattern(const _api::tok_api&) {
+    return pat::tok{any_token{}};
   }
 };
 
 template <TokenSet TokSet>
-struct to_pattern<TokSet> {
-  constexpr auto operator()(TokSet tok_set) const {
+struct pattern_traits<TokSet> {
+  using pattern_tag = weak_pattern_tag;
+  static constexpr auto to_pattern(TokSet tok_set) {
     return pat::tok(std::move(tok_set));
   }
 };
 
-// ***** lit *****
-static constexpr auto lit(auto r) { return pat::lit{std::move(r)}; }
+// // ***** lit *****
+// static constexpr auto lit(auto r) { return pat::lit{std::move(r)}; }
 
-// ***** eoi *****
+// // ***** eoi *****
 static constexpr pat::eoi eoi;
 
-// ***** pass *****
+// // ***** pass *****
 static constexpr pat::pass pass;
 
-// ***** fail *****
+// // ***** fail *****
 static constexpr pat::fail fail;
 
-
-// ***** drop *****
-static constexpr auto discard(PatternLike auto pat_like) {
+// ***** discard *****
+inline constexpr auto discard(PatternLike auto pat_like) {
   return pat::discard{as_pattern(pat_like)};
 }
 
-// ***** opt *****
+// // ***** opt *****
 static constexpr auto opt(PatternLike auto pat_like) {
-  return pat::opt{as_pattern(pat_like)};
+  return pat::optional{as_pattern(pat_like)};
 }
 
-// ***** repeat *****
-template<std::size_t Min, std::size_t Max>
+// // ***** repeat *****
+template <std::size_t Min, std::size_t Max>
 static constexpr auto repeat(PatternLike auto pat_like) {
-  using P = std::decay_t<decltype(as_pattern(pat_like))>;
-  return pat::repeat<P, Min, Max>{as_pattern(pat_like)};
+  using Op = std::decay_t<decltype(as_pattern(pat_like))>;
+
+  return pat::repeat<Op, Min, Max>{as_pattern(pat_like)};
 }
-
-
 
 }  // namespace abu
 

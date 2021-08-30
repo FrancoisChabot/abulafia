@@ -13,7 +13,12 @@
 namespace abu {
 namespace archetypes {
 
-struct placeholder_token {
+struct token {
+  template <typename T>
+  operator T() const noexcept;
+};
+
+struct value {
   template <typename T>
   operator T() const noexcept;
 };

@@ -12,17 +12,17 @@ using namespace abu;
 TEST(opt, works) {
   auto sut = opt(tok([](char c) { return c >= '0' && c <= '9'; }));
 
-  EXPECT_TRUE(check("a", sut));
-  EXPECT_TRUE(check("b", sut));
-  EXPECT_TRUE(check(std::string_view(""), sut));
-  EXPECT_TRUE(check(std::string_view("0"), sut));
+  EXPECT_TRUE(match("a", sut));
+  EXPECT_TRUE(match("b", sut));
+  EXPECT_TRUE(match(std::string_view(""), sut));
+  EXPECT_TRUE(match(std::string_view("0"), sut));
 }
 
 TEST(opt, parses_correctly) {
   auto sut = opt(tok([](char c) { return c >= '0' && c <= '9'; }));
 
-  EXPECT_EQ(*parse("a", sut), std::nullopt);
-  EXPECT_EQ(*parse("b", sut), std::nullopt);
-  EXPECT_EQ(*parse(std::string_view(""), sut), std::nullopt);
-  EXPECT_EQ(**parse(std::string_view("0"), sut), '0');
+  EXPECT_EQ(parse("a", sut), std::nullopt);
+  EXPECT_EQ(parse("b", sut), std::nullopt);
+  EXPECT_EQ(parse(std::string_view(""), sut), std::nullopt);
+  EXPECT_EQ(*parse(std::string_view("0"), sut), '0');
 }

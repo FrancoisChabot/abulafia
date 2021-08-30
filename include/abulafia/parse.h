@@ -10,18 +10,40 @@
 
 #include <ranges>
 
+#include "abulafia/parsers/coro.h"
 #include "abulafia/pattern.h"
 
 namespace abu {
 
-// ***** parse *****
+template <std::forward_iterator I, std::sentinel_for<I> S, Pattern Pat>
+constexpr auto parse(I& b, const S& e, const Pat& pat) {
+  using context_type = abu::coro::context<I, S, Pat>;
+  using result_type = pattern_value_t<Pat, context_type>;
 
-template <std::forward_iterator I, std::sentinel_for<I> S, PatternLike Pat>
+  abu::coro::context<I, S, Pat> root_ctx{b, e, pat};
+
+  std::optional<result_type> result;
+
+  auto status =
+      root_ctx.on_tokens(pat, [&](result_type r) { result = std::move(r); });
+
+  if (status == coro::status::partial) {
+    status =
+        root_ctx.on_end(pat, [&](result_type r) { result = std::move(r); });
+  }
+
+  if (status == coro::status::failure) {
+    throw parse_error{};
+  }
+
+  return *result;
+}
+
+template <std::forward_iterator I,
+          std::sentinel_for<I> S,
+          PatternConvertible Pat>
 constexpr auto parse(I& b, const S& e, const Pat& pat_like) {
-  const auto& pat = as_pattern(pat_like);
-
-  using parser_type = basic_parser<std::decay_t<decltype(pat)>>;
-  return parser_type::parse(b, e, pat);
+  return parse(b, e, as_pattern(pat_like));
 }
 
 template <std::ranges::forward_range R, PatternLike Pat>
@@ -31,42 +53,50 @@ constexpr auto parse(const R& range, const Pat& pat) {
   return parse(b, e, pat);
 }
 
-// ***** check *****
+/*
+struct sink {
+  bool& done;
+  constexpr void operator()() const { done = true; }
+
+  template <typename T>
+  constexpr void operator()(const T&) const {
+    done = true;
+  }
+};
 
 template <std::forward_iterator I, std::sentinel_for<I> S, Pattern Pat>
-constexpr auto check(I& b,
-                     const S& e,
-                     const Pat& pat) requires(ExplicitelyCheckable<Pat>) {
-  using parser_type = basic_parser<std::decay_t<decltype(pat)>>;
-  return parser_type::check(b, e, pat);
-}
+constexpr bool match(I& b, const S& e, const Pat& pat) {
+  using token_type = std::iter_value_t<I>;
 
-template <std::forward_iterator I, std::sentinel_for<I> S, Pattern Pat>
-constexpr auto check(I& b,
-                     const S& e,
-                     const Pat& pat) requires(!ExplicitelyCheckable<Pat>) {
-  using parser_type = basic_parser<std::decay_t<decltype(pat)>>;
+  abu::coro::parse_op<token_type, Pat> operation;
 
-  static_assert(TrivialResult<decltype(parser_type::parse(b, e, pat))>,
-                "Using parse() to check a non-trivial result");
-
-  return parser_type::parse(b, e, pat);
+  bool done = false;
+  sink dst{done};
+  try {
+    operation.on_tokens(b, e, pat, dst);
+    if (!done) {
+      operation.on_end(pat, dst);
+    }
+  } catch (parse_error&) {
+    return false;
+  }
+  return true;
 }
 
 template <std::forward_iterator I,
           std::sentinel_for<I> S,
           PatternConvertible Pat>
-constexpr auto check(I& b, const S& e, const Pat& pat_like) {
-  return check(b, e, as_pattern(pat_like));
+constexpr bool match(I& b, const S& e, const Pat& pat_like) {
+  return match(b, e, as_pattern(pat_like));
 }
 
 template <std::ranges::forward_range R, PatternLike Pat>
-constexpr auto check(const R& range, const Pat& pat) {
+constexpr bool match(const R& range, const Pat& pat) {
   auto b = std::ranges::begin(range);
   auto e = std::ranges::end(range);
-  return check(b, e, pat);
+  return match(b, e, pat);
 }
-
+*/
 }  // namespace abu
 
 #endif

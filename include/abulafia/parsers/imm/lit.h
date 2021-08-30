@@ -5,32 +5,15 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_PATTERNS_LIT_H_INCLUDED
-#define ABULAFIA_PATTERNS_LIT_H_INCLUDED
+#ifndef ABULAFIA_PARSERS_IMM_LIT_H_INCLUDED
+#define ABULAFIA_PARSERS_IMM_LIT_H_INCLUDED
 
-#include <algorithm>
+#include <concepts>
+#include <iterator>
 
-#include "abulafia/pattern.h"
-#include "abulafia/stdlib_utils.h"
-#include "abulafia/token.h"
+#include "abulafia/patterns/lit.h"
 
 namespace abu {
-
-namespace pat {
-template <typename T>
-class lit {
- public:
-  explicit constexpr lit(T expected) noexcept
-      : expected_(std::move(expected)) {}
-
-  constexpr const T& expected() const { return expected_; }
-
- private:
-  [[no_unique_address]] T expected_;
-};
-
-}  // namespace pat
-
 namespace lit_details {
 template <typename I, typename T>
 concept ValueLiteralIterator = std::input_iterator<I> &&
@@ -41,7 +24,7 @@ concept ValueLiteralIterator = std::input_iterator<I> &&
 template <typename I, typename T>
 concept RangeLiteralIterator =
     std::ranges::input_range<T> && !ValueLiteralIterator<I, T> &&
-        std::input_iterator<I> &&
+    std::input_iterator<I> &&
     requires(const I& i, const std::ranges::range_value_t<T>& t) {
   { *i == t } -> std::convertible_to<bool>;
 };
@@ -75,6 +58,7 @@ struct basic_parser<pat::lit<T>> {
     return error{};
   }
 };
+
 }  // namespace abu
 
 #endif

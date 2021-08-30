@@ -12,15 +12,12 @@ using namespace abu;
 TEST(discard, works) {
   auto sut = discard(tok);
 
-  auto parse_result = parse("a", sut);
-  static_assert(std::is_same_v<decltype(parse_result), result<void>>);
+  EXPECT_TRUE(match("a", sut));
+  // parse("a", sut);
 
-  EXPECT_TRUE(check("a", sut));
-  EXPECT_TRUE(parse("a", sut));
+  EXPECT_TRUE(match("", sut));
+  // parse("", sut);
 
-  EXPECT_TRUE(check("", sut));
-  EXPECT_TRUE(parse("", sut));
-
-  EXPECT_FALSE(check(std::string_view(""), sut));
-  EXPECT_FALSE(parse(std::string_view(""), sut));
+  EXPECT_FALSE(match(std::string_view(""), sut));
+  // EXPECT_THROW(parse(std::string_view(""), sut), parse_error);
 }
