@@ -15,28 +15,71 @@
 namespace abu::pat {
 // ############# Misc ############# //
 
-// ***** End of input *****
-struct eoi {
-  using pattern_tag = real_pattern_tag;
+struct tok_tag {};
+struct repeat_tag {};
 
-  template <DataContext>
-  using parsed_value_type = void;
+template <TokenSet TokSetT>
+struct tok {
+  using pattern_category = real_pattern_tag;
+  using pattern_tag = tok_tag;
+  using token_set_type = TokSetT;
+
+  template <DataContext Ctx>
+  using parsed_value_type = typename Ctx::token_type;
+
+  [[no_unique_address]] token_set_type allowed;
 };
+
+// ***** repeat *****
+namespace repeat_ {
+template <typename T, std::size_t Min, std::size_t Max>
+struct value : public std::type_identity<std::vector<T>> {};
+
+template <std::size_t Min, std::size_t Max>
+struct value<char, Min, Max>
+    : public std::type_identity<std::basic_string<char>> {};
+
+template <typename T, std::size_t Min, std::size_t Max>
+using value_t = typename value<T, Min, Max>::type;
+
+}  // namespace repeat_
+
+template <Pattern Op, std::size_t Min, std::size_t Max>
+struct repeat {
+  static_assert(Max == 0 || Max >= Min);
+
+  static constexpr std::size_t min_reps = Min;
+  static constexpr std::size_t max_reps = Max;
+
+  using pattern_category = real_pattern_tag;
+  using pattern_tag = repeat_tag;
+  using operand_type = Op;
+
+  template <DataContext Ctx>
+  using parsed_value_type = std::basic_string<char>;
+      // repeat_::value_t<parsed_value_ctx_t<operand_type, Ctx>, Min, Max>;
+
+  [[no_unique_address]] operand_type operand;
+};
+
+/*
+
+// ***** End of input *****
+struct eoi_tag {};
+struct fail_tag {};
+struct pass_tag {};
+
+
+
 
 // ***** Always fails *****
 struct fail {
-  using pattern_tag = real_pattern_tag;
-
-  template <DataContext>
-  using parsed_value_type = void;
+  using pattern_tag = fail;
 };
 
 // ***** Always Passes *****
 struct pass {
-  using pattern_tag = real_pattern_tag;
-
-  template <DataContext>
-  using parsed_value_type = void;
+  using pattern_tag = pass;
 };
 
 // ############# Terminal ############# //
@@ -111,41 +154,12 @@ struct optional {
   using operand_type = Op;
 
   template <DataContext Ctx>
-  using parsed_value_type = opt_::value_t<parsed_value_ctx_t<operand_type, Ctx>>;
+  using parsed_value_type = opt_::value_t<parsed_value_ctx_t<operand_type,
+Ctx>>;
 
   [[no_unique_address]] operand_type operand;
 };
 
-// ***** repeat *****
-namespace repeat_ {
-template <typename T, std::size_t Min, std::size_t Max>
-struct value : public std::type_identity<std::vector<T>> {};
-
-template <std::size_t Min, std::size_t Max>
-struct value<char, Min, Max>
-    : public std::type_identity<std::basic_string<char>> {};
-
-template <typename T, std::size_t Min, std::size_t Max>
-using value_t = typename value<T, Min, Max>::type;
-
-}  // namespace repeat_
-
-template <Pattern Op, std::size_t Min, std::size_t Max>
-struct repeat {
-  static_assert(Max == 0 || Max >= Min);
-
-  static constexpr std::size_t min_reps = Min;
-  static constexpr std::size_t max_reps = Max;
-
-  using pattern_tag = real_pattern_tag;
-  using operand_type = Op;
-
-  template <DataContext Ctx>
-  using parsed_value_type =
-      repeat_::value_t<parsed_value_ctx_t<operand_type, Ctx>, Min, Max>;
-
-  [[no_unique_address]] operand_type operand;
-};
 
 // ***** action *****
 template <Pattern Op, typename Act>
@@ -206,7 +220,7 @@ struct alt {
 
   [[no_unique_address]] operands_type operands;
 };
-
+*/
 }  // namespace abu::pat
 
 #endif

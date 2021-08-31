@@ -12,11 +12,18 @@
 #include <iterator>
 
 #include "abulafia/op_result.h"
-#include "abulafia/parsers/coro/operation.h"
+#include "abulafia/parsers/coro/context.h"
 
 namespace abu::coro {
 
-template <Context ParentCtx,
+struct noop_type {
+  template<typename T>
+  constexpr void operator()(T&&) const{}
+};
+
+inline constexpr noop_type noop;
+
+template <OpContext ParentCtx,
           auto Mem,
           op_type OpType = ParentCtx::operation_type>
 class child_op {
@@ -26,18 +33,11 @@ class child_op {
   using parent_context_type = ParentCtx;
   using pattern_type =
       std::decay_t<decltype(std::declval<ParentCtx>().pattern.*Mem)>;
-  static constexpr op_type operation_type = OpType;
 
   using sub_context_type = context<typename ParentCtx::iterator_type,
                                    typename ParentCtx::sentinel_type,
-                                   pattern_type,
-                                   operation_type,
-                                   typename ParentCtx::policies>;
-
-  using value_type =
-      std::conditional_t<OpType == op_type::match,
-                         void,
-                         pattern_value_t<pattern_type, sub_context_type> >;
+                                   typename ParentCtx::policies,
+                                   pattern_type>;
 
   constexpr sub_context_type make_sub_context(const ParentCtx& ctx) {
     return sub_context_type(ctx.iterator, ctx.end, ctx.pattern.*Mem);
@@ -45,21 +45,24 @@ class child_op {
 
   constexpr child_op(const ParentCtx& ctx) : op_(make_sub_context(ctx)) {}
 
-  constexpr op_result on_tokens(const ParentCtx& ctx) {
-    return op_.on_tokens(make_sub_context(ctx));
+  template <typename CbT>
+  constexpr op_result on_tokens(const ParentCtx& ctx, const CbT& cb) {
+    return op_.on_tokens(make_sub_context(ctx), cb);
   }
 
-  constexpr op_result on_end(const ParentCtx& ctx) {
-    return op_.on_end(make_sub_context(ctx));
+  template <typename CbT>
+  constexpr op_result on_end(const ParentCtx& ctx, const CbT& cb) {
+    return op_.on_end(make_sub_context(ctx), cb);
   }
 
   void reset(const ParentCtx& ctx) {
-    op_ = operation<sub_context_type, pattern_type>{make_sub_context(ctx)};
+    op_ = operation<sub_context_type>{make_sub_context(ctx)};
   }
 
  private:
-  operation<sub_context_type, pattern_type> op_;
+  operation<sub_context_type> op_;
 };
+
 /*
 // ***** child_op_set ***** /
 template <std::size_t>

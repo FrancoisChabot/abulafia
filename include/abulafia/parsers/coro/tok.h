@@ -8,35 +8,38 @@
 #ifndef ABULAFIA_PARSERS_CORO_TOK_H_INCLUDED
 #define ABULAFIA_PARSERS_CORO_TOK_H_INCLUDED
 
-#include "abulafia/parsers/coro/parser.h"
+#include "abulafia/parsers/coro/child_operation.h"
+#include "abulafia/parsers/coro/context.h"
 #include "abulafia/patterns.h"
 
 namespace abu::coro {
 
 // template <ParseContext Ctx, TokenSet TSet>
 // class operation<Ctx, pat::tok<TSet>> {
-template <ContextFor<pat::tok> Ctx>
+template <ContextFor<pat::tok_tag> Ctx>
 class operation<Ctx> {
  public:
   constexpr operation(const Ctx&) {}
 
-  constexpr op_result on_tokens(const Ctx& ctx) {
-    if (ctx.empty()) {
+  template <typename CbT = noop_type>
+  constexpr op_result on_tokens(const Ctx& ctx, const CbT& cb = {}) {
+    if (ctx.iterator == ctx.end) {
       return partial_result;
     }
 
-    if (!ctx.pattern.allowed(ctx.peek())) {
+    if (!ctx.pattern.allowed(*ctx.iterator)) {
       return failure_t{};
     }
 
-    if constexpr (Ctx::operation_type == op_type::parse) {
-      ctx.return_value(ctx.get());
-    }
+    cb(*ctx.iterator++);
 
     return success;
   }
 
-  constexpr op_result on_end(const Ctx&) { return failure_t{}; }
+  template <typename CbT = noop_type>
+  constexpr op_result on_end(const Ctx&, const CbT& = {}) {
+    return failure_t{};
+  }
 };
 
 }  // namespace abu::coro

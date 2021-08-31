@@ -18,43 +18,28 @@
 namespace abu {
 
 // Real patterns have to be implemented by a parser
-struct real_pattern_tag {
-  using pattern_tag = real_pattern_tag;
-};
-
-// Strong patterns
-//  - can be converted to real patterns
-//  - can be used in unary operators as if they were real patterns
-//  - can be used in binary operators as if they were real patterns
-struct strong_pattern_tag {
-  using pattern_tag = strong_pattern_tag;
-};
-
-// Weak patterns
-//  - can be converted to real patterns
-//  - can be used in binary operators with real or strong patterns
-struct weak_pattern_tag {
-  using pattern_tag = weak_pattern_tag;
-};
+struct real_pattern_tag {};
+struct strong_pattern_tag {};
+struct weak_pattern_tag {};
 
 template <typename T>
 struct pattern_traits {
-  using pattern_tag = typename T::pattern_tag;
+  using pattern_category = typename T::pattern_category;
 };
 
 // All patterns are required to be able to operate on forward iterators.
 template <typename T>
-concept Pattern =
-    std::same_as<typename pattern_traits<T>::pattern_tag, real_pattern_tag>;
+concept Pattern = std::same_as<typename pattern_traits<T>::pattern_category,
+                               real_pattern_tag>;
 
 ///////////////////////////
 template <typename T>
-using pattern_tag_t = typename pattern_traits<T>::pattern_tag;
+using pattern_category_t = typename pattern_traits<T>::pattern_category;
 
 template <typename T, DataContext Ctx>
 using parsed_value_ctx_t = typename T::template parsed_value_type<Ctx>;
 
-template <typename T, Token Tok, Policy Pol=default_policy>
+template <typename T, Token Tok, Policy Pol = default_policy>
 using parsed_value_t = parsed_value_ctx_t<T, data_context<Tok, Pol>>;
 ///////////////////////////
 
@@ -64,12 +49,12 @@ concept PatternConvertible = requires(T x) {
 };
 
 template <typename T>
-concept StrongPattern =
-    PatternConvertible<T> && std::same_as<pattern_tag_t<T>, strong_pattern_tag>;
+concept StrongPattern = PatternConvertible<T> &&
+    std::same_as<pattern_category_t<T>, strong_pattern_tag>;
 
 template <typename T>
-concept WeakPattern =
-    PatternConvertible<T> && std::same_as<pattern_tag_t<T>, strong_pattern_tag>;
+concept WeakPattern = PatternConvertible<T> &&
+    std::same_as<pattern_category_t<T>, strong_pattern_tag>;
 
 ///////////////////////////
 template <typename T>
@@ -121,12 +106,14 @@ struct op_context<Tok, Pol, Pat, op_type::match> {
 };
 
 ///////////////////////////
-template <typename T, template <typename... U> typename PatTmpl>
-concept PatternContext = DataContext<T> && Pattern<typename T::pattern_type> &&
-    requires(typename T::pattern_type x) {
-  { PatTmpl(x) } -> std::same_as<typename T::pattern_type>;
-};
 
+template <typename T, typename PatTag>
+concept IsPatternOf =
+    Pattern<T> && std::is_same_v<typename T::pattern_tag, PatTag>;
+
+template <typename T, typename PatTag>
+concept PatternContext =
+    DataContext<T> && IsPatternOf<typename T::pattern_type, PatTag>;
 }  // namespace abu
 
 #endif

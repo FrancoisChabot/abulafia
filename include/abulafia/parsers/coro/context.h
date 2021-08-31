@@ -19,6 +19,8 @@
 
 namespace abu::coro {
 
+template <typename T>
+class operation;
 // template <std::input_iterator I,
 //           std::sentinel_for<I> S,
 //           Policy Pol,
@@ -30,11 +32,12 @@ template <std::input_iterator I,
           std::sentinel_for<I> S,
           Policy Pol,
           Pattern Pat>
-struct match_context
+struct context
     : public op_context<std::iter_value_t<I>, Pol, Pat, op_type::match> {
   using iterator_type = I;
   using sentinel_type = S;
-  constexpr match_context(I& init_ite, S init_end, const Pat& pat)
+
+  constexpr context(I& init_ite, S init_end, const Pat& pat)
       : iterator(init_ite), end(init_end), pattern(pat) {}
 
   iterator_type& iterator;
@@ -42,45 +45,35 @@ struct match_context
   const Pat& pattern;
 };
 
-template <std::input_iterator I,
-          std::sentinel_for<I> S,
-          Policy Pol,
-          Pattern Pat,
-          typename ResultCb>
-struct parse_context
-    : public op_context<std::iter_value_t<I>, Pol, Pat, op_type::parse> {
-  using iterator_type = I;
-  using sentinel_type = S;
-  using value_type =
-      typename op_context<std::iter_value_t<I>, Pol, Pat, op_type::parse>::
-          value_type;
+// template <std::input_iterator I,
+//           std::sentinel_for<I> S,
+//           Policy Pol,
+//           Pattern Pat,
+//           typename ResultCb>
+// struct parse_context
+//     : public op_context<std::iter_value_t<I>, Pol, Pat, op_type::parse> {
+//   using iterator_type = I;
+//   using sentinel_type = S;
+//   using value_type =
+//       typename op_context<std::iter_value_t<I>, Pol, Pat, op_type::parse>::
+//           value_type;
 
-  constexpr parse_context(I& init_ite,
-                          S init_end,
-                          const Pat& pat,
-                          const ResultCb& cb)
-      : iterator(init_ite), end(init_end), pattern(pat), cb_(cb) {}
+//   constexpr parse_context(I& init_ite,
+//                           S init_end,
+//                           const Pat& pat,
+//                           const ResultCb& cb)
+//       : iterator(init_ite), end(init_end), pattern(pat), cb_(cb) {}
 
-  void return_value(value_type v) const { cb_(std::move(v)); }
+//   constexpr void return_value(value_type v) const { cb_(std::move(v)); }
 
-  iterator_type& iterator;
-  sentinel_type end;
-  const Pat& pattern;
-  const ResultCb& cb_;
-};
+//   iterator_type& iterator;
+//   sentinel_type end;
+//   const Pat& pattern;
+//   const ResultCb& cb_;
+// };
 
-template <typename T,
-          template <typename... U>
-          typename PatTmpl,
-          op_type OpType = op_type::any>
-concept ContextFor = PatternContext<T, PatTmpl> &&
-    (T::operation_type == OpType || OpType == op_type::any);
-
-template <typename T,
-          typename U,
-          typename PatTmpl,
-          op_type OpType = op_type::any>
-concept ContextForTag = Pattern<U> &&
+template <typename T, typename PatTag, op_type OpType = op_type::any>
+concept ContextFor = PatternContext<T, PatTag> &&
     (T::operation_type == OpType || OpType == op_type::any);
 
 }  // namespace abu::coro

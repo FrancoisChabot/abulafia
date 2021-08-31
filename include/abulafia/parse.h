@@ -10,30 +10,38 @@
 
 #include <ranges>
 
+#include "abulafia/parser.h"
 #include "abulafia/parsers/coro.h"
 #include "abulafia/pattern.h"
 
 namespace abu {
 
-template <std::forward_iterator I, std::sentinel_for<I> S, Pattern Pat>
+template <Policy Pol = default_policy,
+          std::forward_iterator I,
+          std::sentinel_for<I> S,
+          Pattern Pat>
 constexpr auto parse(I& b, const S& e, const Pat& pat) {
   using result_type = parsed_value_t<Pat, std::iter_value_t<I>>;
-  result_type result;
+  std::optional<result_type> result;
   auto result_assign = [&](result_type r) { result = std::move(r); };
 
-  auto root_parser = abu::coro::make_parser<char>(pat, result_assign);
+  using root_ctx = coro::context<I, S, Pol, Pat>;
+  using root_op = coro::operation<root_ctx>;
 
-  op_result status = root_parser.add_data(b, e);
+  root_ctx ctx{b, e, pat};
+  root_op op{ctx};
+
+  auto status = op.on_tokens(ctx, result_assign);
 
   if (status.is_partial()) {
-    status = root_parser.end();
+    status = op.on_end(ctx, result_assign);
   }
 
-  if (!status.is_success()) {
-    // We know for a fact that this is not data starvation.
+  if (status.is_match_failure()) {
     throw no_match_error{};
   }
-  return result;
+
+  return std::move(*result);
 }
 
 template <std::forward_iterator I,
@@ -52,21 +60,24 @@ constexpr auto parse(const R& range, const Pat& pat) {
 
 /////////////////////////////////////////
 
-template <std::forward_iterator I, std::sentinel_for<I> S, Pattern Pat>
+template <Policy Pol = default_policy,
+          std::forward_iterator I,
+          std::sentinel_for<I> S,
+          Pattern Pat>
 constexpr bool match(I& b, const S& e, const Pat& pat) {
-  // auto root_matcher = abu::coro::make_matcher<I, S>(pat);
+  using root_ctx = coro::context<I, S, Pol, Pat>;
+  using root_op = coro::operation<root_ctx>;
 
-  // auto status = root_matcher.advance(b, e);
+  root_ctx ctx{b, e, pat};
+  root_op op{ctx};
 
-  // if (status.is_partial()) {
-  //   return root_matcher.end().is_success();
-  // }
+  auto status = op.on_tokens(ctx);
 
-  // return status.is_success();
-  (void)b;
-  (void)e;
-  (void)pat;
-  return true;
+  if (status.is_partial()) {
+    status = op.on_end(ctx);
+  }
+
+  return status.is_success();
 }
 
 template <std::forward_iterator I,

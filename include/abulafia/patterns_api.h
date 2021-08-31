@@ -84,7 +84,7 @@ static constexpr _api::tok_api tok;
 
 template <>
 struct pattern_traits<_api::tok_api> {
-  using pattern_tag = strong_pattern_tag;
+  using pattern_category = strong_pattern_tag;
 
   static constexpr auto to_pattern(const _api::tok_api&) {
     return pat::tok<any_token>{any_token{}};
@@ -93,49 +93,58 @@ struct pattern_traits<_api::tok_api> {
 
 template <TokenSet TokSet>
 struct pattern_traits<TokSet> {
-  using pattern_tag = weak_pattern_tag;
+  using pattern_category = weak_pattern_tag;
   static constexpr auto to_pattern(TokSet tok_set) {
     return pat::tok<TokSet>{std::move(tok_set)};
   }
 };
 
-// // ***** lit *****
-// static constexpr auto lit(auto r) { return pat::lit{std::move(r)}; }
-
-// // ***** eoi *****
-static constexpr pat::eoi eoi;
-
-// // ***** pass *****
-static constexpr pat::pass pass;
-
-// // ***** fail *****
-static constexpr pat::fail fail;
-
-// ***** discard *****
-inline constexpr auto discard(PatternLike auto pat_like) {
-  auto pat = as_pattern(pat_like);
-  return pat::discard<decltype(pat)>{std::move(pat)};
-}
-
-inline constexpr auto except(PatternLike auto operand, PatternLike auto exception) {
-  auto operand_pat = as_pattern(operand);
-  auto exception_pat = as_pattern(exception);
-
-  return pat::except<decltype(operand_pat), decltype(exception_pat)>{std::move(operand_pat), std::move(exception_pat)};
-}
-
-// // ***** opt *****
-static constexpr auto opt(PatternLike auto pat_like) {
-  return pat::optional{as_pattern(pat_like)};
-}
-
-// // ***** repeat *****
 template <std::size_t Min, std::size_t Max>
 static constexpr auto repeat(PatternLike auto pat_like) {
   using Op = std::decay_t<decltype(as_pattern(pat_like))>;
 
   return pat::repeat<Op, Min, Max>{as_pattern(pat_like)};
 }
+
+// // // ***** lit *****
+// // static constexpr auto lit(auto r) { return pat::lit{std::move(r)}; }
+
+// // // ***** eoi *****
+// static constexpr pat::eoi eoi;
+
+// // // ***** pass *****
+// static constexpr pat::pass pass;
+
+// // // ***** fail *****
+// static constexpr pat::fail fail;
+
+// // ***** discard *****
+// inline constexpr auto discard(PatternLike auto pat_like) {
+//   auto pat = as_pattern(pat_like);
+//   return pat::discard<decltype(pat)>{std::move(pat)};
+// }
+
+// inline constexpr auto except(PatternLike auto operand, PatternLike auto
+// exception) {
+//   auto operand_pat = as_pattern(operand);
+//   auto exception_pat = as_pattern(exception);
+
+//   return pat::except<decltype(operand_pat),
+//   decltype(exception_pat)>{std::move(operand_pat), std::move(exception_pat)};
+// }
+
+// // // ***** opt *****
+// static constexpr auto opt(PatternLike auto pat_like) {
+//   return pat::optional{as_pattern(pat_like)};
+// }
+
+// // // ***** repeat *****
+// template <std::size_t Min, std::size_t Max>
+// static constexpr auto repeat(PatternLike auto pat_like) {
+//   using Op = std::decay_t<decltype(as_pattern(pat_like))>;
+
+//   return pat::repeat<Op, Min, Max>{as_pattern(pat_like)};
+// }
 
 }  // namespace abu
 
