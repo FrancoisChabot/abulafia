@@ -8,79 +8,61 @@
 #ifndef ABULAFIA_PARSERS_CORO_EXCEPT_H_INCLUDED
 #define ABULAFIA_PARSERS_CORO_EXCEPT_H_INCLUDED
 
-#include <variant>
-
+#include "abulafia/parsers/coro/child_operation.h"
 #include "abulafia/parsers/coro/operation.h"
 #include "abulafia/patterns.h"
 
 namespace abu::coro {
 
-namespace except_ {
+template <ContextFor<pat::except> Ctx>
+class operation<Ctx> {
+ public:
+  using pattern_type = typename Ctx::pattern_type;
 
-struct handler {
-  bool& feedback;
+  using except_child_op = child_op<Ctx, &pattern_type::except, op_type::match>;
+  using operand_child_op = child_op<Ctx, &pattern_type::operand>;
 
-  constexpr void operator()() const { feedback = true; }
-  constexpr void operator()(const auto&) const { feedback = true; }
-};
-}  // namespace except_
+  using value_type = typename operand_child_op::value_type;
 
-template <Token Tok, Pattern Op, Pattern Except, Policy Pol>
-struct parse_op<Tok, pat::except<Op, Except>, Pol> {
-  using pattern_type = pat::except<Op, Except>;
-  using value_type = typename parse_op<Tok, Op, Pol>::value_type;
+  // ***** constructor ***** //
+  constexpr operation(const Ctx& ctx) : child_op_(ctx) {}
 
-  using except_child_type = parse_op<Tok, Op, Pol>;
-  using op_child_type = parse_op<Tok, Op, Pol>;
-
-  using child_type = std::variant<except_child_type, op_child_type>;
-
-  constexpr parse_op() : child_(except_child_type{}) {}
-
-  template <std::input_iterator I, std::sentinel_for<I> S, typename Cb>
-  constexpr void on_tokens(I& i,
-                           const S& s,
-                           const pattern_type& pat,
-                           const Cb& complete) {
-    if (child_.index() == 0) {
-      bool passed = false;
-      try {
-        std::get<0>(child_).on_tokens(
-            i, s, pat.except, except_::handler{passed});
-      } catch (parse_error&) {
-        child_ = op_child_type{};
-      }
-
-      if (passed) {
-        throw parse_error{};
+  // ***** on_tokens ***** //
+  constexpr coro_result<value_type> on_tokens(const Ctx& ctx) {
+    // Test for the excluded pattern
+    if (child_op_.index() == 0) {
+      auto tmp = child_op_.on_tokens(child_index<0>, ctx);
+      if (tmp.is_success()) {
+        return match_failure_t{};
+      } else if (tmp.is_match_failure()) {
+        child_op_.reset(child_index<0>, child_index<1>, ctx);
       }
     }
 
-    if (child_.index() == 1) {
-      std::get<1>(child_).on_tokens(i, s, pat.operand, complete);
+    // Propagate to the operand parser.
+    if (child_op_.index() == 1) {
+      return child_op_.on_tokens(child_index<1>, ctx);
     }
+    return partial_result_tag{};
   }
 
-  template <typename Cb>
-  constexpr void on_end(const pattern_type& pat, const Cb& complete) {
-    if (child_.index() == 0) {
-      bool passed = false;
-      try {
-        std::get<0>(child_).on_end(pat.except, except_::handler{passed});
-      } catch (parse_error&) {
-        child_ = op_child_type{};
+  // ***** on_end ***** //
+  constexpr ::abu::parse_result<value_type> on_end(const Ctx& ctx) {
+    if (child_op_.index() == 0) {
+      auto tmp = child_op_.on_end(child_index<0>, ctx);
+      if (tmp.is_success()) {
+        return match_failure_t{};
       }
-      if (passed) {
-        throw parse_error{};
-      }
+      child_op_.reset(child_index<0>, child_index<1>, ctx);
     }
 
-    if (child_.index() == 1) {
-      std::get<1>(child_).on_end(pat.operand, complete);
-    }
+    abu_assume(child_op_.index() == 1);
+
+    return child_op_.on_end(child_index<1>, ctx);
   }
 
-  child_type child_;
+ private:
+  child_op_set<except_child_op, operand_child_op> child_op_;
 };
 
 }  // namespace abu::coro

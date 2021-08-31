@@ -1,3 +1,4 @@
+
 //  Copyright 2017-2021 Francois Chabot
 //  (francois.chabot.dev@gmail.com)
 //
@@ -5,83 +6,83 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_PARSERS_CORO_REPEAT_H_INCLUDED
-#define ABULAFIA_PARSERS_CORO_REPEAT_H_INCLUDED
+#ifndef ABULAFIA_PARSERS_COROD_REPEAT_H_INCLUDED
+#define ABULAFIA_PARSERS_COROD_REPEAT_H_INCLUDED
 
-#include <vector>
-
-#include "abulafia/parsers/coro/context.h"
+#include "abulafia/parsers/coro/child_operation.h"
 #include "abulafia/parsers/coro/operation.h"
 #include "abulafia/patterns.h"
 
 namespace abu::coro {
 
-namespace repeat_ {
-template <typename T, std::size_t Min, std::size_t Max>
-struct value : public std::type_identity<std::vector<T>> {};
+template <ParseContext Ctx, Pattern Op, std::size_t Min, std::size_t Max>
+class operation<Ctx, pat::repeat<Op, Min, Max>> {
+  static_assert(ForwardContext<Ctx>);
 
-template <std::size_t Min, std::size_t Max>
-struct value<char, Min, Max>
-    : public std::type_identity<std::basic_string<char>> {};
-
-template <typename T, std::size_t Min, std::size_t Max>
-using value_t = typename value<T, Min, Max>::type;
-
-}  // namespace repeat_
-
-template <ForwardContext Ctx, Pattern Operand, std::size_t Min, std::size_t Max>
-struct parse_op<Ctx, pat::repeat<Operand, Min, Max>> {
-  using value_type =
-      repeat_::value_t<typename parse_op<Tok, Operand>::value_type, Min, Max>;
-
+ public:
+  using pattern_type = pat::repeat<Op, Min, Max>;
+  using child_type = child_op<Ctx, &pattern_type::operand>;
   using checkpoint_type = typename Ctx::checkpoint_type;
 
-  parse_op(Ctx& ctx) : checkpoint_(ctx.checkpoint()), child_op_(ctx) {}
+  using value_type = pattern_value_t<pattern_type, Ctx>;
 
-  constexpr status on_tokens(Ctx& ctx, const Cb& complete) {
+  constexpr operation(const Ctx& ctx)
+      : checkpoint_{ctx.checkpoint()}, child_op_(ctx) {}
+
+  constexpr op_result on_tokens(const Ctx& ctx) {
     while (true) {
-      auto res = child_op.on_tokens(
-          ctx, [&](auto v) { result_.push_back(std::move(v)); });
+      auto res = child_op_.on_tokens(ctx);
+      if (res.is_partial()) {
+        return partial_result_tag{};
+      }
 
-      switch (res) {
-        case success:
-          if (Max != 0 && result_.size() == Max) {
-            return finish_(ctx, complete);
-          } else {
-            child_op.reset(ctx);
-          }
-          break;
-        case failure:
-          return finish_(ctx, complete);
-        default:
-          return res;
+      if (res.is_match_failure()) {
+        return finish_(ctx);
+      }
+
+      abu_assume(res.is_success());
+      result_.push_back(std::move(res.value()));
+
+      if (Max != 0 && result_.size() == Max) {
+        return finish_(ctx);
+      } else {
+        child_op_.reset(ctx);
       }
     }
   }
 
-  template <typename Cb>
-  constexpr final_status on_end(Ctx& ctx, const Cb& complete) {
-    auto res =
-        child_op.on_end(ctx, [&](auto v) { result_.push_back(std::move(v)); });
+  constexpr op_result on_end(const Ctx& ctx) {
+    while (true) {
+      auto res = child_op_.on_end(ctx);
+      if (res.is_match_failure()) {
+        return finish_(ctx);
+      }
 
-    return finish_(ctx, complete);
+      abu_assume(res.is_success());
+      result_.push_back(std::move(res.value()));
+
+      if (Max != 0 && result_.size() == Max) {
+        return finish_(ctx);
+      } else {
+        child_op_.reset(ctx);
+      }
+    }
   }
 
  private:
-  template <typename Cb>
-  constexpr final_status finish_(Ctx& ctx, const Cb& complete) {
+  constexpr op_result finish_(const Ctx& ctx) {
     if (result_.size() >= Min) {
-      complete(std::move(result_));
-      return success;
+      ctx.result_value = std::move(result_);
+      return {};
     } else {
       ctx.rollback(checkpoint_);
-      return failure;
+      return match_failure_t{};
     }
   }
 
   checkpoint_type checkpoint_;
   value_type result_;
-  child_op<Ctx, Operand> child_op_;
+  child_type child_op_;
 };
 
 }  // namespace abu::coro

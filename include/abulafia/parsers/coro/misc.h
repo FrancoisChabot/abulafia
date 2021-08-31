@@ -14,65 +14,49 @@
 namespace abu::coro {
 
 // ***** eoi *****
-template <Token Tok, Policy Pol>
-struct parse_op<Tok, pat::eoi, Pol> {
-  using pattern_type = pat::eoi;
+template <ContextForTag<pat::eoi> Ctx>
+class operation<Ctx> {
+ public:
+  using pattern_type = typename Ctx::pattern_type;
   using value_type = void;
 
-  template <std::input_iterator I, std::sentinel_for<I> S, typename Cb>
-  constexpr void on_tokens(I& i,
-                 const S& s,
-                 const pattern_type& pat,
-                 const Cb& complete) {
-    if (i != s) {
-      throw parse_error{};
-    }
-  }
+  constexpr operation(const Ctx&) {}
 
-  template <typename Cb>
-  constexpr void on_end(const pattern_type&, const Cb& cb) {
-    cb();
+  constexpr coro_result<void> on_tokens(const Ctx& ctx) {
+    if (ctx.iterator != ctx.end) {
+      return match_failure_t{};
+    }
+    return partial_result_tag{};
   }
+  constexpr ::abu::parse_result<void> on_end(const Ctx&) { return {}; }
 };
 
 // ***** fail *****
-template <Token Tok, Policy Pol>
-struct parse_op<Tok, pat::fail, Pol> {
-  using pattern_type = pat::fail;
-  using value_type = void;
+template <ContextForTag<pat::fail> Ctx>
+class operation<Ctx> {
+ public:
+  using pattern_type = typename Ctx::pattern_type;
 
-  template <std::input_iterator I, std::sentinel_for<I> S, typename Cb>
-  constexpr void on_tokens(I& i,
-                 const S& s,
-                 const pattern_type& pat,
-                 const Cb& complete) {
-    throw parse_error{};
+  constexpr operation(const Ctx&) {}
+
+  constexpr coro_result<void> on_tokens(const Ctx&) {
+    return match_failure_t{};
   }
-
-  template <typename Cb>
-  constexpr void on_end(const pattern_type&, const Cb& cb) {
-    throw parse_error{};
+  constexpr ::abu::parse_result<void> on_end(const Ctx&) {
+    return match_failure_t{};
   }
 };
 
 // ***** pass *****
-template <Token Tok, Policy Pol>
-struct parse_op<Tok, pat::pass, Pol> {
-  using pattern_type = pat::pass;
-  using value_type = void;
+template <ContextForTag<pat::pass> Ctx>
+class operation<Ctx> {
+ public:
+  using pattern_type = typename Ctx::pattern_type;
 
-  template <std::input_iterator I, std::sentinel_for<I> S, typename Cb>
-  constexpr void on_tokens(I& i,
-                 const S& s,
-                 const pattern_type& pat,
-                 const Cb& complete) {
-    complete();
-  }
+  constexpr operation(const Ctx&) {}
 
-  template <typename Cb>
-  constexpr void on_end(const pattern_type&, const Cb& complete) {
-    complete();
-  }
+  constexpr coro_result<void> on_tokens(const Ctx&) { return {}; }
+  constexpr ::abu::parse_result<void> on_end(const Ctx&) { return {}; }
 };
 
 }  // namespace abu::coro

@@ -13,13 +13,10 @@
 #pragma clang diagnostic ignored "-Wunknown-attributes"
 #endif
 
-#include "abulafia/parse_error.h"
 #include "abulafia/parse.h"
+#include "abulafia/parsers/coro.h"
 #include "abulafia/patterns_api.h"
 #include "abulafia/token.h"
-
-#include "abulafia/parsers/coro.h"
-
 
 #ifdef __clang__
 #pragma clang diagnostic pop

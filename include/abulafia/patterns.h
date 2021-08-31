@@ -8,8 +8,10 @@
 #ifndef ABULAFIA_PATTERNS_UNARY_H_INCLUDED
 #define ABULAFIA_PATTERNS_UNARY_H_INCLUDED
 
-#include "abulafia/pattern.h"
+#include <optional>
 
+#include "abulafia/context.h"
+#include "abulafia/pattern.h"
 namespace abu::pat {
 // ############# Misc ############# //
 
@@ -17,24 +19,24 @@ namespace abu::pat {
 struct eoi {
   using pattern_tag = real_pattern_tag;
 
-  template <Context>
-  using value_type = void;
+  template <DataContext>
+  using parsed_value_type = void;
 };
 
 // ***** Always fails *****
 struct fail {
   using pattern_tag = real_pattern_tag;
 
-  template <Context>
-  using value_type = void;
+  template <DataContext>
+  using parsed_value_type = void;
 };
 
 // ***** Always Passes *****
 struct pass {
   using pattern_tag = real_pattern_tag;
 
-  template <Context>
-  using value_type = void;
+  template <DataContext>
+  using parsed_value_type = void;
 };
 
 // ############# Terminal ############# //
@@ -45,8 +47,8 @@ struct tok {
   using pattern_tag = real_pattern_tag;
   using token_set_type = TokSetT;
 
-  template <Context Ctx>
-  using value_type = Ctx::token_type;
+  template <DataContext Ctx>
+  using parsed_value_type = typename Ctx::token_type;
 
   [[no_unique_address]] token_set_type allowed;
 };
@@ -56,8 +58,8 @@ template <std::ranges::range SeqT>
 struct lit_seq {
   using pattern_tag = real_pattern_tag;
 
-  template <Context>
-  using value_type = void;
+  template <DataContext>
+  using parsed_value_type = void;
 
   [[no_unique_address]] SeqT expected;
 };
@@ -69,8 +71,8 @@ struct raw {
   using pattern_tag = real_pattern_tag;
   using operand_type = Op;
 
-  template <Context Ctx>
-  using value_type = std::basic_string<typename Ctx::token_type>;
+  template <DataContext Ctx>
+  using parsed_value_type = std::basic_string<typename Ctx::token_type>;
 
   [[no_unique_address]] operand_type operand;
 };
@@ -81,8 +83,8 @@ struct discard {
   using pattern_tag = real_pattern_tag;
   using operand_type = Op;
 
-  template <Context>
-  using value_type = void;
+  template <DataContext>
+  using parsed_value_type = void;
 
   [[no_unique_address]] operand_type operand;
 };
@@ -108,8 +110,8 @@ struct optional {
   using pattern_tag = real_pattern_tag;
   using operand_type = Op;
 
-  template <Context Ctx>
-  using value_type = opt_::value_t<pattern_value_t<operand_type, Ctx>>;
+  template <DataContext Ctx>
+  using parsed_value_type = opt_::value_t<parsed_value_ctx_t<operand_type, Ctx>>;
 
   [[no_unique_address]] operand_type operand;
 };
@@ -138,9 +140,9 @@ struct repeat {
   using pattern_tag = real_pattern_tag;
   using operand_type = Op;
 
-  template <Context Ctx>
-  using value_type =
-      repeat_::value_t<pattern_value_t<operand_type, Ctx>, Min, Max>;
+  template <DataContext Ctx>
+  using parsed_value_type =
+      repeat_::value_t<parsed_value_ctx_t<operand_type, Ctx>, Min, Max>;
 
   [[no_unique_address]] operand_type operand;
 };
@@ -165,8 +167,8 @@ struct list {
   using operand_type = Op;
   using delimiter_type = Delim;
 
-  template <Context Ctx>
-  using value_type = std::vector<pattern_value_t<operand_type, Ctx>>;
+  template <DataContext Ctx>
+  using parsed_value_type = std::vector<parsed_value_ctx_t<operand_type, Ctx>>;
 
   [[no_unique_address]] operand_type operand;
   [[no_unique_address]] delimiter_type modifier;
@@ -179,8 +181,8 @@ struct except {
   using operand_type = Op;
   using except_type = Except;
 
-  template <Context Ctx>
-  using value_type = pattern_value_t<operand_type, Ctx>;
+  template <DataContext Ctx>
+  using parsed_value_type = parsed_value_ctx_t<operand_type, Ctx>;
 
   [[no_unique_address]] operand_type operand;
   [[no_unique_address]] except_type except;

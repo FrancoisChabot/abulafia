@@ -8,28 +8,29 @@
 #ifndef ABULAFIA_PARSERS_CORO_DISCARD_H_INCLUDED
 #define ABULAFIA_PARSERS_CORO_DISCARD_H_INCLUDED
 
+#include "abulafia/parsers/coro/child_operation.h"
 #include "abulafia/parsers/coro/operation.h"
 #include "abulafia/patterns.h"
 
 namespace abu::coro {
 
-namespace discard_ {
+template <ContextFor<pat::discard> Ctx>
+class operation<Ctx> {
+ public:
+  using pattern_type = typename Ctx::pattern_type;
+  using child_type = child_op<Ctx, &pattern_type::operand, op_type::match>;
 
-template <Context Ctx, Pattern Op>
-struct parse_op<Ctx, pat::discard<Op>> {
-  constexpr parse_op(Ctx& ctx) : child_op_(ctx) {}
+  constexpr operation(const Ctx& ctx) : child_op_(ctx) {}
 
-  template <typename Cb>
-  constexpr void on_tokens(Ctx& ctx) {
+  constexpr coro_result<void> on_tokens(const Ctx& ctx) {
     return child_op_.on_tokens(ctx);
   }
-
-  template <typename Cb>
-  constexpr void on_end(const pattern_type& pat) {
-    child_op_.on_end(ctx);
+  constexpr ::abu::parse_result<void> on_end(const Ctx& ctx) {
+    return child_op_.on_end(ctx);
   }
 
-  child_op<Ctx, Op> child_op_;
+ private:
+  child_type child_op_;
 };
 
 }  // namespace abu::coro

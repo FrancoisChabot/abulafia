@@ -9,15 +9,13 @@
 #include "gtest/gtest.h"
 
 using namespace abu;
+
+
 TEST(discard, works) {
   auto sut = discard(tok);
 
   EXPECT_TRUE(match("a", sut));
-  // parse("a", sut);
-
   EXPECT_TRUE(match("", sut));
-  // parse("", sut);
-
+  
   EXPECT_FALSE(match(std::string_view(""), sut));
-  // EXPECT_THROW(parse(std::string_view(""), sut), parse_error);
 }

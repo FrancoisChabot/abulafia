@@ -87,7 +87,7 @@ struct pattern_traits<_api::tok_api> {
   using pattern_tag = strong_pattern_tag;
 
   static constexpr auto to_pattern(const _api::tok_api&) {
-    return pat::tok{any_token{}};
+    return pat::tok<any_token>{any_token{}};
   }
 };
 
@@ -95,7 +95,7 @@ template <TokenSet TokSet>
 struct pattern_traits<TokSet> {
   using pattern_tag = weak_pattern_tag;
   static constexpr auto to_pattern(TokSet tok_set) {
-    return pat::tok(std::move(tok_set));
+    return pat::tok<TokSet>{std::move(tok_set)};
   }
 };
 
@@ -113,7 +113,15 @@ static constexpr pat::fail fail;
 
 // ***** discard *****
 inline constexpr auto discard(PatternLike auto pat_like) {
-  return pat::discard{as_pattern(pat_like)};
+  auto pat = as_pattern(pat_like);
+  return pat::discard<decltype(pat)>{std::move(pat)};
+}
+
+inline constexpr auto except(PatternLike auto operand, PatternLike auto exception) {
+  auto operand_pat = as_pattern(operand);
+  auto exception_pat = as_pattern(exception);
+
+  return pat::except<decltype(operand_pat), decltype(exception_pat)>{std::move(operand_pat), std::move(exception_pat)};
 }
 
 // // ***** opt *****

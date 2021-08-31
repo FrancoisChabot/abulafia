@@ -1,8 +1,10 @@
 add_executable(abulafia_tests
-    #test_discard.cpp
-    # test_lit.cpp
-    #test_opt.cpp
-    #test_repeat.cpp
+    # test_discard.cpp
+    # test_except.cpp
+    # # test_lit.cpp
+    # test_misc.cpp
+    # #test_opt.cpp
+    # test_repeat.cpp
     test_tok.cpp
  )
 
@@ -14,7 +16,7 @@ if (MSVC)
     target_compile_options(abulafia_tests PRIVATE /W4 /WX)
 else()
     # lots of warnings and all warnings as errors
-    target_compile_options(abulafia_tests PRIVATE -fconcepts-diagnostics-depth=5 -Wall -Wextra -pedantic -Werror -ftemplate-backtrace-limit=20)
+    target_compile_options(abulafia_tests PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
 add_test(abulafia_tests abulafia_tests)
