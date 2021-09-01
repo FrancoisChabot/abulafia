@@ -14,8 +14,8 @@ using namespace abu;
 TEST(discard, works) {
   auto sut = discard(tok);
 
-  EXPECT_TRUE(match("a", sut));
-  EXPECT_TRUE(match("", sut));
+  EXPECT_TRUE(match<sut>("a"));
+  EXPECT_TRUE(match<sut>(""));
   
-  EXPECT_FALSE(match(std::string_view(""), sut));
+  EXPECT_FALSE(match<sut>(std::string_view("")));
 }

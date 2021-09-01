@@ -15,6 +15,7 @@
 
 #include "abulafia/parse.h"
 #include "abulafia/parsers/coro.h"
+#include "abulafia/pattern.h"
 #include "abulafia/patterns_api.h"
 #include "abulafia/token.h"
 

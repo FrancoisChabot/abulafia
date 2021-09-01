@@ -10,88 +10,72 @@
 
 #include <ranges>
 
-#include "abulafia/parser.h"
 #include "abulafia/parsers/coro.h"
 #include "abulafia/pattern.h"
 
 namespace abu {
 
-template <Policy Pol = default_policy,
+template <PatternLike auto pattern_like,
+          Policies auto policies = default_policies,
           std::forward_iterator I,
-          std::sentinel_for<I> S,
-          Pattern Pat>
-constexpr auto parse(I& b, const S& e, const Pat& pat) {
-  using result_type = parsed_value_t<Pat, std::iter_value_t<I>>;
-  std::optional<result_type> result;
-  auto result_assign = [&](result_type r) { result = std::move(r); };
+          std::sentinel_for<I> S>
+constexpr bool match(I& b, const S& e) {
+  abu::data_chunk data{b, e};
 
-  using root_ctx = coro::context<I, S, Pol, Pat>;
-  using root_op = coro::operation<root_ctx>;
+  constexpr auto pattern = as_pattern(pattern_like);
+  coro::matcher<pattern, policies, decltype(data)> matcher(data);
 
-  root_ctx ctx{b, e, pat};
-  root_op op{ctx};
-
-  auto status = op.on_tokens(ctx, result_assign);
-
+  auto status = matcher.on_tokens(data);
   if (status.is_partial()) {
-    status = op.on_end(ctx, result_assign);
-  }
-
-  if (status.is_match_failure()) {
-    throw no_match_error{};
-  }
-
-  return std::move(*result);
-}
-
-template <std::forward_iterator I,
-          std::sentinel_for<I> S,
-          PatternConvertible Pat>
-constexpr auto parse(I& b, const S& e, const Pat& pat_like) {
-  return parse(b, e, as_pattern(pat_like));
-}
-
-template <std::ranges::forward_range R, PatternLike Pat>
-constexpr auto parse(const R& range, const Pat& pat) {
-  auto b = std::ranges::begin(range);
-  auto e = std::ranges::end(range);
-  return parse(b, e, pat);
-}
-
-/////////////////////////////////////////
-
-template <Policy Pol = default_policy,
-          std::forward_iterator I,
-          std::sentinel_for<I> S,
-          Pattern Pat>
-constexpr bool match(I& b, const S& e, const Pat& pat) {
-  using root_ctx = coro::context<I, S, Pol, Pat>;
-  using root_op = coro::operation<root_ctx>;
-
-  root_ctx ctx{b, e, pat};
-  root_op op{ctx};
-
-  auto status = op.on_tokens(ctx);
-
-  if (status.is_partial()) {
-    status = op.on_end(ctx);
+    status = matcher.on_end(data);
   }
 
   return status.is_success();
 }
 
-template <std::forward_iterator I,
-          std::sentinel_for<I> S,
-          PatternConvertible Pat>
-constexpr auto match(I& b, const S& e, const Pat& pat_like) {
-  return match(b, e, as_pattern(pat_like));
-}
-
-template <std::ranges::forward_range R, PatternLike Pat>
-constexpr auto match(const R& range, const Pat& pat) {
+template <PatternLike auto pattern,
+          Policies auto policies = default_policies,
+          std::ranges::forward_range R>
+constexpr bool match(const R& range) {
   auto b = std::ranges::begin(range);
   auto e = std::ranges::end(range);
-  return match(b, e, pat);
+  return match<pattern, policies>(b, e);
+}
+
+template <PatternLike auto pattern_like,
+          Policies auto policies = default_policies,
+          std::forward_iterator I,
+          std::sentinel_for<I> S>
+constexpr auto parse(I& b, const S& e) {
+  abu::data_chunk data{b, e};
+
+  constexpr auto pattern = as_pattern(pattern_like);
+  coro::parser<pattern, policies, decltype(data)> parser(data);
+
+  using result_type =
+      parsed_value_t<decltype(pattern), policies, decltype(data)>;
+  std::optional<result_type> result;
+
+  auto assign = [&](auto&& v) { result = std::move(v); };
+
+  auto status = parser.on_tokens(data, assign);
+  if (status.is_partial()) {
+    status = parser.on_end(data, assign);
+  }
+
+  if (!status.is_success()) {
+    throw no_match_error{};
+  }
+  return std::move(*result);
+}
+
+template <PatternLike auto pattern,
+          Policies auto policies = default_policies,
+          std::ranges::forward_range R>
+constexpr auto parse(const R& range) {
+  auto b = std::ranges::begin(range);
+  auto e = std::ranges::end(range);
+  return parse<pattern, policies>(b, e);
 }
 
 }  // namespace abu

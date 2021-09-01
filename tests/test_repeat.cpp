@@ -11,11 +11,11 @@
 using namespace abu;
 
 TEST(repeat, builds_string) {
-  auto sut = repeat<0, 5>([](char c) { return c >= '0' && c <= '9'; });
+  constexpr auto sut = repeat([](char c) { return c >= '0' && c <= '9'; }, 0, 5);
 
-  EXPECT_EQ(parse("012", sut), "012");
-  EXPECT_EQ(parse("123a", sut), "123");
-  EXPECT_EQ(parse("ksajcnas", sut), "");
+  EXPECT_EQ(parse<sut>("012"), "012");
+  EXPECT_EQ(parse<sut>("123a"), "123");
+  EXPECT_EQ(parse<sut>("ksajcnas"), "");
 }
 
 // TEST(repeat, Fixed_size) {

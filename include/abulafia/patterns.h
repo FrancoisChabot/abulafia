@@ -8,56 +8,47 @@
 #ifndef ABULAFIA_PATTERNS_UNARY_H_INCLUDED
 #define ABULAFIA_PATTERNS_UNARY_H_INCLUDED
 
-#include <optional>
+#include <string>
 
-#include "abulafia/context.h"
 #include "abulafia/pattern.h"
+#include "abulafia/token.h"
+
 namespace abu::pat {
 // ############# Misc ############# //
 
-struct tok_tag {};
-struct repeat_tag {};
-
+// ***** tok *****
 template <TokenSet TokSetT>
 struct tok {
   using pattern_category = real_pattern_tag;
-  using pattern_tag = tok_tag;
   using token_set_type = TokSetT;
 
-  template <DataContext Ctx>
-  using parsed_value_type = typename Ctx::token_type;
+  template <Policies auto policies, DataSource Data>
+  using value_type = typename Data::token_type;
 
   [[no_unique_address]] token_set_type allowed;
 };
 
 // ***** repeat *****
-namespace repeat_ {
-template <typename T, std::size_t Min, std::size_t Max>
-struct value : public std::type_identity<std::vector<T>> {};
-
-template <std::size_t Min, std::size_t Max>
-struct value<char, Min, Max>
-    : public std::type_identity<std::basic_string<char>> {};
-
-template <typename T, std::size_t Min, std::size_t Max>
-using value_t = typename value<T, Min, Max>::type;
-
-}  // namespace repeat_
-
-template <Pattern Op, std::size_t Min, std::size_t Max>
+template <Pattern Op>
 struct repeat {
-  static_assert(Max == 0 || Max >= Min);
-
-  static constexpr std::size_t min_reps = Min;
-  static constexpr std::size_t max_reps = Max;
-
   using pattern_category = real_pattern_tag;
-  using pattern_tag = repeat_tag;
+
+  template <Policies auto policies, DataSource Data>
+  using value_type = std::basic_string<char>;
+
+  [[no_unique_address]] Op operand;
+  std::size_t min;
+  std::size_t max;
+};
+
+// ***** discard *****
+template <Pattern Op>
+struct discard {
+  using pattern_category = real_pattern_tag;
   using operand_type = Op;
 
-  template <DataContext Ctx>
-  using parsed_value_type = std::basic_string<char>;
-      // repeat_::value_t<parsed_value_ctx_t<operand_type, Ctx>, Min, Max>;
+  template <Policies auto policies, DataSource Data>
+  using value_type = void;
 
   [[no_unique_address]] operand_type operand;
 };
@@ -120,17 +111,7 @@ struct raw {
   [[no_unique_address]] operand_type operand;
 };
 
-// ***** discard *****
-template <Pattern Op>
-struct discard {
-  using pattern_tag = real_pattern_tag;
-  using operand_type = Op;
 
-  template <DataContext>
-  using parsed_value_type = void;
-
-  [[no_unique_address]] operand_type operand;
-};
 
 // ***** optional *****
 namespace opt_ {

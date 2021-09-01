@@ -1,114 +1,107 @@
-//  Copyright 2017-2021 Francois Chabot
-//  (francois.chabot.dev@gmail.com)
-//
-//  Distributed under the Boost Software License, Version 1.0.
-//  (See accompanying file LICENSE or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
+// //  Copyright 2017-2021 Francois Chabot
+// //  (francois.chabot.dev@gmail.com)
+// //
+// //  Distributed under the Boost Software License, Version 1.0.
+// //  (See accompanying file LICENSE or copy at
+// //  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ABULAFIA_PARSERS_CORO_CHILD_OPERATION_H_INCLUDED
-#define ABULAFIA_PARSERS_CORO_CHILD_OPERATION_H_INCLUDED
+// #ifndef ABULAFIA_PARSERS_CORO_CHILD_OPERATION_H_INCLUDED
+// #define ABULAFIA_PARSERS_CORO_CHILD_OPERATION_H_INCLUDED
 
-#include <concepts>
-#include <iterator>
+// #include <concepts>
+// #include <iterator>
 
-#include "abulafia/op_result.h"
-#include "abulafia/parsers/coro/context.h"
+// #include "abulafia/op_result.h"
+// #include "abulafia/data.h"
 
-namespace abu::coro {
+// namespace abu::coro {
 
-struct noop_type {
-  template<typename T>
-  constexpr void operator()(T&&) const{}
-};
+// template <OpContext ParentCtx,
+//           auto Mem,
+//           op_type OpType = ParentCtx::operation_type>
+// class child_op {
+//   static_assert(std::is_member_object_pointer_v<decltype(Mem)>);
 
-inline constexpr noop_type noop;
+//  public:
+//   using parent_context_type = ParentCtx;
+//   using pattern_type =
+//       std::decay_t<decltype(std::declval<ParentCtx>().pattern.*Mem)>;
 
-template <OpContext ParentCtx,
-          auto Mem,
-          op_type OpType = ParentCtx::operation_type>
-class child_op {
-  static_assert(std::is_member_object_pointer_v<decltype(Mem)>);
+//   using sub_context_type = context<typename ParentCtx::iterator_type,
+//                                    typename ParentCtx::sentinel_type,
+//                                    typename ParentCtx::policies,
+//                                    pattern_type>;
 
- public:
-  using parent_context_type = ParentCtx;
-  using pattern_type =
-      std::decay_t<decltype(std::declval<ParentCtx>().pattern.*Mem)>;
+//   constexpr sub_context_type make_sub_context(const ParentCtx& ctx) {
+//     return sub_context_type(ctx.iterator, ctx.end, ctx.pattern.*Mem);
+//   }
 
-  using sub_context_type = context<typename ParentCtx::iterator_type,
-                                   typename ParentCtx::sentinel_type,
-                                   typename ParentCtx::policies,
-                                   pattern_type>;
+//   constexpr child_op(const ParentCtx& ctx) : op_(make_sub_context(ctx)) {}
 
-  constexpr sub_context_type make_sub_context(const ParentCtx& ctx) {
-    return sub_context_type(ctx.iterator, ctx.end, ctx.pattern.*Mem);
-  }
+//   template <typename CbT>
+//   constexpr op_result on_tokens(const ParentCtx& ctx, const CbT& cb) {
+//     return op_.on_tokens(make_sub_context(ctx), cb);
+//   }
 
-  constexpr child_op(const ParentCtx& ctx) : op_(make_sub_context(ctx)) {}
+//   template <typename CbT>
+//   constexpr op_result on_end(const ParentCtx& ctx, const CbT& cb) {
+//     return op_.on_end(make_sub_context(ctx), cb);
+//   }
 
-  template <typename CbT>
-  constexpr op_result on_tokens(const ParentCtx& ctx, const CbT& cb) {
-    return op_.on_tokens(make_sub_context(ctx), cb);
-  }
+//   void reset(const ParentCtx& ctx) {
+//     op_ = operation<sub_context_type>{make_sub_context(ctx)};
+//   }
 
-  template <typename CbT>
-  constexpr op_result on_end(const ParentCtx& ctx, const CbT& cb) {
-    return op_.on_end(make_sub_context(ctx), cb);
-  }
+//  private:
+//   operation<sub_context_type> op_;
+// };
 
-  void reset(const ParentCtx& ctx) {
-    op_ = operation<sub_context_type>{make_sub_context(ctx)};
-  }
+// /*
+// // ***** child_op_set ***** /
+// template <std::size_t>
+// struct child_index_type {};
 
- private:
-  operation<sub_context_type> op_;
-};
+// template <std::size_t N>
+// inline constexpr child_index_type<N> child_index;
 
-/*
-// ***** child_op_set ***** /
-template <std::size_t>
-struct child_index_type {};
+// template <typename First, typename... Rest>
+// class child_op_set {
+//   using current_type = std::variant<First, Rest...>;
 
-template <std::size_t N>
-inline constexpr child_index_type<N> child_index;
+//  public:
+//   using parent_context_type = typename First::parent_context_type;
 
-template <typename First, typename... Rest>
-class child_op_set {
-  using current_type = std::variant<First, Rest...>;
+//   constexpr child_op_set(const parent_context_type& ctx)
+//       : current_(std::in_place_index_t<0>{}, ctx) {}
 
- public:
-  using parent_context_type = typename First::parent_context_type;
+//   constexpr std::size_t index() const { return current_.index(); }
 
-  constexpr child_op_set(const parent_context_type& ctx)
-      : current_(std::in_place_index_t<0>{}, ctx) {}
+//   template <std::size_t Orig, std::size_t Target>
+//   constexpr auto reset(child_index_type<Orig>,
+//                        child_index_type<Target>,
+//                        const parent_context_type& ctx) {
+//     abu_assume(current_.index() == Orig);
+//     current_ = current_type(std::in_place_index_t<Target>{}, ctx);
+//   }
 
-  constexpr std::size_t index() const { return current_.index(); }
+//   template <std::size_t Index>
+//   constexpr auto on_tokens(child_index_type<Index>,
+//                            const parent_context_type& ctx) {
+//     abu_assume(current_.index() == Index);
+//     return std::get<Index>(current_).on_tokens(ctx);
+//   }
 
-  template <std::size_t Orig, std::size_t Target>
-  constexpr auto reset(child_index_type<Orig>,
-                       child_index_type<Target>,
-                       const parent_context_type& ctx) {
-    abu_assume(current_.index() == Orig);
-    current_ = current_type(std::in_place_index_t<Target>{}, ctx);
-  }
+//   template <std::size_t Index>
+//   constexpr auto on_end(child_index_type<Index>,
+//                         const parent_context_type& ctx) {
+//     abu_assume(current_.index() == Index);
+//     return std::get<Index>(current_).on_end(ctx);
+//   }
 
-  template <std::size_t Index>
-  constexpr auto on_tokens(child_index_type<Index>,
-                           const parent_context_type& ctx) {
-    abu_assume(current_.index() == Index);
-    return std::get<Index>(current_).on_tokens(ctx);
-  }
+//  private:
+//   current_type current_;
+// };
+// */
+// }  // namespace abu::coro
 
-  template <std::size_t Index>
-  constexpr auto on_end(child_index_type<Index>,
-                        const parent_context_type& ctx) {
-    abu_assume(current_.index() == Index);
-    return std::get<Index>(current_).on_end(ctx);
-  }
-
- private:
-  current_type current_;
-};
-*/
-}  // namespace abu::coro
-
-#endif
+// #endif

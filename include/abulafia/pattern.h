@@ -10,10 +10,8 @@
 
 #include <iterator>
 
-#include "abulafia/archetypes.h"
-#include "abulafia/context.h"
-#include "abulafia/policy.h"
-#include "abulafia/token.h"
+#include "abulafia/data_source.h"
+#include "abulafia/policies.h"
 
 namespace abu {
 
@@ -25,22 +23,23 @@ struct weak_pattern_tag {};
 template <typename T>
 struct pattern_traits {
   using pattern_category = typename T::pattern_category;
+
+  template <Policies auto policies, DataSource Data>
+  using value_type = typename T::template value_type<policies, Data>;
 };
 
-// All patterns are required to be able to operate on forward iterators.
-template <typename T>
-concept Pattern = std::same_as<typename pattern_traits<T>::pattern_category,
-                               real_pattern_tag>;
-
-///////////////////////////
 template <typename T>
 using pattern_category_t = typename pattern_traits<T>::pattern_category;
 
-template <typename T, DataContext Ctx>
-using parsed_value_ctx_t = typename T::template parsed_value_type<Ctx>;
+template <typename T>
+concept Pattern = std::is_same_v<pattern_category_t<T>, real_pattern_tag>;
 
-template <typename T, Token Tok, Policy Pol = default_policy>
-using parsed_value_t = parsed_value_ctx_t<T, data_context<Tok, Pol>>;
+template <typename T, Policies auto policies, DataSource Data>
+using parsed_value_t =
+    typename pattern_traits<T>::template value_type<policies, Data>;
+
+///////////////////////////
+
 ///////////////////////////
 
 template <typename T>
@@ -70,50 +69,9 @@ constexpr const T& as_pattern(const T& p) {
   return p;
 }
 
-template <typename T>
-concept OpContext =
-    DataContext<T> && Pattern<typename T::pattern_type> && requires {
-  { T::operation_type } -> std::same_as<const op_type>;
+template <typename T, template <typename...> typename U>
+concept PatternTemplate = requires(T x) {
+  { U(x) } -> std::same_as<T>;
 };
-
-template <typename T>
-concept MatchContext = OpContext<T> &&(T::operation_type == op_type::match);
-
-template <typename T>
-concept ParseContext =
-    OpContext<T> &&(T::operation_type == op_type::parse) && requires {
-  typename T::value_type;
-};
-
-template <Token Tok, Policy Pol, Pattern Pat, op_type OpType>
-struct op_context;
-
-template <Token Tok, Policy Pol, Pattern Pat>
-struct op_context<Tok, Pol, Pat, op_type::parse> {
-  static constexpr op_type operation_type = op_type::parse;
-  using token_type = Tok;
-  using policies = Pol;
-  using pattern_type = Pat;
-  using value_type = parsed_value_t<Pat, token_type, policies>;
-};
-
-template <Token Tok, Policy Pol, Pattern Pat>
-struct op_context<Tok, Pol, Pat, op_type::match> {
-  static constexpr op_type operation_type = op_type::match;
-  using token_type = Tok;
-  using policies = Pol;
-  using pattern_type = Pat;
-};
-
-///////////////////////////
-
-template <typename T, typename PatTag>
-concept IsPatternOf =
-    Pattern<T> && std::is_same_v<typename T::pattern_tag, PatTag>;
-
-template <typename T, typename PatTag>
-concept PatternContext =
-    DataContext<T> && IsPatternOf<typename T::pattern_type, PatTag>;
 }  // namespace abu
-
 #endif

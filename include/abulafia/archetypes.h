@@ -23,12 +23,12 @@ struct value {
   operator T() const noexcept;
 };
 
-using input_iterator = std_utils::archetypes::input_iterator<char>;
-using input_iterator_sentinel = std_utils::archetypes::input_iterator_sentinel;
+// using input_iterator = std_utils::archetypes::input_iterator<char>;
+// using input_iterator_sentinel = std_utils::archetypes::input_iterator_sentinel;
 
-using forward_iterator = std_utils::archetypes::forward_iterator<char>;
-using forward_iterator_sentinel =
-    std_utils::archetypes::forward_iterator_sentinel;
+// using forward_iterator = std_utils::archetypes::forward_iterator<char>;
+// using forward_iterator_sentinel =
+//     std_utils::archetypes::forward_iterator_sentinel;
 
 }  // namespace archetypes
 

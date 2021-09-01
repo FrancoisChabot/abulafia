@@ -80,8 +80,6 @@ struct tok_api {
 
 }  // namespace _api
 
-static constexpr _api::tok_api tok;
-
 template <>
 struct pattern_traits<_api::tok_api> {
   using pattern_category = strong_pattern_tag;
@@ -91,6 +89,8 @@ struct pattern_traits<_api::tok_api> {
   }
 };
 
+static constexpr _api::tok_api tok;
+
 template <TokenSet TokSet>
 struct pattern_traits<TokSet> {
   using pattern_category = weak_pattern_tag;
@@ -99,12 +99,16 @@ struct pattern_traits<TokSet> {
   }
 };
 
-template <std::size_t Min, std::size_t Max>
-static constexpr auto repeat(PatternLike auto pat_like) {
-  using Op = std::decay_t<decltype(as_pattern(pat_like))>;
-
-  return pat::repeat<Op, Min, Max>{as_pattern(pat_like)};
+template <PatternLike OpT>
+inline constexpr auto repeat(const OpT& pat_like, std::size_t min, std::size_t max) {
+  return pat::repeat{as_pattern(pat_like), min, max};
 }
+
+inline constexpr auto discard(PatternLike auto pat_like) {
+  return pat::discard{as_pattern(pat_like)};
+}
+
+// template <std::size_t Min, std::size_t Max>
 
 // // // ***** lit *****
 // // static constexpr auto lit(auto r) { return pat::lit{std::move(r)}; }
@@ -119,10 +123,7 @@ static constexpr auto repeat(PatternLike auto pat_like) {
 // static constexpr pat::fail fail;
 
 // // ***** discard *****
-// inline constexpr auto discard(PatternLike auto pat_like) {
-//   auto pat = as_pattern(pat_like);
-//   return pat::discard<decltype(pat)>{std::move(pat)};
-// }
+
 
 // inline constexpr auto except(PatternLike auto operand, PatternLike auto
 // exception) {

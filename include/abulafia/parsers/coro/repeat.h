@@ -9,84 +9,80 @@
 #ifndef ABULAFIA_PARSERS_COROD_REPEAT_H_INCLUDED
 #define ABULAFIA_PARSERS_COROD_REPEAT_H_INCLUDED
 
-#include "abulafia/parsers/coro/child_operation.h"
-#include "abulafia/parsers/coro/context.h"
+#include "abulafia/parsers/coro/parser.h"
 #include "abulafia/patterns.h"
 
 namespace abu::coro {
 
-template <ContextFor<pat::repeat_tag> Ctx>
-class operation<Ctx> {
+template <PatternTemplate<pat::repeat> auto pattern,
+          Policies auto policies,
+          DataSource Data>
+class parser<pattern, policies, Data> {
  public:
-  using pattern_type = typename Ctx::pattern_type;
-  using child_type = child_op<Ctx, &pattern_type::operand>;
-  // using checkpoint_type = typename Ctx::checkpoint_type;
+  using value_type = parsed_value_t<decltype(pattern), policies, Data>;
+  using operand_parser = parser<pattern.operand, policies, Data>;
+  using op_value_type =
+      parsed_value_t<decltype(pattern.operand), policies, Data>;
+  
 
-  static constexpr std::size_t min_reps = pattern_type::min_reps;
-  static constexpr std::size_t max_reps = pattern_type::max_reps;
+  constexpr parser(Data& data) : child_op_(data) {}
 
-  using value_type = parsed_value_t<pattern_type, Ctx>;
-
-  constexpr operation(const Ctx& ctx)
-      : /*checkpoint_{ctx.checkpoint()},*/ child_op_(ctx) {}
-
-  template <typename CbT>
-  constexpr op_result on_tokens(const Ctx& ctx, const CbT& cb) {
+  template <ParseCallback<pattern, policies, Data> CbT>
+  constexpr op_result on_tokens(Data& data, const CbT& cb) {
     while (true) {
       auto res = child_op_.on_tokens(
-          ctx, [this](char v) { result_.push_back(std::move(v)); });
+          data, [this](op_value_type&& v) { result_.push_back(std::move(v)); });
+
       if (res.is_partial()) {
         return partial_result;
       }
 
       if (res.is_match_failure()) {
-        return finish_(ctx, cb);
+        return finish_(cb);
       }
 
       abu_assume(res.is_success());
 
-      if (max_reps != 0 && result_.size() == max_reps) {
-        return finish_(ctx, cb);
+      if (pattern.max != 0 && result_.size() == pattern.max) {
+        return finish_(cb);
       } else {
-        child_op_.reset(ctx);
+        child_op_ = operand_parser{data};
       }
     }
   }
 
-  template <typename CbT = noop_type>
-  constexpr op_result on_end(const Ctx& ctx, const CbT& cb = {}) {
+  template <ParseCallback<pattern, policies, Data> CbT>
+  constexpr op_result on_end(Data& data, const CbT& cb) {
     while (true) {
-      auto res = child_op_.on_end(
-          ctx, [this](char v) { result_.push_back(std::move(v)); });
+      auto res = child_op_.on_end(data,
+          [this](op_value_type&& v) { result_.push_back(std::move(v)); });
       if (res.is_match_failure()) {
-        return finish_(ctx, cb);
+        return finish_(cb);
       }
 
       abu_assume(res.is_success());
 
-      if (max_reps != 0 && result_.size() == max_reps) {
-        return finish_(ctx, cb);
+      if (pattern.max != 0 && result_.size() == pattern.max) {
+        return finish_(cb);
       } else {
-        child_op_.reset(ctx);
+        child_op_ = operand_parser{data};
       }
     }
   }
 
  private:
-  template <typename CbT = noop_type>
-  constexpr op_result finish_(const Ctx&, const CbT& cb = {}) {
-    if (result_.size() >= min_reps) {
+  template <ParseCallback<pattern, policies, Data> CbT>
+  constexpr op_result finish_(const CbT& cb) {
+    if (result_.size() >= pattern.min) {
       cb(std::move(result_));
       return success;
     } else {
-      // ctx.rollback(checkpoint_);
       return failure_t{};
     }
   }
 
-  // checkpoint_type checkpoint_;
   value_type result_;
-  child_type child_op_;
+  operand_parser child_op_;
 };
 
 }  // namespace abu::coro

@@ -8,18 +8,21 @@
 #ifndef ABULAFIA_POLICIES_H_INCLUDED
 #define ABULAFIA_POLICIES_H_INCLUDED
 
+#include <concepts>
 #include <vector>
 
 namespace abu {
 
 template <typename T>
-concept Policy = requires {
+concept Policies = requires {
   { T::vector_of_tokens_are_strings } -> std::convertible_to<bool>;
 };
 
-struct default_policy {
+struct default_policies_type {
   static constexpr bool vector_of_tokens_are_strings = true;
 };
+
+static constexpr default_policies_type default_policies{};
 
 }  // namespace abu
 #endif

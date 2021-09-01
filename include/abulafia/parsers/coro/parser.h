@@ -1,153 +1,90 @@
-// //  Copyright 2017-2021 Francois Chabot
-// //  (francois.chabot.dev@gmail.com)
-// //
-// //  Distributed under the Boost Software License, Version 1.0.
-// //  (See accompanying file LICENSE or copy at
-// //  http://www.boost.org/LICENSE_1_0.txt)
+//  Copyright 2017-2021 Francois Chabot
+//  (francois.chabot.dev@gmail.com)
+//
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
 
-// #ifndef ABULAFIA_PARSERS_CORO_PARSER_H_INCLUDED
-// #define ABULAFIA_PARSERS_CORO_PARSER_H_INCLUDED
+#ifndef ABULAFIA_PARSERS_CORO_PARSER_H_INCLUDED
+#define ABULAFIA_PARSERS_CORO_PARSER_H_INCLUDED
 
-// #include <concepts>
-// #include <iterator>
+#include "abulafia/data_source.h"
+#include "abulafia/op_result.h"
+#include "abulafia/pattern.h"
+#include "abulafia/policies.h"
+#include "abulafia/utils.h"
 
-// #include "abulafia/op_result.h"
-// #include "abulafia/parsers/coro/context.h"
-// #include "abulafia/pattern.h"
-// #include "abulafia/policy.h"
-// #include "abulafia/token.h"
+namespace abu::coro {
 
-// namespace abu::coro {
+template <Pattern auto pattern, Policies auto policies, DataSource Data>
+class parser;
 
-// template <typename Ctx>
-// class operation;
+template <Pattern auto pattern, Policies auto policies, DataSource Data>
+class matcher : public parser<pattern, policies, Data> {
+  using parser<pattern, policies, Data>::parser;
 
-// // template <std::input_iterator I,
-// //           std::sentinel_for<I> S,
-// //           Pattern Pat,
-// //           Policy Pol,
-// //           typename ResultCb>
-// // class parser {
-// //   using root_ctx_type = parse_context<I, S, Pol, Pat, ResultCb>;
+ public:
+  constexpr op_result on_tokens(Data& data) {
+    return parser<pattern, policies, Data>::on_tokens(data, details_::noop);
+  }
 
-// //  public:
-// //   constexpr parser(const Pat& pat, const ResultCb& cb) : pat_(pat), cb_(cb)
-// //   {}
+  constexpr op_result on_end(Data& data) {
+    return parser<pattern, policies, Data>::on_end(data, details_::noop);
+  }
+};
 
-// //   constexpr op_result advance(I i, S e) {
-// //     root_ctx_type ctx{i, e, pat_, cb_};
-// //     return root_op_.on_tokens(ctx);
-// //   }
-// //   constexpr op_result end() {
-// //     root_ctx_type ctx{i, e, pat_, cb_};
-// //     return root_op_.end(ctx);
-// //   }
+namespace details_ {
 
-// //  private:
-// //   using root_op = operation<root_ctx_type>;
+template <typename T>
+struct op_pattern_lookup;
 
-// //   const Pat& pat_;
-// //   const ResultCb& cb_;
-// //   root_op root_op_;
-// // };
+template <Pattern auto pattern, Policies auto policies, DataSource Data>
+struct op_pattern_lookup<parser<pattern, policies, Data>> {
+  static constexpr auto value = pattern;
+};
 
-// // template <std::input_iterator I, std::sentinel_for<I> S, Pattern Pat>
-// // class matcher {
-// //  public:
-// //   matcher(const Pat&) {}
+template <Pattern auto pattern, Policies auto policies, DataSource Data>
+struct op_pattern_lookup<matcher<pattern, policies, Data>> {
+  static constexpr auto value = pattern;
+};
 
-// //   constexpr op_result advance(I, S);
-// //   constexpr op_result end();
-// // };
+}  // namespace details_
 
-// // template <std::input_iterator I,
-// //           std::sentinel_for<I> S,
-// //           Pattern Pat,
-// //           Policy Pol = default_policy>
-// // constexpr auto make_matcher(const Pat& pat) {
-// //   return matcher<I, S, Pat>{pat};
-// // }
+template <typename T>
+inline constexpr auto op_pattern = details_::op_pattern_lookup<T>::value;
 
-// template <std::input_iterator I,
-//           std::sentinel_for<I> S,
-//           Pattern Pat,
-//           op_type OpType,
-//           Policy Pol>
-// struct basic_context
-//     : public ::abu::context<std::iter_value_t<I>, OpType, Pol> {
-//   static constexpr op_type operation_type = OpType;
+template <typename T, auto pattern, auto policies, typename Data>
+concept ParseCallback =
+    requires(T x, parsed_value_t<decltype(pattern), policies, Data>&& val) {
+  { x(std::move(val)) } -> std::same_as<void>;
+};
 
-//   using pattern_type = Pat;
-//   using iterator_type = I;
-//   using sentinel_type = S;
-//   using value_type = pattern_value_t<
-//       Pat,
-//       ::abu::context<std::iter_value_t<I>, op_type::parse, Pol>>;
+namespace details_ {
+  template <typename Parser, DataSource Data>
+  struct parse_callback_archetype {
+    using value_t =
+        parsed_value_t<decltype(op_pattern<Parser>), default_policies, Data>;
+    void operator()(value_t&&);
+  };
+}  // namespace details_
 
-//   constexpr basic_context(I& init_ite, S init_end, const Pat& pat)
-//       : iterator(init_ite), end(init_end), pattern(pat) {}
+template <typename T, typename Data>
+concept Parser =
+    requires(T x,
+             Data& d,
+             const Data& cd,
+             const details_::parse_callback_archetype<T, Data>& cb) {
+  T(cd);
+  { x.on_tokens(d, cb) } -> std::same_as<op_result>;
+  { x.on_end(cb) } -> std::same_as<op_result>;
+};
 
-//   iterator_type& iterator;
-//   sentinel_type end;
-//   const pattern_type& pattern;
-// };
+template <typename T, typename Data>
+concept Matcher = requires(T x, Data& d, const Data& cd) {
+  T(cd);
+  { x.on_tokens(d) } -> std::same_as<op_result>;
+  { x.on_end(d) } -> std::same_as<op_result>;
+};
+}  // namespace abu::coro
 
-// template <std::input_iterator I,
-//           std::sentinel_for<I> S,
-//           Pattern Pat,
-//           op_type OpType,
-//           Policy Pol = default_policy>
-// struct context : public basic_context<I, S, Pat, OpType, Pol> {
-//   using basic_context<I, S, Pat, OpType, Pol>::basic_context;
-// };
-
-// template <std::input_iterator I,
-//           std::sentinel_for<I> S,
-//           Pattern Pat,
-//           Policy Pol>
-// struct context<I, S, Pat, op_type::parse, Pol>
-//     : public basic_context<I, S, Pat, op_type::parse, Pol> {
-//   using value_type = pattern_value_t<
-//       Pat,
-//       ::abu::context<std::iter_value_t<I>, op_type::parse, Pol>>;
-
-//   constexpr context(I& init_ite, S init_end, const Pat& pat, value_type& dst)
-//       : basic_context<I, S, Pat, op_type::parse, Pol>(init_ite, init_end, pat),
-//         result_value(dst) {}
-
-//   value_type& result_value;
-// };
-
-// // template <std::forward_iterator I,
-// //           std::sentinel_for<I> S,
-// //           Pattern Pat,
-// //           op_type OpType,
-// //           Policy Pol>
-// // struct context<I, S, Pat, OpType, Pol>
-// //     : public ::abu::context<std::iter_value_t<I>, OpType, Pol> {
-// //   static constexpr op_type operation_type = OpType;
-
-// //   using pattern_type = Pat;
-// //   using iterator_type = I;
-// //   using sentinel_type = S;
-// //   using value_type =
-// //       pattern_value_t<Pat, ::abu::context<std::iter_value_t<I>, OpType,
-// //       Pol>>;
-
-// //   using checkpoint_type = I;
-
-// //   constexpr context(I& init_ite, S init_end, const Pat& pat)
-// //       : iterator(init_ite), end(init_end), pattern(pat) {}
-
-// //   checkpoint_type checkpoint() const { return iterator; }
-
-// //   void rollback(checkpoint_type cp) const { iterator = cp; }
-
-// //   iterator_type& iterator;
-// //   sentinel_type end;
-// //   const pattern_type& pattern;
-// // };
-
-// }  // namespace abu::coro
-
-// #endif
+#endif
