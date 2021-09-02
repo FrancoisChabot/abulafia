@@ -19,15 +19,15 @@ template <PatternTemplate<pat::repeat> auto pattern,
           DataSource Data>
 class parser<pattern, policies, Data> {
  public:
-  using value_type = parsed_value_t<decltype(pattern), policies, Data>;
+  using token_type = typename Data::token_type;
+  using value_type = parsed_value_t<decltype(pattern), token_type, policies>;
   using operand_parser = parser<pattern.operand, policies, Data>;
   using op_value_type =
-      parsed_value_t<decltype(pattern.operand), policies, Data>;
-  
+      parsed_value_t<decltype(pattern.operand), token_type, policies>;
 
   constexpr parser(Data& data) : child_op_(data) {}
 
-  template <ParseCallback<pattern, policies, Data> CbT>
+  template <ParseCallback<pattern, token_type, policies> CbT>
   constexpr op_result on_tokens(Data& data, const CbT& cb) {
     while (true) {
       auto res = child_op_.on_tokens(
@@ -51,11 +51,11 @@ class parser<pattern, policies, Data> {
     }
   }
 
-  template <ParseCallback<pattern, policies, Data> CbT>
+  template <ParseCallback<pattern, token_type, policies> CbT>
   constexpr op_result on_end(Data& data, const CbT& cb) {
     while (true) {
-      auto res = child_op_.on_end(data,
-          [this](op_value_type&& v) { result_.push_back(std::move(v)); });
+      auto res = child_op_.on_end(
+          data, [this](op_value_type&& v) { result_.push_back(std::move(v)); });
       if (res.is_match_failure()) {
         return finish_(cb);
       }
@@ -71,7 +71,7 @@ class parser<pattern, policies, Data> {
   }
 
  private:
-  template <ParseCallback<pattern, policies, Data> CbT>
+  template <ParseCallback<pattern, token_type, policies> CbT>
   constexpr op_result finish_(const CbT& cb) {
     if (result_.size() >= pattern.min) {
       cb(std::move(result_));

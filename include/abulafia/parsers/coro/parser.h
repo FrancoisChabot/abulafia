@@ -53,17 +53,17 @@ struct op_pattern_lookup<matcher<pattern, policies, Data>> {
 template <typename T>
 inline constexpr auto op_pattern = details_::op_pattern_lookup<T>::value;
 
-template <typename T, auto pattern, auto policies, typename Data>
-concept ParseCallback =
-    requires(T x, parsed_value_t<decltype(pattern), policies, Data>&& val) {
+template <typename T, auto pattern, typename Tok, auto policies>
+concept ParseCallback = Token<Tok> &&
+    requires(T x, parsed_value_t<decltype(pattern), Tok, policies>&& val) {
   { x(std::move(val)) } -> std::same_as<void>;
 };
 
 namespace details_ {
-  template <typename Parser, DataSource Data>
+  template <typename Parser, Token Tok>
   struct parse_callback_archetype {
-    using value_t =
-        parsed_value_t<decltype(op_pattern<Parser>), default_policies, Data>;
+    static constexpr default_policies_type policies = default_policies;
+    using value_t = parsed_value_t<decltype(op_pattern<Parser>), Tok, policies>;
     void operator()(value_t&&);
   };
 }  // namespace details_

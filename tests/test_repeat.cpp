@@ -5,7 +5,7 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#include "abulafia/abulafia.h"
+#include "abu_test_utils.h"
 #include "gtest/gtest.h"
 
 using namespace abu;
@@ -13,9 +13,9 @@ using namespace abu;
 TEST(repeat, builds_string) {
   constexpr auto sut = repeat([](char c) { return c >= '0' && c <= '9'; }, 0, 5);
 
-  EXPECT_EQ(parse<sut>("012"), "012");
-  EXPECT_EQ(parse<sut>("123a"), "123");
-  EXPECT_EQ(parse<sut>("ksajcnas"), "");
+  ABU_EXPECT_PARSES_AS(sut, "012", "012");
+  ABU_EXPECT_PARSES_AS(sut, "123a", "123");
+  ABU_EXPECT_PARSES_AS(sut, "ksajcnas", "");
 }
 
 // TEST(repeat, Fixed_size) {

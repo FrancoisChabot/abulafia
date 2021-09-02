@@ -14,6 +14,14 @@ struct noop_t {
   constexpr void operator()(const Ts&...) const {}
 };
 inline constexpr noop_t noop;
+
+struct null_sink_t {
+  template <typename T>
+  constexpr const null_sink_t& operator=(T&&) const {
+    return *this;
+  }
+};
+
 }  // namespace abu::details_
 
 #endif

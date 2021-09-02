@@ -5,35 +5,29 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#include "abulafia/abulafia.h"
+#include "abu_test_utils.h"
 #include "gtest/gtest.h"
 
 using namespace abu;
 
-// // Constexpr usage
-static_assert(match<tok>("a"));
-static_assert(parse<tok>("a") == 'a');
-
 TEST(token, any_works) {
-  EXPECT_TRUE(match<tok>("a"));
-  EXPECT_EQ(parse<tok>("a"), 'a');
-  EXPECT_EQ(parse<tok>("ab"), 'a');
+  ABU_EXPECT_PARSES_AS(tok, "a", 'a');
+  ABU_EXPECT_PARSES_AS(tok, "ab", 'a');
 
   // // The empty string string literal contains the null termination, which is
   // // a valid token in its own right.
-  EXPECT_EQ(parse<tok>(""), '\0');
+  ABU_EXPECT_PARSES_AS(tok, "", '\0');
 
-  EXPECT_FALSE(match<tok>(std::string_view("")));
-  EXPECT_THROW(parse<tok>(std::string_view("")), no_match_error);
+  // But the actual empty string does not parse
+  ABU_EXPECT_PARSE_FAIL(tok, std::string_view{});
 }
 
 TEST(token, any_non_null_works) {
   constexpr auto any_non_null = [](char c) { return c != '\0'; };
 
   // EXPECT_TRUE(match("a", any_non_null));
-  EXPECT_EQ(parse<any_non_null>("a"), 'a');
-  EXPECT_THROW(parse<any_non_null>(""), no_match_error);
-  EXPECT_FALSE(match<any_non_null>(""));
+  ABU_EXPECT_PARSES_AS(any_non_null, "a", 'a');
+  ABU_EXPECT_PARSE_FAIL(any_non_null, "");
 }
 
 TEST(token, non_trivial_token_type) {
@@ -41,10 +35,9 @@ TEST(token, non_trivial_token_type) {
   std::vector<std::string> tokens = {"aaa", "bbb", "ccc"};
   std::vector<std::string> tokens_2 = {"bbb", "aaa", "ccc"};
 
-  constexpr auto not_bbb = [](const std::string &t) { return t != "bbb"; };
+  constexpr auto not_bbb = [](const std::string& t) { return t != "bbb"; };
 
-  EXPECT_TRUE(match<tok>(tokens));
-  EXPECT_EQ(parse<tok>(tokens), "aaa");
-  EXPECT_THROW(parse<tok>(empty_tokens), no_match_error);
-  EXPECT_FALSE(match<not_bbb>(tokens_2));
+  ABU_EXPECT_PARSES_AS(tok, tokens, "aaa");
+  ABU_EXPECT_PARSE_FAIL(tok, empty_tokens);
+  ABU_EXPECT_PARSE_FAIL(not_bbb, tokens_2);
 }

@@ -22,8 +22,8 @@ struct tok {
   using pattern_category = real_pattern_tag;
   using token_set_type = TokSetT;
 
-  template <Policies auto policies, DataSource Data>
-  using value_type = typename Data::token_type;
+  template <Token Tok, Policies auto policies>
+  using value_type = Tok;
 
   [[no_unique_address]] token_set_type allowed;
 };
@@ -33,7 +33,7 @@ template <Pattern Op>
 struct repeat {
   using pattern_category = real_pattern_tag;
 
-  template <Policies auto policies, DataSource Data>
+  template <Token Tok, Policies auto policies>
   using value_type = std::basic_string<char>;
 
   [[no_unique_address]] Op operand;
@@ -47,7 +47,7 @@ struct discard {
   using pattern_category = real_pattern_tag;
   using operand_type = Op;
 
-  template <Policies auto policies, DataSource Data>
+  template <Token Tok, Policies auto policies>
   using value_type = void;
 
   [[no_unique_address]] operand_type operand;

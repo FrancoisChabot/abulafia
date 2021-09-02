@@ -18,9 +18,10 @@ template <PatternTemplate<pat::tok> auto pattern,
           DataSource Data>
 class parser<pattern, policies, Data> {
  public:
+  using token_type = typename Data::token_type;
   constexpr parser(const Data&) {}
 
-  template <ParseCallback<pattern, policies, Data> CbT>
+  template <ParseCallback<pattern, token_type, policies> CbT>
   constexpr op_result on_tokens(Data& data, const CbT& cb) {
     if (data.empty()) {
       return partial_result;
@@ -35,7 +36,7 @@ class parser<pattern, policies, Data> {
     return success;
   }
 
-  template <ParseCallback<pattern, policies, Data> CbT>
+  template <ParseCallback<pattern, token_type, policies> CbT>
   constexpr op_result on_end(Data&, const CbT&) {
     return failure_t{};
   }

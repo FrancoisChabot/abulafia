@@ -8,6 +8,7 @@
 #ifndef ABULAFIA_TOKEN_H_INCLUDED
 #define ABULAFIA_TOKEN_H_INCLUDED
 
+#include <string>
 #include <concepts>
 #include <type_traits>
 
