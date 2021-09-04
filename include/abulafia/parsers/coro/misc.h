@@ -8,55 +8,49 @@
 #ifndef ABULAFIA_PARSERS_CORO_MISC_H_INCLUDED
 #define ABULAFIA_PARSERS_CORO_MISC_H_INCLUDED
 
-#include "abulafia/parsers/coro/operation.h"
+#include "abulafia/parsers/coro/parser.h"
 #include "abulafia/patterns.h"
+#include "abulafia/utils.h"
 
 namespace abu::coro {
 
-// ***** eoi *****
-template <ContextForTag<pat::eoi> Ctx>
-class operation<Ctx> {
+template <std::same_as<pat::eoi> auto pattern,
+          Policies auto policies,
+          DataSource Data>
+class matcher<pattern, policies, Data> {
  public:
-  using pattern_type = typename Ctx::pattern_type;
-  using value_type = void;
+  constexpr matcher(const Data&) {}
 
-  constexpr operation(const Ctx&) {}
-
-  constexpr coro_result<void> on_tokens(const Ctx& ctx) {
-    if (ctx.iterator != ctx.end) {
-      return match_failure_t{};
+  constexpr op_result on_tokens(Data&) { return partial_result; }
+  constexpr op_result on_end(Data& d) {
+    if (d.empty()) {
+      return success;
+    } else {
+      return failure_t{};
     }
-    return partial_result_tag{};
-  }
-  constexpr ::abu::parse_result<void> on_end(const Ctx&) { return {}; }
-};
-
-// ***** fail *****
-template <ContextForTag<pat::fail> Ctx>
-class operation<Ctx> {
- public:
-  using pattern_type = typename Ctx::pattern_type;
-
-  constexpr operation(const Ctx&) {}
-
-  constexpr coro_result<void> on_tokens(const Ctx&) {
-    return match_failure_t{};
-  }
-  constexpr ::abu::parse_result<void> on_end(const Ctx&) {
-    return match_failure_t{};
   }
 };
 
-// ***** pass *****
-template <ContextForTag<pat::pass> Ctx>
-class operation<Ctx> {
+template <std::same_as<pat::pass> auto pattern,
+          Policies auto policies,
+          DataSource Data>
+class matcher<pattern, policies, Data> {
  public:
-  using pattern_type = typename Ctx::pattern_type;
+  constexpr matcher(const Data&) {}
 
-  constexpr operation(const Ctx&) {}
+  constexpr op_result on_tokens(Data&) { return success; }
+  constexpr op_result on_end(Data&) { return success; }
+};
 
-  constexpr coro_result<void> on_tokens(const Ctx&) { return {}; }
-  constexpr ::abu::parse_result<void> on_end(const Ctx&) { return {}; }
+template <std::same_as<pat::fail> auto pattern,
+          Policies auto policies,
+          DataSource Data>
+class matcher<pattern, policies, Data> {
+ public:
+  constexpr matcher(const Data&) {}
+
+  constexpr op_result on_tokens(Data&) { return failure_t{}; }
+  constexpr op_result on_end(Data&) { return failure_t{}; }
 };
 
 }  // namespace abu::coro

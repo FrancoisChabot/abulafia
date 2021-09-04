@@ -9,6 +9,7 @@
 #define ABULAFIA_PARSERS_IMMEDIATE_H_INCLUDED
 
 #include "abulafia/parsers/immediate/discard.h"
+#include "abulafia/parsers/immediate/misc.h"
 #include "abulafia/parsers/immediate/parser.h"
 #include "abulafia/parsers/immediate/repeat.h"
 #include "abulafia/parsers/immediate/tok.h"

@@ -32,9 +32,16 @@ template <typename T>
 using pattern_category_t = typename pattern_traits<T>::pattern_category;
 
 template <typename T>
-concept Pattern = std::is_same_v<pattern_category_t<T>, real_pattern_tag>;
+concept Pattern = std::is_same_v<pattern_category_t<T>, real_pattern_tag> &&
+    requires(const T v) {
+  { v.can_fail() } -> std::convertible_to<bool>;
+  { v.consumes_on_success() } -> std::convertible_to<bool>;
+  { v.consumes_on_failure() } -> std::convertible_to<bool>;
+};
 
-template <typename PatLikeT, Token Tok, Policies auto policies=default_policies>
+template <typename PatLikeT,
+          Token Tok,
+          Policies auto policies = default_policies>
 using parsed_value_t =
     typename pattern_traits<PatLikeT>::template value_type<Tok, policies>;
 

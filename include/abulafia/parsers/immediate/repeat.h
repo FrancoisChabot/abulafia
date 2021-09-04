@@ -13,15 +13,35 @@
 
 namespace abu::imm {
 
+namespace details_ {
+template <PatternTemplate<pat::repeat> auto pattern,
+          Policies auto policies,
+          std::input_iterator I>
+struct basic_repeat {
+  static constexpr bool is_done(std::size_t count) {
+    return pattern.max > 0 && count >= pattern.max;
+  }
+
+  static constexpr op_result final_result(std::size_t count) {
+    if (count >= pattern.min) {
+      return success;
+    } else {
+      return failure_t{};
+    }
+  }
+};
+}  // namespace details_
+
 template <PatternTemplate<pat::repeat> auto pattern,
           Policies auto policies,
           std::input_iterator I,
           std::sentinel_for<I> S>
-struct parser<pattern, policies, I, S> {
+struct parser<pattern, policies, I, S>
+    : public details_::basic_repeat<pattern, policies, I> {
   template <typename Dst>
   static constexpr op_result parse(Dst& dst, I& i, const S& e) {
+    using basic = details_::basic_repeat<pattern, policies, I>;
     using token_type = std::iter_value_t<I>;
-
     using value_type = parsed_value_t<decltype(pattern), token_type, policies>;
     using op_value_type =
         parsed_value_t<decltype(pattern.operand), token_type, policies>;
@@ -34,7 +54,7 @@ struct parser<pattern, policies, I, S> {
       if (child_res.is_success()) {
         abu_assume(landing);
         result_val.push_back(*landing);
-        if (result_val.size() >= pattern.max) {
+        if (basic::is_done(result_val.size())) {
           break;
         }
       } else {
@@ -42,12 +62,44 @@ struct parser<pattern, policies, I, S> {
       }
     }
 
-    if (result_val.size() >= pattern.min) {
-      dst = std::move(result_val);
-      return success;
-    } else {
-      return failure_t{};
+    auto result = basic::final_result(result_val.size());
+    if(result.is_success()) {
+      dst = result_val;
     }
+    return result;
+  }
+};
+
+template <PatternTemplate<pat::repeat> auto pattern,
+          Policies auto policies,
+          std::input_iterator I,
+          std::sentinel_for<I> S>
+struct matcher<pattern, policies, I, S>
+    : public details_::basic_repeat<pattern, policies, I> {
+  static constexpr op_result match(I& i, const S& e) {
+    using basic = details_::basic_repeat<pattern, policies, I>;
+
+    using token_type = std::iter_value_t<I>;
+    using value_type = parsed_value_t<decltype(pattern), token_type, policies>;
+    using op_value_type =
+        parsed_value_t<decltype(pattern.operand), token_type, policies>;
+    using op_matcher = matcher<pattern.operand, policies, I, S>;
+
+    std::size_t count = 0;
+    while (1) {
+      auto child_res = op_matcher::match(i, e);
+
+      if (basic::is_done(count)) {
+        ++count;
+        if (pattern.max > 0 && count >= pattern.max) {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
+    return basic::final_result(count);
   }
 };
 

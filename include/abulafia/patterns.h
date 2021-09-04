@@ -28,6 +28,12 @@ struct tok {
 
   template <Token Tok, Policies auto policies>
   using value_type = Tok;
+
+  [[no_unique_address]] token_set_type allowed;
+
+  constexpr bool can_fail() const { return true; }
+  constexpr bool consumes_on_success() const { return true; }
+  constexpr bool consumes_on_failure() const { return false; }
 };
 
 // ***** repeat *****
@@ -43,7 +49,23 @@ struct repeat {
   static constexpr bool fails_cleanly = true;
 
   template <Token Tok, Policies auto policies>
-  using value_type = std::basic_string<char>;
+  using value_type = std::conditional_t<
+      std::is_same_v<Tok, parsed_value_t<Op, Tok, policies>> && pol::repeat_tokens_to_string(policies),
+      std::basic_string<Tok>,
+      std::vector<parsed_value_t<Op, Tok, policies>>>;
+
+  [[no_unique_address]] Op operand;
+  std::size_t min;
+  std::size_t max;
+
+  constexpr bool can_fail() const { return min > 0 && operand.can_fail(); }
+  constexpr bool consumes_on_success() const {
+    return operand.consumes_on_success();
+  }
+  constexpr bool consumes_on_failure() const {
+    return can_fail() &&
+           (operand.consumes_on_success() || operand.consumes_on_failure());
+  }
 };
 
 // ***** discard *****
@@ -53,10 +75,51 @@ struct discard {
 
   using pattern_category = real_pattern_tag;
 
-  static constexpr bool fails_cleanly = Op::fails_cleanly;
+  template <Token Tok, Policies auto policies>
+  using value_type = void;
+
+  [[no_unique_address]] Op operand;
+
+  constexpr bool can_fail() const { return Op::can_fail(); }
+  constexpr bool consumes_on_success() const {
+    return Op::consumes_on_success();
+  }
+  constexpr bool consumes_on_failure() const {
+    return Op::consumes_on_failure();
+  }
+};
+
+struct eoi {
+  using pattern_category = real_pattern_tag;
 
   template <Token Tok, Policies auto policies>
   using value_type = void;
+
+  constexpr bool can_fail() const { return true; }
+  constexpr bool consumes_on_success() const { return false; }
+  constexpr bool consumes_on_failure() const { return false; }
+};
+
+struct pass {
+  using pattern_category = real_pattern_tag;
+
+  template <Token Tok, Policies auto policies>
+  using value_type = void;
+
+  constexpr bool can_fail() const { return false; }
+  constexpr bool consumes_on_success() const { return false; }
+  constexpr bool consumes_on_failure() const { return false; }
+};
+
+struct fail {
+  using pattern_category = real_pattern_tag;
+
+  template <Token Tok, Policies auto policies>
+  using value_type = void;
+
+  constexpr bool can_fail() const { return true; }
+  constexpr bool consumes_on_success() const { return false; }
+  constexpr bool consumes_on_failure() const { return false; }
 };
 
 /*
