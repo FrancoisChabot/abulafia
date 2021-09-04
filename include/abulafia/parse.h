@@ -16,19 +16,17 @@
 
 namespace abu {
 
-/*
-
 template <PatternLike auto pattern_like,
           Policies auto policies = default_policies,
-          std::forward_iterator I,
+          std::input_iterator I,
           std::sentinel_for<I> S>
 constexpr bool match(I& b, const S& e) {
-  abu::data_chunk data{b, e};
-
   constexpr auto pattern = as_pattern(pattern_like);
-  coro::matcher<pattern, policies, decltype(data)> matcher(data);
 
-  auto status = matcher.on_tokens(data);
+  abu::data_chunk data{b, e};
+  abu::coro::matcher<pattern, policies, decltype(data)> matcher(data);
+
+  op_result status = matcher.on_tokens(data);
   if (status.is_partial()) {
     status = matcher.on_end(data);
   }
@@ -36,60 +34,26 @@ constexpr bool match(I& b, const S& e) {
   return status.is_success();
 }
 
-
 template <PatternLike auto pattern_like,
           Policies auto policies = default_policies,
-          std::forward_iterator I,
+          std::input_iterator I,
           std::sentinel_for<I> S>
 constexpr auto parse(I& b, const S& e) {
   using token_type = std::iter_value_t<I>;
+
+  constexpr auto pattern = as_pattern(pattern_like);
+  using result_type = parsed_value_t<decltype(pattern), token_type, policies>;
+  std::optional<result_type> result;
+  auto on_success = [&](result_type v) { result = v; };
 
   abu::data_chunk data{b, e};
 
-  constexpr auto pattern = as_pattern(pattern_like);
-  coro::parser<pattern, policies, decltype(data)> parser(data);
+  abu::coro::parser<pattern, policies, decltype(data)> matcher(data);
 
-  using result_type = parsed_value_t<decltype(pattern), token_type, policies>;
-  std::optional<result_type> result;
-
-  auto assign = [&](auto&& v) { result = std::move(v); };
-
-  auto status = parser.on_tokens(data, assign);
+  op_result status = matcher.on_tokens(data, on_success);
   if (status.is_partial()) {
-    status = parser.on_end(data, assign);
+    status = matcher.on_end(data, on_success);
   }
-
-  if (!status.is_success()) {
-    throw no_match_error{};
-  }
-  return std::move(*result);
-}
-
-*/
-
-template <PatternLike auto pattern_like,
-          Policies auto policies = default_policies,
-          std::forward_iterator I,
-          std::sentinel_for<I> S>
-constexpr bool match(I& b, const S& e) {
-  constexpr auto pattern = as_pattern(pattern_like);
-
-  return imm::match<pattern, policies>(b, e).is_success();
-}
-
-template <PatternLike auto pattern_like,
-          Policies auto policies = default_policies,
-          std::forward_iterator I,
-          std::sentinel_for<I> S>
-constexpr auto parse(I& b, const S& e) {
-  using token_type = std::iter_value_t<I>;
-
-  constexpr auto pattern = as_pattern(pattern_like);
-  using result_type = parsed_value_t<decltype(pattern), token_type, policies>;
-  std::optional<result_type> result;
-
-  auto status = imm::parse<pattern, policies>(result, b, e);
-
   if (!status.is_success()) {
     throw no_match_error{};
   }
@@ -98,7 +62,7 @@ constexpr auto parse(I& b, const S& e) {
 
 template <PatternLike auto pattern,
           Policies auto policies = default_policies,
-          std::ranges::forward_range R>
+          std::ranges::input_range R>
 constexpr bool match(const R& range) {
   auto b = std::ranges::begin(range);
   auto e = std::ranges::end(range);
@@ -107,7 +71,7 @@ constexpr bool match(const R& range) {
 
 template <PatternLike auto pattern,
           Policies auto policies = default_policies,
-          std::ranges::forward_range R>
+          std::ranges::input_range R>
 constexpr auto parse(const R& range) {
   auto b = std::ranges::begin(range);
   auto e = std::ranges::end(range);

@@ -19,15 +19,13 @@ template <PatternTemplate<pat::discard> auto pattern,
           DataSource Data>
 class matcher<pattern, policies, Data> {
  public:
-  using operand_paraser = matcher<pattern.operand, policies, Data>;
-
   constexpr matcher(const Data& data) : child_(data) {}
 
   constexpr op_result on_tokens(Data& data) { return child_.on_tokens(data); }
   constexpr op_result on_end(Data& data) { return child_.on_end(data); }
 
  private:
-  operand_paraser child_;
+  matcher<pattern.operand, policies, Data> child_;
 };
 
 }  // namespace abu::coro

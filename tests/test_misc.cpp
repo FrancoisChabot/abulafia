@@ -5,26 +5,25 @@
 //  (See accompanying file LICENSE or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#include "abulafia/abulafia.h"
+#include "abu_test_utils.h"
 #include "gtest/gtest.h"
 
 using namespace abu;
-TEST(misc, pass_works) {
 
-  EXPECT_TRUE(match("a", pass));
-  EXPECT_TRUE(match("", pass));
-  EXPECT_TRUE(match(std::string_view(""), pass));
+TEST(misc, pass_works) {
+  ABU_EXPECT_MATCH(pass, "a");
+  ABU_EXPECT_MATCH(pass, "");
+  ABU_EXPECT_MATCH(pass, std::string_view{});
 }
 
 TEST(misc, fail_works) {
-
-  EXPECT_FALSE(match("a", fail));
-  EXPECT_FALSE(match("", fail));
-  EXPECT_FALSE(match(std::string_view(""), fail));
+  ABU_EXPECT_NO_MATCH(fail, "a");
+  ABU_EXPECT_NO_MATCH(fail, "");
+  ABU_EXPECT_NO_MATCH(fail, std::string_view{});
 }
 
-TEST(opt, eoi_works) {
-  EXPECT_FALSE(match("a", eoi));
-  EXPECT_FALSE(match("", eoi));
-  EXPECT_TRUE(match(std::string_view(""), eoi));
+TEST(misc, eoi_works) {
+  ABU_EXPECT_NO_MATCH(eoi, "a");
+  ABU_EXPECT_NO_MATCH(eoi, "");
+  ABU_EXPECT_MATCH(eoi, std::string_view{});
 }

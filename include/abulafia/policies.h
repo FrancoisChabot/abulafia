@@ -14,15 +14,26 @@
 namespace abu {
 
 template <typename T>
-concept Policies = requires {
-  { T::vector_of_tokens_are_strings } -> std::convertible_to<bool>;
+concept Policies = requires(T x) {
+  { x.repeat.tokens_to_string } -> std::convertible_to<bool>;
 };
 
 struct default_policies_type {
-  static constexpr bool vector_of_tokens_are_strings = true;
+  struct {
+    bool tokens_to_string = true;
+  } repeat;
 };
 
 static constexpr default_policies_type default_policies{};
+
+// These are hacks to handle a bug in msvc 19.29. It's fixed in 19.30, and
+// the hackls should/will be removed once it releases.
+
+namespace pol {
+constexpr bool repeat_tokens_to_string(Policies auto policy) {
+  return policy.repeat.tokens_to_string;
+}
+}  // namespace pol
 
 }  // namespace abu
 #endif

@@ -2,7 +2,7 @@ add_executable(abulafia_tests
     test_discard.cpp
     # test_except.cpp
     # # test_lit.cpp
-    # test_misc.cpp
+    test_misc.cpp
     # #test_opt.cpp
     test_repeat.cpp
     test_tok.cpp

@@ -22,6 +22,14 @@ struct null_sink_t {
   }
 };
 
+struct null_vector_sink_t {
+  constexpr void add() { size_ += 1; }
+  constexpr std::size_t size() const { return size_; }
+
+ private:
+  std::size_t size_ = 0;
+};
+
 }  // namespace abu::details_
 
 #endif

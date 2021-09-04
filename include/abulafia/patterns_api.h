@@ -108,19 +108,22 @@ inline constexpr auto discard(PatternLike auto pat_like) {
   return pat::discard{as_pattern(pat_like)};
 }
 
+// ***** eoi *****
+static constexpr pat::eoi eoi;
+
+// ***** pass *****
+static constexpr pat::pass pass;
+
+// ***** fail *****
+static constexpr pat::fail fail;
+
+
+
 // template <std::size_t Min, std::size_t Max>
 
 // // // ***** lit *****
 // // static constexpr auto lit(auto r) { return pat::lit{std::move(r)}; }
 
-// // // ***** eoi *****
-// static constexpr pat::eoi eoi;
-
-// // // ***** pass *****
-// static constexpr pat::pass pass;
-
-// // // ***** fail *****
-// static constexpr pat::fail fail;
 
 // // ***** discard *****
 
