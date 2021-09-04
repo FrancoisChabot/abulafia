@@ -19,38 +19,44 @@ namespace abu::pat {
 // ***** tok *****
 template <TokenSet TokSetT>
 struct tok {
+  [[no_unique_address]] TokSetT allowed;
+
+  // traits
   using pattern_category = real_pattern_tag;
-  using token_set_type = TokSetT;
+
+  static constexpr bool fails_cleanly = true;
 
   template <Token Tok, Policies auto policies>
   using value_type = Tok;
-
-  [[no_unique_address]] token_set_type allowed;
 };
 
 // ***** repeat *****
 template <Pattern Op>
 struct repeat {
-  using pattern_category = real_pattern_tag;
-
-  template <Token Tok, Policies auto policies>
-  using value_type = std::basic_string<char>;
-
   [[no_unique_address]] Op operand;
   std::size_t min;
   std::size_t max;
+
+  // traits
+  using pattern_category = real_pattern_tag;
+
+  static constexpr bool fails_cleanly = true;
+
+  template <Token Tok, Policies auto policies>
+  using value_type = std::basic_string<char>;
 };
 
 // ***** discard *****
 template <Pattern Op>
 struct discard {
+  [[no_unique_address]] Op operand;
+
   using pattern_category = real_pattern_tag;
-  using operand_type = Op;
+
+  static constexpr bool fails_cleanly = Op::fails_cleanly;
 
   template <Token Tok, Policies auto policies>
   using value_type = void;
-
-  [[no_unique_address]] operand_type operand;
 };
 
 /*
