@@ -22,9 +22,7 @@ class maybe_checkpoint {
 
   maybe_checkpoint(Data& data) : checkpoint_(data.make_checkpoint()) {}
 
-  constexpr void reset(Data& data) {
-    checkpoint_ = data.make_checkpoint();
-  }
+  constexpr void reset(Data& data) { checkpoint_ = data.make_checkpoint(); }
   constexpr void rollback(Data& data) { data.rollback(std::move(checkpoint_)); }
 
  private:
@@ -34,9 +32,9 @@ class maybe_checkpoint {
 template <DataSource Data>
 class maybe_checkpoint<Data, false> {
  public:
-  constexpr maybe_checkpoint(Data& data) {}
-  constexpr void reset(Data& data) {}
-  constexpr void rollback(Data& data){};
+  constexpr maybe_checkpoint(Data&) {}
+  constexpr void reset(Data&) {}
+  constexpr void rollback(Data&){};
 };
 
 template <PatternTemplate<pat::repeat> auto pattern,
@@ -100,7 +98,6 @@ class basic_repeat {
   constexpr bool handle_child_success(Data& data,
                                       const Cb& cb,
                                       op_result& out_result) {
-    
     if (pattern.max != 0 && result.size() == pattern.max) {
       out_result = finalize_(cb);
       return false;

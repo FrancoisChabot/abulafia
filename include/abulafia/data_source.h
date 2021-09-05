@@ -172,13 +172,18 @@ struct data_chunk<I, S> {
 // Data feed chunks are organized as a dag of shared pointers, where both the
 // feed itself and checkpoints keep branches alive.
 
+template <typename ChunkData>
+struct data_feed_chunk;
+
+template <typename ChunkData>
 struct data_feed_chunk_elem {
-  std::shared_ptr<data_feed_chunk_elem> next_chunk;
-}
+  std::shared_ptr<data_feed_chunk<ChunkData>> next_chunk;
+};
 
 template <typename ChunkData>
 struct data_feed_chunk : public data_feed_chunk_elem {
-  explicit data_feed_chunk(ChunkData init_data) : data(std::move(init_data) {}
+  explicit data_feed_chunk(ChunkData init_data) : data(std::move(init_data)) {}
+
   ChunkData data;
 };
 
@@ -224,7 +229,8 @@ class basic_data_feed {
 
       // This is intentionally not be a move!
       // A checkpoint could be holding on to the current_chunk_.
-      current_chunk_ = current_chunk_->next_chunk;
+      current_chunk_ =
+          std::static_pointer_cast<chunk_type>(current_chunk_->next_chunk);
 
       if (current_chunk_) {
         current_chunk_next_ = std::ranges::begin(current_chunk_->data);
@@ -237,7 +243,8 @@ class basic_data_feed {
   }
 
  protected:
-  std::shared_ptr<data_feed_chunk_elem> current_chunk_;
+  std::weak_ptr<data_feed_chunk_elem<ChunkData>> list_head_;
+  std::shared_ptr<chunk_type> current_chunk_;
   chunk_type* last_chunk_ = nullptr;
 
   data_iterator_type current_chunk_next_;
@@ -247,7 +254,7 @@ class basic_data_feed {
 // ***** Input feed *****
 template <std::ranges::input_range ChunkData>
 struct feed_input_checkpoint {
-  std::shared_ptr<data_feed_chunk<ChunkData>> chunk;
+  std::shared_ptr<data_feed_chunk_elem> chunk;
 };
 
 template <std::ranges::input_range ChunkData>
@@ -272,17 +279,35 @@ template <std::ranges::forward_range ChunkData>
 struct data_feed<ChunkData> : public basic_data_feed<ChunkData> {
   using checkpoint_type = feed_forward_checkpoint<ChunkData>;
 
-  constexpr checkpoint_type make_checkpoint() const {
+  constexpr checkpoint_type make_checkpoint() {
+    if (!this->current_chunk_) {
+      // We are creating a checkpoint before having been fed any data from
+      auto head = this->list_head_.lock();
+      if (!head) {
+        head = std::make_shared<data_feed_chunk_elem>();
+        this->list_head_ = head;
+      }
+      return checkpoint_type{head, {}};
+    }
     return checkpoint_type{this->current_chunk_, this->current_chunk_next_};
   }
 
   constexpr void rollback(checkpoint_type cp) {
-    if (cp.chunk) {
-      this->current_chunk_ = std::move(cp.chunk);
+    std::shared_ptr<checkpoint_type> new_head;
+    if (cp.chunk == this.list_head_) {
+      this->current_chunk_ =
+          std::static_pointer_cast<checkpoint_type>(cp.chunk->next());
+
+      if (this->current_chunk_) {  // N.B. Can this be assumed?
+        this->current_chunk_next_ =
+            std::ranges::begin(this->current_chunk_->data);
+        this->current_chunk_end_ = std::ranges::end(this->current_chunk_->data);
+      }
+    } else {
+      this->current_chunk_ =
+          std::static_pointer_cast<checkpoint_type>(std::move(cp.chunk));
       this->current_chunk_next_ = std::move(cp.next);
       this->current_chunk_end_ = std::ranges::end(this->current_chunk_->data);
-    } else {
-      // we are rolling back to before we had any data at
     }
   }
 };
